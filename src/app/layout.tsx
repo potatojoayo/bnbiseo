@@ -4,7 +4,7 @@ import "./globals.css";
 
 const notoSerifKr = Noto_Serif_KR({
   variable: "--font-display",
-  subsets: ["latin"],
+  subsets: ["latin", "korean"],
   weight: ["400", "700", "900"],
 });
 
