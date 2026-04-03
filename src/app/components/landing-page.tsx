@@ -275,7 +275,7 @@ export default function LandingPage() {
             <div className="p-6 flex flex-col divide-y divide-[#d5d2cc]/30">
               {[
                 { icon: "🔧", label: "수리 요청", steps: "\"전구 나갔어요\" 한마디면 부품·비용·일정까지 알아서 잡아드려요", time: "3분" },
-                { icon: "💬", label: "게스트 문의", steps: "게스트가 QR 찍으면 AI가 그 숙소에 맞게 바로 답해줘요", time: "0분 (자동)" },
+                { icon: "💬", label: "게스트 문의", steps: "게스트가 QR을 스캔하면 AI가 그 숙소에 맞게 바로 답해줘요", time: "0분 (자동)" },
                 { icon: "📋", label: "시설 관리", steps: "모든 시설물이 DB에 기록되어 있어서 언제든 바로 확인할 수 있어요", time: "완전 자동" },
               ].map((item, i) => (
                 <div key={i} className="flex gap-3 py-4 first:pt-0 last:pb-0">
