@@ -292,11 +292,13 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <hr className="border-t border-[#d5d2cc] mx-0" />
+
       {/* CTA */}
       <section
         id="cta"
         data-a
-        className={`bg-white px-12 py-28 text-center max-md:px-6 max-md:py-20 ${v("cta")}`}
+        className={`px-12 py-28 text-center max-md:px-6 max-md:py-20 ${v("cta")}`}
       >
         <h2
           className={`${FONT_DISPLAY} text-[clamp(32px,5vw,56px)] font-medium leading-tight tracking-tighter mb-5`}
