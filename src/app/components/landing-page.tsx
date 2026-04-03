@@ -51,8 +51,8 @@ const MARQUEE_ITEMS = [
   "구독형 유지보수",
 ];
 
-const FONT_DISPLAY = "font-[var(--font-display)]";
-const FONT_BODY = "font-[var(--font-body)]";
+const FONT_DISPLAY = "font-heading";
+const FONT_BODY = "font-text";
 const SECTION = "max-w-5xl mx-auto px-12 max-md:px-6";
 const BADGE = "text-[#D4421E] text-xs font-bold tracking-widest uppercase mb-5";
 const SEC_TITLE = `${FONT_DISPLAY} text-[clamp(28px,4vw,44px)] font-black leading-tight tracking-tight mb-4`;

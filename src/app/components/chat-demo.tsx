@@ -80,7 +80,7 @@ export default function ChatDemo() {
     >
       <div className="px-4 py-3 border-b border-[#d5d2cc] flex items-center gap-2">
         <div className="w-2 h-2 rounded-full bg-green-500" />
-        <span className="text-[#1a1a1a] text-xs font-medium font-[var(--font-body)]">
+        <span className="text-[#1a1a1a] text-xs font-medium font-text">
           비앤비서 AI
         </span>
       </div>
@@ -96,7 +96,7 @@ export default function ChatDemo() {
             }`}
           >
             <div
-              className={`px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line max-w-[85%] font-[var(--font-body)] ${
+              className={`px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line max-w-[85%] font-text ${
                 m.f === "u"
                   ? "bg-[#D4421E] text-white rounded-t-xl rounded-bl-xl rounded-br-sm"
                   : "bg-[#EDEAE4] text-[#1a1a1a] rounded-t-xl rounded-br-xl rounded-bl-sm"
@@ -109,7 +109,7 @@ export default function ChatDemo() {
                 {m.opts.map((o, j) => (
                   <span
                     key={j}
-                    className="px-3 py-1 rounded-full border border-[#d5d2cc] text-[#8a8a82] text-xs font-[var(--font-body)]"
+                    className="px-3 py-1 rounded-full border border-[#d5d2cc] text-[#8a8a82] text-xs font-text"
                   >
                     {o}
                   </span>

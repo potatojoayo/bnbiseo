@@ -1,19 +1,14 @@
 import type { Metadata } from "next";
-import { Noto_Serif_KR, Sora } from "next/font/google";
+import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 
-const notoSerifKr = Noto_Serif_KR({
+const notoSansKr = Noto_Sans_KR({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "700", "900"],
+  weight: ["400", "500", "600", "700", "900"],
   display: "swap",
 });
 
-const sora = Sora({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "비앤비서 — 에어비앤비 호스트를 위한 올인원 유지보수 서비스",
@@ -29,7 +24,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${notoSerifKr.variable} ${sora.variable} h-full antialiased`}
+      className={`${notoSansKr.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
