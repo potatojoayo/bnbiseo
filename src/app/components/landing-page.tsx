@@ -3,290 +3,334 @@
 import { useState, useEffect } from "react";
 import ChatDemo from "./chat-demo";
 import GuestDemo from "./guest-demo";
-import CompareTable from "./compare-table";
 
-const PAIN_POINTS = [
+const PROBLEMS = [
   {
     icon: "🔍",
-    title: "정보의 비대칭",
-    desc: "수전 고장나면 규격 확인하러 직접 현장에 가야 하고, 업체마다 다른 견적에 시간만 낭비",
+    t: "숙소마다 규격이 다 달라요",
+    d: "5채 수전이 전부 다른데, 고장 날 때마다 현장 가서 사진 찍고 업체에 보내고… 이걸 매번 해야 해요.",
   },
   {
     icon: "📞",
-    title: "반복되는 게스트 문의",
-    desc: '"보일러 어떻게 켜요?" "와이파이 비번 뭐예요?" 매번 같은 질문에 같은 답변',
+    t: "같은 질문이 끝없이 와요",
+    d: '"보일러 어떻게 켜요?" 5채에서 동시에 들어오면 답장할 시간이 없어요.',
   },
   {
     icon: "💸",
-    title: "감에 의존하는 운영",
-    desc: "수리비 바가지, 급할 때 부르면 웃돈 — 부업 수익이 유지보수비로 새어나감",
+    t: "급하면 바가지를 쓸 수밖에 없어요",
+    d: "체크인 3시간 전에 고장 나면 웃돈 주고 부를 수밖에 없잖아요. 수익이 수리비로 다 새어나가요.",
   },
 ];
 
 const STEPS = [
   {
-    num: "01",
     icon: "📋",
-    title: "공간 스캔",
-    desc: "전문가가 방문하여 모든 시설물의 브랜드·모델·규격을 기록합니다. 등록비 무료.",
+    t: "먼저 숙소를 스캔해요",
+    d: "전문가가 직접 방문해서 조명, 수전, 보일러, 가전 등 모든 시설물의 규격을 기록해 드려요. 등록비는 무료!",
   },
   {
-    num: "02",
     icon: "🤖",
-    title: "AI 챗봇 접수",
-    desc: '"전구 나갔어요" 한마디면 정확한 부품과 비용을 안내하고 방문 예약까지.',
+    t: "채팅으로 접수하면 끝",
+    d: '"전구 나갔어요" 한마디면 알아서 부품이랑 비용 찾아드리고, 방문 예약까지 잡아드려요.',
   },
   {
-    num: "03",
     icon: "🔧",
-    title: "방문 수리",
-    desc: "필요한 부품을 가지고 방문합니다. 구독 회원은 출장비 무료, 업계 최저가.",
+    t: "부품 들고 바로 방문",
+    d: "맞는 부품 가지고 한 번에 해결해요. 출장비는 무료, 업계 최저가 보장이에요.",
   },
 ];
 
-const SECTION = "px-9 md:px-8 max-w-[960px] mx-auto";
-const SECTION_BADGE =
-  "inline-block py-1 px-3.5 rounded-2xl bg-blue-600/10 border border-blue-600/20 text-blue-400 text-[11px] font-semibold mb-3.5";
-const SECTION_TITLE =
-  "text-[clamp(20px,5vw,26px)] md:text-[clamp(20px,3.5vw,28px)] font-extrabold text-white leading-[1.3] tracking-[-0.02em] mb-2";
-const SECTION_DESC =
-  "text-slate-500 text-[13px] md:text-sm leading-normal mb-6 md:mb-8";
-const CTA_BUTTON =
-  "bg-gradient-to-br from-blue-600 to-purple-600 text-white border-none py-4 px-10 rounded-[14px] text-[15px] md:text-base font-bold cursor-pointer shadow-[0_4px_28px_rgba(37,99,235,0.35)] font-[inherit] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_36px_rgba(37,99,235,0.45)] w-full max-w-[340px] md:w-auto md:max-w-none";
+const MARQUEE_ITEMS = [
+  "공간 스캔",
+  "디지털 트윈",
+  "AI 챗봇 접수",
+  "출장비 무료",
+  "1회 방문 해결",
+  "게스트 QR 가이드",
+  "업계 최저가",
+  "구독형 유지보수",
+];
+
+const FONT_DISPLAY = "font-[var(--font-display)]";
+const FONT_BODY = "font-[var(--font-body)]";
+const SECTION = "max-w-5xl mx-auto px-12 max-md:px-6";
+const BADGE = "text-[#D4421E] text-xs font-bold tracking-widest uppercase mb-5";
+const SEC_TITLE = `${FONT_DISPLAY} text-[clamp(28px,4vw,44px)] font-black leading-tight tracking-tight mb-4`;
+const SEC_DESC =
+  "text-[#8a8a82] text-sm leading-relaxed max-w-xl mb-12";
+const BTN_MAIN = `${FONT_BODY} bg-[#1a1a1a] text-[#F6F4F0] border-none px-9 py-4 rounded-full text-base font-semibold cursor-pointer inline-flex items-center gap-3 transition-all duration-200 hover:bg-[#D4421E] hover:scale-[1.03] group`;
 
 export default function LandingPage() {
-  const [activeDemo, setActiveDemo] = useState("host");
-  const [visibleSections, setVisibleSections] = useState<
-    Record<string, boolean>
-  >({});
+  const [vis, setVis] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            setVisibleSections((prev) => ({
-              ...prev,
-              [e.target.id]: true,
-            }));
-          }
+    const obs = new IntersectionObserver(
+      (es) => {
+        es.forEach((e) => {
+          if (e.isIntersecting)
+            setVis((p) => ({ ...p, [e.target.id]: true }));
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.1 }
     );
-
-    document
-      .querySelectorAll("[data-animate]")
-      .forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    document.querySelectorAll("[data-a]").forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
   }, []);
 
-  const anim = (id: string) =>
-    `transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-      visibleSections[id]
-        ? "opacity-100 translate-y-0"
-        : "opacity-0 translate-y-6"
+  const v = (id: string) =>
+    `transition-all duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      vis[id] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
     }`;
 
   return (
-    <>
+    <div
+      className={`min-h-screen bg-[#F6F4F0] text-[#1a1a1a] ${FONT_BODY} antialiased overflow-x-hidden`}
+    >
       {/* Nav */}
-      <nav className="sticky top-0 z-50 py-3 px-7 md:py-4 md:px-8 flex justify-between items-center backdrop-blur-[20px] bg-[rgba(10,10,26,0.85)] border-b border-white/[0.04]">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-[13px] font-extrabold text-white">
-            B
-          </div>
-          <span className="text-[17px] font-extrabold text-white tracking-[-0.03em]">
-            비앤비서
-          </span>
+      <nav className="bg-[rgba(246,244,240,0.9)] backdrop-blur-[12px] sticky top-0 z-50 px-12 py-5 flex justify-between items-center border-b border-[#d5d2cc] max-md:px-6 max-md:py-4">
+        <div className={`${FONT_DISPLAY} text-xl font-black tracking-tighter`}>
+          비앤비서
         </div>
-        <button className="bg-blue-600 text-white border-none py-2 px-5 rounded-lg text-[13px] font-semibold cursor-pointer font-[inherit]">
-          무료 등록
-        </button>
+        <button className={`${FONT_BODY} bg-[#1a1a1a] text-[#F6F4F0] border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-[#D4421E] hover:scale-[1.03]`}>무료 등록</button>
       </nav>
 
       {/* Hero */}
-      <section className="pt-20 pb-16 md:pt-28 md:pb-20 px-9 md:px-8 text-center relative">
-        <div className="absolute -top-[60px] left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.1)_0%,transparent_70%)] pointer-events-none" />
-        <div className="relative animate-fade-up">
-          <h1 className="text-[clamp(26px,7vw,36px)] md:text-[clamp(28px,6vw,48px)] font-extrabold text-white leading-[1.3] tracking-[-0.03em] mb-3 md:mb-3.5">
+      <section className="max-w-5xl mx-auto px-12 pt-24 pb-20 max-md:px-6 max-md:pt-16 max-md:pb-14">
+        <h1
+          className={`${FONT_DISPLAY} font-black tracking-tighter mb-7`}
+        >
+          <span className="block text-[clamp(28px,4vw,48px)] max-md:text-[28px] leading-tight animate-fade-in-d1">
+            에어비앤비,
+          </span>
+          <span className="block text-[clamp(36px,5.5vw,64px)] max-md:text-[36px] leading-tight animate-fade-in-d2">
             부업인데 왜
-            <br />
-            <span className="text-red-600 not-italic">본업</span>처럼 하시나요?
-          </h1>
-          <p className="text-sm md:text-base leading-normal text-slate-400">
-            에어비앤비 유지보수, 비앤비서가 대신합니다
-          </p>
-          <div className="mt-7 md:mt-9 flex flex-col items-center gap-2.5">
-            <button className={CTA_BUTTON}>무료로 숙소 등록하기</button>
-            <div className="text-slate-600 text-xs">
-              등록비 무료 · 서울 전 지역
-            </div>
-          </div>
+          </span>
+          <span className="block text-[clamp(44px,7vw,80px)] max-md:text-[44px] leading-tight animate-fade-in-d3">
+            <span className="text-[#D4421E]">본업</span>처럼 하시나요?
+          </span>
+        </h1>
+        <p className="animate-fade-in-d4 text-[#6b6b63] text-lg leading-relaxed max-w-lg mb-11 max-md:text-sm">
+          숙소 시설을 통째로 기억하는 AI 비서.
+          <br />
+          수리도, 게스트 문의도 한마디면 알아서 처리해 드립니다.
+        </p>
+        <button className={BTN_MAIN}>
+          무료로 숙소 등록하기
+          <span className="text-lg transition-transform duration-300 group-hover:translate-x-1.5">
+            →
+          </span>
+        </button>
+        <div className="text-[#8a8a82] text-xs mt-4 font-normal">
+          등록비 무료 · 서울 전 지역 · 가입 후 3일 내 방문
         </div>
       </section>
 
-      {/* Pain Points */}
-      <section
-        id="pains"
-        data-animate
-        className={`${SECTION} pb-14 md:pb-[72px] ${anim("pains")}`}
-      >
-        <div className={SECTION_BADGE}>Problem</div>
-        <h2 className={SECTION_TITLE}>
-          호스트의 시간을 갉아먹는
-          <br />
-          &apos;공간 운영&apos;의 한계
-        </h2>
-        <div className={SECTION_DESC}>
-          수익은 줄고, 시간은 빠지고, 게스트 만족은 떨어지는 악순환
+      {/* Marquee */}
+      <div className="overflow-hidden border-y border-[#d5d2cc] py-4">
+        <div className="animate-marquee flex gap-16 w-max">
+          {[...Array(4)].flatMap((_, k) =>
+            MARQUEE_ITEMS.map((t, i) => (
+              <span
+                key={`${k}-${i}`}
+                className={`${FONT_DISPLAY} text-sm text-[#8a8a82] whitespace-nowrap flex items-center gap-3`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D4421E] opacity-50" />
+                {t}
+              </span>
+            ))
+          )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {PAIN_POINTS.map((p, i) => (
+      </div>
+
+      {/* Problem */}
+      <section
+        id="prob"
+        data-a
+        className={`${SECTION} py-24 max-md:py-16 ${v("prob")}`}
+      >
+        <div className={BADGE}>Problem</div>
+        <h2 className={SEC_TITLE}>
+          숙소가 늘수록
+          <br />
+          문제는 곱절이 됩니다
+        </h2>
+        <p className={SEC_DESC}>
+          현장 방문, 견적 비교, 긴급 수리 — 이게 매주 반복되면 지치잖아요.
+        </p>
+
+        <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4">
+          {PROBLEMS.map((p, i) => (
             <div
               key={i}
-              className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 md:py-7 md:px-[22px] transition-colors hover:border-red-600/30"
-              style={{ animationDelay: `${i * 0.1}s` }}
+              className="bg-[#EDEAE4] rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
             >
-              <div className="text-2xl md:text-[28px] mb-2.5 md:mb-3.5">
-                {p.icon}
-              </div>
-              <div className="text-white text-sm md:text-[15px] font-bold mb-2">
-                {p.title}
-              </div>
-              <div className="text-slate-400 text-[13px] leading-relaxed">
-                {p.desc}
+              <div className="text-3xl mb-4">{p.icon}</div>
+              <div className="text-base font-bold mb-2">{p.t}</div>
+              <div className="text-[#8a8a82] text-xs leading-relaxed">
+                {p.d}
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      <hr className="border-t border-[#d5d2cc] mx-0" />
 
       {/* Solution */}
       <section
-        id="solution"
-        data-animate
-        className={`${SECTION} pb-14 md:pb-[72px] ${anim("solution")}`}
+        id="sol"
+        data-a
+        className={`${SECTION} py-24 max-md:py-16 ${v("sol")}`}
       >
-        <div className={SECTION_BADGE}>Solution</div>
-        <h2 className={SECTION_TITLE}>
-          숙소를 <span className="text-blue-400">디지털 트윈</span>으로
-          만듭니다
+        <div className={BADGE}>Solution</div>
+        <h2 className={SEC_TITLE}>
+          숙소를 통째로
+          <br />
+          데이터로 만듭니다
         </h2>
-        <div className={SECTION_DESC}>
-          전구 규격부터 보일러 모델까지 — 모든 시설물을 데이터화하면 수리
-          한마디에 부품·비용·일정이 자동으로 정리됩니다
-        </div>
+        <p className={SEC_DESC}>
+          전구 규격부터 보일러 모델까지, 한번 기록해 두면 다음부터는 알아서 척척 처리해 드려요.
+        </p>
 
         {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-9 md:mb-12">
+        <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4 mb-16">
           {STEPS.map((s, i) => (
             <div
               key={i}
-              className="flex md:block gap-4 items-start bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 md:py-7 md:px-[22px] relative overflow-hidden transition-colors hover:border-blue-600/30"
+              className="bg-[#EDEAE4] rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
             >
-              <div className="absolute top-3 right-4 text-white/[0.04] text-[32px] md:text-[44px] font-black">
-                {s.num}
-              </div>
-              <div className="text-[28px] md:text-[32px] md:mb-3.5 shrink-0 mt-0.5 md:mt-0">
-                {s.icon}
-              </div>
-              <div>
-                <div className="text-white text-[15px] md:text-base font-bold mb-2">
-                  {s.title}
-                </div>
-                <div className="text-slate-400 text-[13px] leading-relaxed">
-                  {s.desc}
-                </div>
+              <div className="text-3xl mb-4">{s.icon}</div>
+              <div className="text-base font-bold mb-2">{s.t}</div>
+              <div className="text-[#8a8a82] text-xs leading-relaxed">
+                {s.d}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Chat Demos */}
-        <div className="mb-12">
-          {/* Mobile tabs */}
-          <div className="flex md:hidden rounded-[10px] overflow-hidden border border-white/[0.08] mb-5">
-            {[
-              { key: "host", label: "🔧 호스트 수리 접수" },
-              { key: "guest", label: "💬 게스트 QR 가이드" },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                className={`flex-1 py-2.5 border-none cursor-pointer text-[13px] font-semibold font-[inherit] transition-all duration-200 ${
-                  activeDemo === tab.key
-                    ? "bg-blue-600/15 text-blue-400 border-b-2 border-b-blue-600"
-                    : "bg-white/[0.02] text-slate-500 border-b-2 border-b-transparent"
-                }`}
-                onClick={() => setActiveDemo(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
+        {/* Demo Grid */}
+        <div className="grid grid-cols-2 max-md:grid-cols-1 gap-8 items-start">
+          <div>
+            <div className="text-xs font-semibold text-[#8a8a82] tracking-wide uppercase mb-3">
+              호스트 수리 접수
+            </div>
+            <ChatDemo />
           </div>
-
-          <div className="md:grid md:grid-cols-2 md:gap-6 md:items-start">
-            <div className={activeDemo !== "host" ? "hidden md:block" : ""}>
-              <div className="flex items-center gap-2 mb-3.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                <span className="text-white text-sm font-bold">
-                  호스트 수리 접수
-                </span>
-                <span className="text-slate-600 text-[11px]">
-                  — AI가 부품까지 파악
-                </span>
-              </div>
-              <ChatDemo />
+          <div>
+            <div className="text-xs font-semibold text-[#8a8a82] tracking-wide uppercase mb-3">
+              게스트 QR 가이드
             </div>
-            <div className={activeDemo !== "guest" ? "hidden md:block" : ""}>
-              <div className="flex items-center gap-2 mb-3.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                <span className="text-white text-sm font-bold">
-                  게스트 QR 가이드
-                </span>
-                <span className="text-slate-600 text-[11px]">
-                  — 반복 문의 자동 응답
-                </span>
-              </div>
-              <GuestDemo />
-            </div>
+            <GuestDemo />
           </div>
         </div>
       </section>
 
-      {/* Price Compare */}
+      <hr className="border-t border-[#d5d2cc] mx-0" />
+
+      {/* Before & After */}
       <section
         id="compare"
-        data-animate
-        className={`${SECTION} w-full pb-16 md:pb-20 ${anim("compare")}`}
+        data-a
+        className={`${SECTION} py-24 max-md:py-16 ${v("compare")}`}
       >
-        <div className={SECTION_BADGE}>Price</div>
-        <h2 className={SECTION_TITLE}>출장비 무료, 업계 최저가</h2>
-        <div className={SECTION_DESC}>
-          구독 회원은 출장비 없이 부품+공임만 — 급할 때 바가지 쓸 일 없습니다
+        <div className={BADGE}>Before & After</div>
+        <h2 className={SEC_TITLE}>
+          반나절이 3분으로
+        </h2>
+        <p className={SEC_DESC}>
+          비앤비서 하나로 호스팅이 이렇게 달라져요.
+        </p>
+
+        <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
+          {/* Before */}
+          <div className="bg-white rounded-2xl border border-[#d5d2cc] overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#d5d2cc] flex items-center gap-2">
+              <span className="text-base">😩</span>
+              <span className="text-sm font-bold text-[#8a8a82]">지금</span>
+            </div>
+            <div className="p-6 flex flex-col divide-y divide-[#d5d2cc]/50">
+              {[
+                { icon: "🔧", label: "수리 요청", steps: "고장 → 직접 현장 가서 사진 찍고 → 업체 찾고 → 견적 비교하고 → 예약하고 → 또 방문", time: "반나절 이상" },
+                { icon: "💬", label: "게스트 문의", steps: "\"보일러 어떻게 켜요?\" 같은 메시지에 매번 직접 답장, 숙소마다 반복", time: "하루 30분~1시간" },
+                { icon: "📋", label: "시설 관리", steps: "수전 규격? 보일러 모델? 기억에 의존하다 숙소 늘면 뒤죽박죽", time: "체계 없음" },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-3 py-4 first:pt-0 last:pb-0">
+                  <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                  <div>
+                    <div className="text-sm font-bold mb-1">{item.label}</div>
+                    <div className="text-[#8a8a82] text-xs leading-relaxed mb-1.5">{item.steps}</div>
+                    <div className="inline-block bg-red-50 text-red-500 text-xs font-semibold px-2.5 py-0.5 rounded-full">{item.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* After */}
+          <div className="bg-white rounded-2xl overflow-hidden shadow-xl shadow-black/10 border border-[#d5d2cc]">
+            <div className="px-6 py-4 border-b border-[#d5d2cc] flex items-center gap-2">
+              <span className="text-base">✨</span>
+              <span className={`${FONT_DISPLAY} text-sm font-black tracking-tighter`}>비앤비서</span>
+            </div>
+            <div className="p-6 flex flex-col divide-y divide-[#d5d2cc]/30">
+              {[
+                { icon: "🔧", label: "수리 요청", steps: "\"전구 나갔어요\" 한마디면 부품·비용·일정까지 알아서 잡아드려요", time: "3분" },
+                { icon: "💬", label: "게스트 문의", steps: "게스트가 QR 찍으면 AI가 그 숙소에 맞게 바로 답해줘요", time: "0분 (자동)" },
+                { icon: "📋", label: "시설 관리", steps: "모든 시설물이 DB에 기록되어 있어서 언제든 바로 확인할 수 있어요", time: "완전 자동" },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-3 py-4 first:pt-0 last:pb-0">
+                  <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                  <div>
+                    <div className="text-sm font-bold mb-1">{item.label}</div>
+                    <div className="text-[#8a8a82] text-xs leading-relaxed mb-1.5">{item.steps}</div>
+                    <div className="inline-block bg-green-50 text-green-600 text-xs font-semibold px-2.5 py-0.5 rounded-full">{item.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <CompareTable />
       </section>
 
       {/* CTA */}
-      <section className="mt-20 py-14 md:py-20 px-9 md:px-8 text-center border-t border-white/[0.04]">
-        <h2 className="text-[clamp(20px,5vw,28px)] md:text-[clamp(22px,4vw,32px)] font-extrabold text-white leading-[1.3] tracking-[-0.02em] mb-3">
+      <section
+        id="cta"
+        data-a
+        className={`bg-white px-12 py-28 text-center max-md:px-6 max-md:py-20 ${v("cta")}`}
+      >
+        <h2
+          className={`${FONT_DISPLAY} text-[clamp(32px,5vw,56px)] font-black leading-tight tracking-tighter mb-5`}
+        >
           수리 걱정 없는
           <br />
           호스팅을 시작하세요
         </h2>
-        <div className="text-slate-500 text-[13px] md:text-sm mb-6 md:mb-8 leading-normal">
-          등록비 무료 · 가입 후 3일 내 방문 데이터 수집
-          <br />
-          서울 전 지역 서비스 중
-        </div>
-        <button className={CTA_BUTTON}>무료로 숙소 등록하기</button>
+        <p className="text-[#8a8a82] text-base mb-10">
+          등록비 무료 · 서울 전 지역 · 지금 바로 시작할 수 있어요
+        </p>
+        <button className={`${BTN_MAIN} mx-auto`}>
+          무료로 숙소 등록하기
+          <span className="text-lg transition-transform duration-300 group-hover:translate-x-1.5">
+            →
+          </span>
+        </button>
       </section>
 
       {/* Footer */}
-      <footer className="py-5 md:py-7 px-9 md:px-8 border-t border-white/[0.04] text-center text-slate-700 text-[11px]">
-        © 2026 비앤비서 · 에어비앤비 호스트를 위한 올인원 유지보수 서비스
+      <footer className="px-12 py-7 border-t border-[#d5d2cc] flex justify-between items-center text-[#8a8a82] text-xs max-md:px-6 max-md:flex-col max-md:gap-3">
+        <span>© 2026 비앤비서 (BnBiseo)</span>
+        <div className="flex gap-5 max-md:hidden">
+          <a href="#" className="text-[#8a8a82] no-underline text-xs">
+            이용약관
+          </a>
+          <a href="#" className="text-[#8a8a82] no-underline text-xs">
+            개인정보처리방침
+          </a>
+          <a href="#" className="text-[#8a8a82] no-underline text-xs">
+            문의하기
+          </a>
+        </div>
       </footer>
-    </>
+    </div>
   );
 }

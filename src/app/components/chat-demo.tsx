@@ -2,92 +2,136 @@
 
 import { useState, useEffect, useRef } from "react";
 
-const messages = [
-  { from: "user" as const, text: "거실 전구가 나갔어요" },
+const msgs = [
+  { f: "u" as const, t: "천장 전구 나갔어" },
   {
-    from: "bot" as const,
-    text: "거실 천장 LED 등기구\n(삼성 SI-L60R1) 확인했습니다.\n\n교체 비용: 12,000원\n(부품+공임, 구독 회원가)\n\n방문 예약할까요?",
-    options: ["내일 오전", "내일 오후"],
+    f: "b" as const,
+    t: "어느 방 전구가 나갔어요?",
+    opts: ["거실", "침실", "화장실"],
   },
-  { from: "user" as const, text: "내일 오전" },
+  { f: "u" as const, t: "거실" },
   {
-    from: "bot" as const,
-    text: "4월 4일(금) 오전 10~12시\n방문 예약 완료했습니다. ✓\n\n기사가 삼성 SI-L60R1 호환 전구를\n가지고 방문합니다.",
+    f: "b" as const,
+    t: "거실 천장 LED 등기구\n삼성 SI-L60R1 확인했습니다.\n\n교체 비용: 12,000원 (부품+공임)\n방문 예약할까요?",
+    opts: ["내일 오전", "내일 오후"],
+  },
+  { f: "u" as const, t: "내일 오전" },
+  {
+    f: "b" as const,
+    t: "4/4(금) 오전 10~12시 예약 완료 ✓\nSI-L60R1 호환 전구를 가지고 방문합니다.",
   },
 ];
 
 export default function ChatDemo() {
   const [step, setStep] = useState(0);
+  const [typing, setTyping] = useState(false);
+  const [started, setStarted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
+  // Start animation when scrolled into view
   useEffect(() => {
-    if (step < messages.length) {
-      const t = setTimeout(
-        () => setStep((s) => s + 1),
-        step === 0 ? 1500 : 3000
-      );
-      return () => clearTimeout(t);
-    }
-    const reset = setTimeout(() => setStep(0), 6000);
-    return () => clearTimeout(reset);
-  }, [step]);
+    if (!containerRef.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started) {
+          setStarted(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, [started]);
+
+  // Step through messages once: message → pause → typing → pause → next message
+  useEffect(() => {
+    if (!started || step >= msgs.length) return;
+
+    // Show typing indicator after a pause
+    const typingDelay = setTimeout(() => {
+      setTyping(true);
+    }, step === 0 ? 600 : 800);
+
+    // Then show the actual message
+    const msgDelay = setTimeout(
+      () => {
+        setTyping(false);
+        setStep((s) => s + 1);
+      },
+      step === 0 ? 1600 : 2400
+    );
+
+    return () => {
+      clearTimeout(typingDelay);
+      clearTimeout(msgDelay);
+    };
+  }, [step, started]);
 
   useEffect(() => {
     if (chatRef.current)
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
-  }, [step]);
+  }, [step, typing]);
 
   return (
-    <div className="max-w-full md:max-w-[440px] rounded-[18px] overflow-hidden bg-white/[0.03] border border-white/[0.08]">
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/[0.06]">
-        <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[13px] bg-gradient-to-br from-blue-600 to-purple-600">
-          🔧
-        </div>
-        <div>
-          <div className="text-white text-sm font-semibold">비앤비서 AI</div>
-          <div className="text-green-500 text-[10px]">● 온라인</div>
-        </div>
+    <div
+      ref={containerRef}
+      className="bg-white rounded-2xl overflow-hidden shadow-lg border border-[#d5d2cc]"
+    >
+      <div className="px-4 py-3 border-b border-[#d5d2cc] flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-green-500" />
+        <span className="text-[#1a1a1a] text-xs font-medium font-[var(--font-body)]">
+          비앤비서 AI
+        </span>
       </div>
       <div
         ref={chatRef}
-        className="flex flex-col gap-2 p-3.5 h-[280px] md:h-[300px] overflow-y-auto"
+        className="p-4 h-72 overflow-y-auto flex flex-col gap-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
-        {messages.slice(0, step).map((m, i) => (
+        {msgs.slice(0, step).map((m, i) => (
           <div
             key={i}
             className={`flex flex-col animate-fade-only ${
-              m.from === "user" ? "items-end" : "items-start"
+              m.f === "u" ? "items-end" : "items-start"
             }`}
           >
             <div
-              className={`py-2.5 px-3.5 text-[13px] leading-relaxed whitespace-pre-line text-white max-w-[85%] ${
-                m.from === "user"
-                  ? "bg-blue-600 rounded-[14px_14px_4px_14px]"
-                  : "bg-white/[0.08] rounded-[14px_14px_14px_4px]"
+              className={`px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line max-w-[85%] font-[var(--font-body)] ${
+                m.f === "u"
+                  ? "bg-[#D4421E] text-white rounded-t-xl rounded-bl-xl rounded-br-sm"
+                  : "bg-[#EDEAE4] text-[#1a1a1a] rounded-t-xl rounded-br-xl rounded-bl-sm"
               }`}
             >
-              {m.text}
+              {m.t}
             </div>
-            {m.options && (
+            {m.opts && (
               <div className="flex flex-wrap gap-1.5 mt-1.5">
-                {m.options.map((o, j) => (
-                  <div
+                {m.opts.map((o, j) => (
+                  <span
                     key={j}
-                    className="py-1.5 px-[13px] rounded-full border border-blue-600/40 text-blue-400 text-xs"
+                    className="px-3 py-1 rounded-full border border-[#d5d2cc] text-[#8a8a82] text-xs font-[var(--font-body)]"
                   >
                     {o}
-                  </div>
+                  </span>
                 ))}
               </div>
             )}
           </div>
         ))}
-        {step > 0 && step < messages.length && (
-          <div className={`flex flex-col animate-fade-only ${messages[step].from === "user" ? "items-end" : "items-start"}`}>
-            <div className={`flex gap-1 text-[10px] py-2.5 px-4 ${messages[step].from === "user" ? "bg-blue-600/80 text-white/60 rounded-[14px_14px_4px_14px]" : "text-slate-500 bg-white/[0.08] rounded-[14px_14px_14px_4px]"}`}>
-              <span className="animate-blink">●</span>
-              <span className="animate-blink-2">●</span>
-              <span className="animate-blink-3">●</span>
+        {typing && step < msgs.length && (
+          <div
+            className={`flex flex-col animate-fade-only ${msgs[step].f === "u" ? "items-end" : "items-start"}`}
+          >
+            <div
+              className={`rounded-xl px-4 py-2.5 flex gap-1 text-xs ${
+                msgs[step].f === "u"
+                  ? "bg-[#D4421E]/80 text-white/60"
+                  : "bg-[#EDEAE4] text-[#8a8a82]"
+              }`}
+            >
+              <span className="animate-blink">·</span>
+              <span className="animate-blink-2">·</span>
+              <span className="animate-blink-3">·</span>
             </div>
           </div>
         )}
