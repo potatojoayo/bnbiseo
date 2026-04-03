@@ -4,8 +4,9 @@ import "./globals.css";
 
 const notoSerifKr = Noto_Serif_KR({
   variable: "--font-display",
-  subsets: ["latin", "korean"],
+  subsets: ["latin"],
   weight: ["400", "700", "900"],
+  display: "swap",
 });
 
 const sora = Sora({
