@@ -55,6 +55,15 @@ body {
   }
 }
 
+@keyframes fadeOnly {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes blink {
   0%,
   100% {
@@ -74,6 +83,7 @@ body {
   --animate-fade-in-d3: fadeIn 0.8s ease-out 0.9s both;
   --animate-fade-in-d4: fadeIn 0.8s ease-out 1.2s both;
   --animate-fade-in-fast: fadeIn 0.5s ease-out both;
+  --animate-fade-only: fadeOnly 0.4s ease-out both;
   --animate-marquee: marquee 30s linear infinite;
   --animate-blink: blink 1s infinite;
   --animate-blink-2: blink 1s infinite 0.2s;

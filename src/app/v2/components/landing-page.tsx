@@ -17,7 +17,7 @@ const PROBLEMS = [
   },
   {
     icon: "💸",
-    t: "급하면 바가지 쓰게 돼요",
+    t: "급하면 바가지를 쓸 수밖에 없어요",
     d: "체크인 3시간 전에 고장 나면 웃돈 주고 부를 수밖에 없잖아요. 수익이 수리비로 다 새어나가요.",
   },
 ];
@@ -37,23 +37,6 @@ const STEPS = [
     icon: "🔧",
     t: "부품 들고 바로 방문",
     d: "맞는 부품 가지고 한 번에 해결해요. 출장비는 무료, 업계 최저가 보장이에요.",
-  },
-];
-
-const PRICES = [
-  { item: "전구 교체", before: "25,000~50,000", after: "12,000", save: "65" },
-  { item: "수전 교체", before: "35,000~80,000", after: "15,000", save: "60" },
-  {
-    item: "보일러 점검",
-    before: "50,000~100,000",
-    after: "30,000",
-    save: "55",
-  },
-  {
-    item: "잠금장치 수리",
-    before: "40,000~90,000",
-    after: "20,000",
-    save: "60",
   },
 ];
 
@@ -78,7 +61,6 @@ const SEC_DESC =
 const BTN_MAIN = `${FONT_BODY} bg-[#1a1a1a] text-[#F6F4F0] border-none px-9 py-4 rounded-full text-base font-semibold cursor-pointer inline-flex items-center gap-3 transition-all duration-200 hover:bg-[#D4421E] hover:scale-[1.03] group`;
 
 export default function LandingPage() {
-  const [demo, setDemo] = useState("host");
   const [vis, setVis] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -109,7 +91,7 @@ export default function LandingPage() {
         <div className={`${FONT_DISPLAY} text-xl font-black tracking-tighter`}>
           비앤비서
         </div>
-        <button className={BTN_MAIN}>무료 등록</button>
+        <button className={`${FONT_BODY} bg-[#1a1a1a] text-[#F6F4F0] border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-[#D4421E] hover:scale-[1.03]`}>무료 등록</button>
       </nav>
 
       {/* Hero */}
@@ -146,7 +128,7 @@ export default function LandingPage() {
       {/* Marquee */}
       <div className="overflow-hidden border-y border-[#d5d2cc] py-4">
         <div className="animate-marquee flex gap-16 w-max">
-          {[...Array(2)].flatMap((_, k) =>
+          {[...Array(4)].flatMap((_, k) =>
             MARQUEE_ITEMS.map((t, i) => (
               <span
                 key={`${k}-${i}`}
@@ -207,7 +189,7 @@ export default function LandingPage() {
           데이터로 만듭니다
         </h2>
         <p className={SEC_DESC}>
-          전구 규격부터 보일러 모델까지, 한번 기록해 두면 다음부터는 알아서 척척 처리돼요.
+          전구 규격부터 보일러 모델까지, 한번 기록해 두면 다음부터는 알아서 척척 처리해 드려요.
         </p>
 
         {/* Steps */}
@@ -226,35 +208,15 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* Demo Tabs (mobile) */}
-        <div className="hidden max-md:flex rounded-xl overflow-hidden border border-[#d5d2cc] mb-4">
-          {[
-            { k: "host", l: "호스트 수리 접수" },
-            { k: "guest", l: "게스트 QR 가이드" },
-          ].map((t) => (
-            <button
-              key={t.k}
-              onClick={() => setDemo(t.k)}
-              className={`flex-1 py-2.5 border-none cursor-pointer text-xs font-semibold ${FONT_BODY} transition-all duration-200 ${
-                demo === t.k
-                  ? "bg-[#EDEAE4] text-[#1a1a1a]"
-                  : "bg-[#F6F4F0] text-[#8a8a82]"
-              }`}
-            >
-              {t.l}
-            </button>
-          ))}
-        </div>
-
         {/* Demo Grid */}
         <div className="grid grid-cols-2 max-md:grid-cols-1 gap-8 items-start">
-          <div className={demo !== "host" ? "max-md:hidden" : ""}>
+          <div>
             <div className="text-xs font-semibold text-[#8a8a82] tracking-wide uppercase mb-3">
               호스트 수리 접수
             </div>
             <ChatDemo />
           </div>
-          <div className={demo !== "guest" ? "max-md:hidden" : ""}>
+          <div>
             <div className="text-xs font-semibold text-[#8a8a82] tracking-wide uppercase mb-3">
               게스트 QR 가이드
             </div>
@@ -265,57 +227,76 @@ export default function LandingPage() {
 
       <hr className="border-t border-[#d5d2cc] mx-0" />
 
-      {/* Price */}
+      {/* Before & After */}
       <section
-        id="price"
+        id="compare"
         data-a
-        className={`${SECTION} py-24 max-md:py-16 ${v("price")}`}
+        className={`${SECTION} py-24 max-md:py-16 ${v("compare")}`}
       >
-        <div className={BADGE}>Price</div>
+        <div className={BADGE}>Before & After</div>
         <h2 className={SEC_TITLE}>
-          출장비 무료,
-          <br />
-          업계 최저가
+          반나절이 3분으로
         </h2>
         <p className={SEC_DESC}>
-          급할 때 바가지 쓸 걱정 없어요. 부품이랑 공임만 내면 돼요.
+          비앤비서 하나로 호스팅이 이렇게 달라져요.
         </p>
 
-        <div className="grid grid-cols-4 max-md:grid-cols-2 gap-4">
-          {PRICES.map((r, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl p-6 max-md:p-5 border border-[#d5d2cc] text-center transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-            >
-              <div className="text-[#8a8a82] text-xs font-medium mb-4">
-                {r.item}
-              </div>
-              <div className="text-[#8a8a82] text-sm line-through opacity-50 mb-1">
-                {r.before}원
-              </div>
-              <div className="text-[#D4421E] font-bold text-2xl tracking-tight mb-2">
-                {r.after}
-                <span className="text-sm font-normal text-[#8a8a82]">원</span>
-              </div>
-              <div className="inline-block bg-green-50 text-green-600 text-xs font-semibold px-3 py-1 rounded-full">
-                ▼ {r.save}% 절감
-              </div>
+        <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
+          {/* Before */}
+          <div className="bg-white rounded-2xl border border-[#d5d2cc] overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#d5d2cc] flex items-center gap-2">
+              <span className="text-base">😩</span>
+              <span className="text-sm font-bold text-[#8a8a82]">지금</span>
             </div>
-          ))}
-        </div>
+            <div className="p-6 flex flex-col divide-y divide-[#d5d2cc]/50">
+              {[
+                { icon: "🔧", label: "수리 요청", steps: "고장 → 직접 현장 가서 사진 찍고 → 업체 찾고 → 견적 비교하고 → 예약하고 → 또 방문", time: "반나절 이상" },
+                { icon: "💬", label: "게스트 문의", steps: "\"보일러 어떻게 켜요?\" 같은 메시지에 매번 직접 답장, 숙소마다 반복", time: "하루 30분~1시간" },
+                { icon: "📋", label: "시설 관리", steps: "수전 규격? 보일러 모델? 기억에 의존하다 숙소 늘면 뒤죽박죽", time: "체계 없음" },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-3 py-4 first:pt-0 last:pb-0">
+                  <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                  <div>
+                    <div className="text-sm font-bold mb-1">{item.label}</div>
+                    <div className="text-[#8a8a82] text-xs leading-relaxed mb-1.5">{item.steps}</div>
+                    <div className="inline-block bg-red-50 text-red-500 text-xs font-semibold px-2.5 py-0.5 rounded-full">{item.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        <div className="text-center mt-6 text-[#8a8a82] text-xs">
-          * 부품+공임 포함, 출장비 무료
+          {/* After */}
+          <div className="bg-white rounded-2xl overflow-hidden shadow-xl shadow-black/10 border border-[#d5d2cc]">
+            <div className="px-6 py-4 border-b border-[#d5d2cc] flex items-center gap-2">
+              <span className="text-base">✨</span>
+              <span className={`${FONT_DISPLAY} text-sm font-black tracking-tighter`}>비앤비서</span>
+            </div>
+            <div className="p-6 flex flex-col divide-y divide-[#d5d2cc]/30">
+              {[
+                { icon: "🔧", label: "수리 요청", steps: "\"전구 나갔어요\" 한마디면 부품·비용·일정까지 알아서 잡아드려요", time: "3분" },
+                { icon: "💬", label: "게스트 문의", steps: "게스트가 QR 찍으면 AI가 그 숙소에 맞게 바로 답해줘요", time: "0분 (자동)" },
+                { icon: "📋", label: "시설 관리", steps: "모든 시설물이 DB에 기록되어 있어서 언제든 바로 확인할 수 있어요", time: "완전 자동" },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-3 py-4 first:pt-0 last:pb-0">
+                  <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
+                  <div>
+                    <div className="text-sm font-bold mb-1">{item.label}</div>
+                    <div className="text-[#8a8a82] text-xs leading-relaxed mb-1.5">{item.steps}</div>
+                    <div className="inline-block bg-green-50 text-green-600 text-xs font-semibold px-2.5 py-0.5 rounded-full">{item.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
-
-      <hr className="border-t border-[#d5d2cc] mx-0" />
 
       {/* CTA */}
       <section
         id="cta"
         data-a
-        className={`max-w-5xl mx-auto px-12 py-28 text-center max-md:px-6 max-md:py-20 ${v("cta")}`}
+        className={`bg-white px-12 py-28 text-center max-md:px-6 max-md:py-20 ${v("cta")}`}
       >
         <h2
           className={`${FONT_DISPLAY} text-[clamp(32px,5vw,56px)] font-black leading-tight tracking-tighter mb-5`}

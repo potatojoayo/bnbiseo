@@ -55,7 +55,7 @@ export default function ChatDemo() {
         {messages.slice(0, step).map((m, i) => (
           <div
             key={i}
-            className={`flex flex-col animate-fade-up-fast ${
+            className={`flex flex-col animate-fade-only ${
               m.from === "user" ? "items-end" : "items-start"
             }`}
           >
@@ -83,8 +83,8 @@ export default function ChatDemo() {
           </div>
         ))}
         {step > 0 && step < messages.length && (
-          <div className="flex flex-col items-start animate-fade-up-fast">
-            <div className="flex gap-1 text-[10px] text-slate-500 py-2.5 px-4 bg-white/[0.08] rounded-[14px_14px_14px_4px]">
+          <div className={`flex flex-col animate-fade-only ${messages[step].from === "user" ? "items-end" : "items-start"}`}>
+            <div className={`flex gap-1 text-[10px] py-2.5 px-4 ${messages[step].from === "user" ? "bg-blue-600/80 text-white/60 rounded-[14px_14px_4px_14px]" : "text-slate-500 bg-white/[0.08] rounded-[14px_14px_14px_4px]"}`}>
               <span className="animate-blink">●</span>
               <span className="animate-blink-2">●</span>
               <span className="animate-blink-3">●</span>

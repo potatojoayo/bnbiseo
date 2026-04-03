@@ -3,7 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 
 const msgs = [
-  { f: "u" as const, t: "마포 3호점 거실 전구가 나갔어요" },
+  { f: "u" as const, t: "천장 전구 나갔어" },
+  {
+    f: "b" as const,
+    t: "어느 방 전구가 나갔어요?",
+    opts: ["거실", "침실", "화장실"],
+  },
+  { f: "u" as const, t: "거실" },
   {
     f: "b" as const,
     t: "거실 천장 LED 등기구\n삼성 SI-L60R1 확인했습니다.\n\n교체 비용: 12,000원 (부품+공임)\n방문 예약할까요?",
@@ -18,26 +24,60 @@ const msgs = [
 
 export default function ChatDemo() {
   const [step, setStep] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
+  const [typing, setTyping] = useState(false);
+  const [started, setStarted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
+
+  // Start animation when scrolled into view
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started) {
+          setStarted(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, [started]);
+
+  // Step through messages once: message → pause → typing → pause → next message
+  useEffect(() => {
+    if (!started || step >= msgs.length) return;
+
+    // Show typing indicator after a pause
+    const typingDelay = setTimeout(() => {
+      setTyping(true);
+    }, step === 0 ? 600 : 800);
+
+    // Then show the actual message
+    const msgDelay = setTimeout(
+      () => {
+        setTyping(false);
+        setStep((s) => s + 1);
+      },
+      step === 0 ? 1600 : 2400
+    );
+
+    return () => {
+      clearTimeout(typingDelay);
+      clearTimeout(msgDelay);
+    };
+  }, [step, started]);
 
   useEffect(() => {
-    if (step < msgs.length) {
-      const t = setTimeout(
-        () => setStep((s) => s + 1),
-        step === 0 ? 1500 : 3000
-      );
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => setStep(0), 6000);
-    return () => clearTimeout(t);
-  }, [step]);
-
-  useEffect(() => {
-    if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
-  }, [step]);
+    if (chatRef.current)
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [step, typing]);
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-[#d5d2cc]">
+    <div
+      ref={containerRef}
+      className="bg-white rounded-2xl overflow-hidden shadow-lg border border-[#d5d2cc]"
+    >
       <div className="px-4 py-3 border-b border-[#d5d2cc] flex items-center gap-2">
         <div className="w-2 h-2 rounded-full bg-green-500" />
         <span className="text-[#1a1a1a] text-xs font-medium font-[var(--font-body)]">
@@ -45,13 +85,13 @@ export default function ChatDemo() {
         </span>
       </div>
       <div
-        ref={ref}
+        ref={chatRef}
         className="p-4 h-72 overflow-y-auto flex flex-col gap-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {msgs.slice(0, step).map((m, i) => (
           <div
             key={i}
-            className={`flex flex-col animate-fade-in-fast ${
+            className={`flex flex-col animate-fade-only ${
               m.f === "u" ? "items-end" : "items-start"
             }`}
           >
@@ -78,9 +118,17 @@ export default function ChatDemo() {
             )}
           </div>
         ))}
-        {step > 0 && step < msgs.length && (
-          <div className="flex flex-col items-start">
-            <div className="bg-[#EDEAE4] rounded-xl px-4 py-2.5 flex gap-1 text-xs text-[#8a8a82]">
+        {typing && step < msgs.length && (
+          <div
+            className={`flex flex-col animate-fade-only ${msgs[step].f === "u" ? "items-end" : "items-start"}`}
+          >
+            <div
+              className={`rounded-xl px-4 py-2.5 flex gap-1 text-xs ${
+                msgs[step].f === "u"
+                  ? "bg-[#D4421E]/80 text-white/60"
+                  : "bg-[#EDEAE4] text-[#8a8a82]"
+              }`}
+            >
               <span className="animate-blink">·</span>
               <span className="animate-blink-2">·</span>
               <span className="animate-blink-3">·</span>

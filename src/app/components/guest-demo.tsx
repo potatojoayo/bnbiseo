@@ -13,12 +13,12 @@ export default function GuestDemo() {
         </div>
       </div>
       <div className="flex flex-col gap-2 p-3.5 min-h-[200px]">
-        <div className="flex flex-col items-end animate-fade-up-fast">
+        <div className="flex flex-col items-end animate-fade-only">
           <div className="py-2.5 px-3.5 text-[13px] leading-relaxed whitespace-pre-line text-white max-w-[85%] bg-emerald-600 rounded-[14px_14px_4px_14px]">
             뜨거운 물이 안 나와요
           </div>
         </div>
-        <div className="flex flex-col items-start animate-fade-up-fast">
+        <div className="flex flex-col items-start animate-fade-only">
           <div className="py-2.5 px-3.5 text-[13px] leading-relaxed whitespace-pre-line text-white max-w-[85%] bg-white/[0.08] rounded-[14px_14px_14px_4px]">
             부엌 창가쪽 벽면 보일러
             {"\n"}(경동나비엔 NCB354)를 켜주세요.
