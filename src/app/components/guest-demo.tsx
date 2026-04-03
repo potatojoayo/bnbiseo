@@ -9,7 +9,7 @@ export default function GuestDemo() {
           숙소 가이드
         </span>
       </div>
-      <div className="p-4 flex flex-col gap-2 min-h-[180px]">
+      <div className="p-4 flex flex-col gap-2 h-96">
         <div className="flex flex-col items-end">
           <div className="px-3.5 py-2.5 text-sm leading-relaxed text-white max-w-[85%] bg-emerald-600 rounded-t-xl rounded-bl-xl rounded-br-sm font-[var(--font-body)]">
             뜨거운 물이 안 나와요

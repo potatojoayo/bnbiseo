@@ -155,7 +155,7 @@ export default function LandingPage() {
           문제는 곱절이 됩니다
         </h2>
         <p className={SEC_DESC}>
-          현장 방문, 견적 비교, 긴급 수리 — 이게 매주 반복되면 지치잖아요.
+          현장 방문, 견적 비교, 긴급 수리 <br className='sm:hidden'/> — 이게 매주 반복되면 지치잖아요.
         </p>
 
         <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4">
@@ -189,7 +189,7 @@ export default function LandingPage() {
           데이터로 만듭니다
         </h2>
         <p className={SEC_DESC}>
-          전구 규격부터 보일러 모델까지, 한번 기록해 두면 다음부터는 알아서 척척 처리해 드려요.
+          전구 규격부터 보일러 모델까지,<br className='sm:hidden'/> 한번 기록해 두면 다음부터는 알아서 척척 처리해 드려요.
         </p>
 
         {/* Steps */}
@@ -305,7 +305,7 @@ export default function LandingPage() {
           <br />
           호스팅을 시작하세요
         </h2>
-        <p className="text-[#8a8a82] text-base mb-10">
+        <p className="text-[#8a8a82] text-sm sm:text-base mb-10">
           등록비 무료 · 서울 전 지역 · 지금 바로 시작할 수 있어요
         </p>
         <button className={`${BTN_MAIN} mx-auto`}>

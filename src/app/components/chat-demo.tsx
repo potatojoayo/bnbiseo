@@ -86,7 +86,7 @@ export default function ChatDemo() {
       </div>
       <div
         ref={chatRef}
-        className="p-4 h-72 overflow-y-auto flex flex-col gap-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="p-4 h-96 overflow-y-auto flex flex-col gap-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {msgs.slice(0, step).map((m, i) => (
           <div
