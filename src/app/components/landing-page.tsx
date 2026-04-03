@@ -55,7 +55,7 @@ const FONT_DISPLAY = "font-heading";
 const FONT_BODY = "font-text";
 const SECTION = "max-w-5xl mx-auto px-12 max-md:px-6";
 const BADGE = "text-[#D4421E] text-xs font-bold tracking-widest uppercase mb-5";
-const SEC_TITLE = `${FONT_DISPLAY} text-[clamp(28px,4vw,44px)] font-black leading-tight tracking-tight mb-4`;
+const SEC_TITLE = `${FONT_DISPLAY} text-[clamp(28px,4vw,44px)] font-medium leading-tight tracking-tight mb-4`;
 const SEC_DESC =
   "text-[#8a8a82] text-sm leading-relaxed max-w-xl mb-12";
 const BTN_MAIN = `${FONT_BODY} bg-[#1a1a1a] text-[#F6F4F0] border-none px-9 py-4 rounded-full text-base font-semibold cursor-pointer inline-flex items-center gap-3 transition-all duration-200 hover:bg-[#D4421E] hover:scale-[1.03] group`;
@@ -84,11 +84,11 @@ export default function LandingPage() {
 
   return (
     <div
-      className={`min-h-screen bg-[#F6F4F0] text-[#1a1a1a] ${FONT_BODY} antialiased overflow-x-hidden`}
+      className={`min-h-screen bg-[#F6F4F0] text-[#1a1a1a] ${FONT_BODY} antialiased`}
     >
       {/* Nav */}
-      <nav className="bg-[rgba(246,244,240,0.9)] backdrop-blur-[12px] sticky top-0 z-50 px-12 py-5 flex justify-between items-center border-b border-[#d5d2cc] max-md:px-6 max-md:py-4">
-        <div className={`${FONT_DISPLAY} text-xl font-black tracking-tighter`}>
+      <nav className="bg-[rgba(246,244,240,0.7)] backdrop-blur-[8px] sticky top-0 z-50 px-12 py-3 flex justify-between items-center border-b border-[#d5d2cc] max-md:px-6 max-md:py-2.5">
+        <div className={`${FONT_DISPLAY} text-xl font-medium tracking-tighter`}>
           비앤비서
         </div>
         <button className={`${FONT_BODY} bg-[#1a1a1a] text-[#F6F4F0] border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-[#D4421E] hover:scale-[1.03]`}>무료 등록</button>
@@ -97,7 +97,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-12 pt-24 pb-20 max-md:px-6 max-md:pt-16 max-md:pb-14">
         <h1
-          className={`${FONT_DISPLAY} font-black tracking-tighter mb-7`}
+          className={`${FONT_DISPLAY} font-medium tracking-tighter mb-7`}
         >
           <span className="block text-[clamp(28px,4vw,48px)] max-md:text-[26px] leading-tight animate-fade-in-d1">
             에어비앤비,
@@ -270,7 +270,7 @@ export default function LandingPage() {
           <div className="bg-white rounded-2xl overflow-hidden shadow-xl shadow-black/10 border border-[#d5d2cc]">
             <div className="px-6 py-4 border-b border-[#d5d2cc] flex items-center gap-2">
               <span className="text-base">✨</span>
-              <span className={`${FONT_DISPLAY} text-sm font-black tracking-tighter`}>비앤비서</span>
+              <span className={`${FONT_DISPLAY} text-sm font-medium tracking-tighter`}>비앤비서</span>
             </div>
             <div className="p-6 flex flex-col divide-y divide-[#d5d2cc]/30">
               {[
@@ -299,7 +299,7 @@ export default function LandingPage() {
         className={`bg-white px-12 py-28 text-center max-md:px-6 max-md:py-20 ${v("cta")}`}
       >
         <h2
-          className={`${FONT_DISPLAY} text-[clamp(32px,5vw,56px)] font-black leading-tight tracking-tighter mb-5`}
+          className={`${FONT_DISPLAY} text-[clamp(32px,5vw,56px)] font-medium leading-tight tracking-tighter mb-5`}
         >
           수리 걱정 없는
           <br />
