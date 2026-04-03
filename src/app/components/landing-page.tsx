@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Marquee from "react-fast-marquee";
 import ChatDemo from "./chat-demo";
 import GuestDemo from "./guest-demo";
 
@@ -126,20 +127,18 @@ export default function LandingPage() {
       </section>
 
       {/* Marquee */}
-      <div className="overflow-hidden border-y border-[#d5d2cc] py-4">
-        <div className="animate-marquee flex gap-16 w-max">
-          {[...Array(4)].flatMap((_, k) =>
-            MARQUEE_ITEMS.map((t, i) => (
-              <span
-                key={`${k}-${i}`}
-                className={`${FONT_DISPLAY} text-sm text-[#8a8a82] whitespace-nowrap flex items-center gap-3`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#D4421E] opacity-50" />
-                {t}
-              </span>
-            ))
-          )}
-        </div>
+      <div className="border-y border-[#d5d2cc] py-4">
+        <Marquee speed={64} gradient={false} autoFill>
+          {MARQUEE_ITEMS.map((t, i) => (
+            <span
+              key={i}
+              className={`${FONT_DISPLAY} text-sm text-[#8a8a82] whitespace-nowrap flex items-center gap-3 mx-8`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4421E] opacity-50" />
+              {t}
+            </span>
+          ))}
+        </Marquee>
       </div>
 
       {/* Problem */}
