@@ -24,11 +24,11 @@ export default function ChatDemo() {
     if (step < messages.length) {
       const t = setTimeout(
         () => setStep((s) => s + 1),
-        step === 0 ? 1200 : 2400
+        step === 0 ? 1500 : 3000
       );
       return () => clearTimeout(t);
     }
-    const reset = setTimeout(() => setStep(0), 5000);
+    const reset = setTimeout(() => setStep(0), 6000);
     return () => clearTimeout(reset);
   }, [step]);
 
@@ -55,7 +55,7 @@ export default function ChatDemo() {
         {messages.slice(0, step).map((m, i) => (
           <div
             key={i}
-            className={`flex flex-col animate-[fadeUp_0.3s_ease_both] ${
+            className={`flex flex-col animate-fade-up-fast ${
               m.from === "user" ? "items-end" : "items-start"
             }`}
           >
@@ -83,11 +83,11 @@ export default function ChatDemo() {
           </div>
         ))}
         {step > 0 && step < messages.length && (
-          <div className="flex flex-col items-start animate-[fadeUp_0.3s_ease_both]">
+          <div className="flex flex-col items-start animate-fade-up-fast">
             <div className="flex gap-1 text-[10px] text-slate-500 py-2.5 px-4 bg-white/[0.08] rounded-[14px_14px_14px_4px]">
-              <span className="animate-[blink_1s_infinite_0s]">●</span>
-              <span className="animate-[blink_1s_infinite_0.2s]">●</span>
-              <span className="animate-[blink_1s_infinite_0.4s]">●</span>
+              <span className="animate-blink">●</span>
+              <span className="animate-blink-2">●</span>
+              <span className="animate-blink-3">●</span>
             </div>
           </div>
         )}

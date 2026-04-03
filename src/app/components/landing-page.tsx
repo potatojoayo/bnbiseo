@@ -108,7 +108,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="pt-20 pb-16 md:pt-28 md:pb-20 px-9 md:px-8 text-center relative">
         <div className="absolute -top-[60px] left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.1)_0%,transparent_70%)] pointer-events-none" />
-        <div className="relative animate-[fadeUp_0.8s_ease_both]">
+        <div className="relative animate-fade-up">
           <h1 className="text-[clamp(26px,7vw,36px)] md:text-[clamp(28px,6vw,48px)] font-extrabold text-white leading-[1.3] tracking-[-0.03em] mb-3 md:mb-3.5">
             부업인데 왜
             <br />
