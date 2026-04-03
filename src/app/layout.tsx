@@ -1,12 +1,31 @@
 import type { Metadata } from "next";
-import { Noto_Sans_KR } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const notoSansKr = Noto_Sans_KR({
+const sbAggro = localFont({
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "900"],
   display: "swap",
+  src: [
+    { path: "../../public/fonts/SBAggroOTF-Light.otf", weight: "300" },
+    { path: "../../public/fonts/SBAggroOTF-Medium.otf", weight: "500" },
+    { path: "../../public/fonts/SBAggroOTF-Bold.otf", weight: "700" },
+  ],
+});
+
+const paperlogy = localFont({
+  variable: "--font-body",
+  display: "swap",
+  src: [
+    { path: "../../public/fonts/Paperlogy-1Thin.ttf", weight: "100" },
+    { path: "../../public/fonts/Paperlogy-2ExtraLight.ttf", weight: "200" },
+    { path: "../../public/fonts/Paperlogy-3Light.ttf", weight: "300" },
+    { path: "../../public/fonts/Paperlogy-4Regular.ttf", weight: "400" },
+    { path: "../../public/fonts/Paperlogy-5Medium.ttf", weight: "500" },
+    { path: "../../public/fonts/Paperlogy-6SemiBold.ttf", weight: "600" },
+    { path: "../../public/fonts/Paperlogy-7Bold.ttf", weight: "700" },
+    { path: "../../public/fonts/Paperlogy-8ExtraBold.ttf", weight: "800" },
+    { path: "../../public/fonts/Paperlogy-9Black.ttf", weight: "900" },
+  ],
 });
 
 
@@ -24,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${notoSansKr.variable} h-full antialiased`}
+      className={`${sbAggro.variable} ${paperlogy.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

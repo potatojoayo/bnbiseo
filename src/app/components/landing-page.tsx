@@ -99,13 +99,13 @@ export default function LandingPage() {
         <h1
           className={`${FONT_DISPLAY} font-black tracking-tighter mb-7`}
         >
-          <span className="block text-[clamp(28px,4vw,48px)] max-md:text-[28px] leading-tight animate-fade-in-d1">
+          <span className="block text-[clamp(28px,4vw,48px)] max-md:text-[26px] leading-tight animate-fade-in-d1">
             에어비앤비,
           </span>
-          <span className="block text-[clamp(36px,5.5vw,64px)] max-md:text-[36px] leading-tight animate-fade-in-d2">
+          <span className="block text-[clamp(36px,5.5vw,64px)] max-md:text-[34px] leading-tight animate-fade-in-d2">
             부업인데 왜
           </span>
-          <span className="block text-[clamp(44px,7vw,80px)] max-md:text-[44px] leading-tight animate-fade-in-d3">
+          <span className="block text-[clamp(44px,7vw,80px)] max-md:text-[38px] leading-tight animate-fade-in-d3">
             <span className="text-[#D4421E]">본업</span>처럼 하시나요?
           </span>
         </h1>
@@ -165,8 +165,8 @@ export default function LandingPage() {
               className="bg-[#EDEAE4] rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
             >
               <div className="text-3xl mb-4">{p.icon}</div>
-              <div className="text-base font-bold mb-2">{p.t}</div>
-              <div className="text-[#8a8a82] text-xs leading-relaxed">
+              <div className="text-[17px] font-bold mb-2">{p.t}</div>
+              <div className="text-[#8a8a82] text-sm leading-relaxed">
                 {p.d}
               </div>
             </div>
@@ -200,8 +200,8 @@ export default function LandingPage() {
               className="bg-[#EDEAE4] rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
             >
               <div className="text-3xl mb-4">{s.icon}</div>
-              <div className="text-base font-bold mb-2">{s.t}</div>
-              <div className="text-[#8a8a82] text-xs leading-relaxed">
+              <div className="text-[17px] font-bold mb-2">{s.t}</div>
+              <div className="text-[#8a8a82] text-sm leading-relaxed">
                 {s.d}
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function LandingPage() {
                   <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
                   <div>
                     <div className="text-sm font-bold mb-1">{item.label}</div>
-                    <div className="text-[#8a8a82] text-xs leading-relaxed mb-1.5">{item.steps}</div>
+                    <div className="text-[#8a8a82] text-sm leading-relaxed mb-1.5">{item.steps}</div>
                     <div className="inline-block bg-red-50 text-red-500 text-xs font-semibold px-2.5 py-0.5 rounded-full">{item.time}</div>
                   </div>
                 </div>
@@ -282,7 +282,7 @@ export default function LandingPage() {
                   <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
                   <div>
                     <div className="text-sm font-bold mb-1">{item.label}</div>
-                    <div className="text-[#8a8a82] text-xs leading-relaxed mb-1.5">{item.steps}</div>
+                    <div className="text-[#8a8a82] text-sm leading-relaxed mb-1.5">{item.steps}</div>
                     <div className="inline-block bg-green-50 text-green-600 text-xs font-semibold px-2.5 py-0.5 rounded-full">{item.time}</div>
                   </div>
                 </div>
