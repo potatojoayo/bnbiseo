@@ -80,7 +80,7 @@ export function FixtureForm({
       {/* Category */}
       <div className="space-y-1.5">
         <Label>
-          카테고리 <span className="text-[#D4421E]">*</span>
+          카테고리 <span className="text-brand">*</span>
         </Label>
         <Select name="category" defaultValue={defaultValues?.category ?? 'other'}>
           <SelectTrigger>
@@ -100,14 +100,14 @@ export function FixtureForm({
           </SelectContent>
         </Select>
         {state?.errors?.category && (
-          <p className="text-xs text-[#D4421E]">{state.errors.category[0]}</p>
+          <p className="text-xs text-brand">{state.errors.category[0]}</p>
         )}
       </div>
 
       {/* Name */}
       <div className="space-y-1.5">
         <Label htmlFor="name">
-          시설물 이름 <span className="text-[#D4421E]">*</span>
+          시설물 이름 <span className="text-brand">*</span>
         </Label>
         <Input
           id="name"
@@ -116,14 +116,14 @@ export function FixtureForm({
           defaultValue={defaultValues?.name ?? ''}
         />
         {state?.errors?.name && (
-          <p className="text-xs text-[#D4421E]">{state.errors.name[0]}</p>
+          <p className="text-xs text-brand">{state.errors.name[0]}</p>
         )}
       </div>
 
       {/* Location */}
       <div className="space-y-1.5">
         <Label htmlFor="location">
-          위치 <span className="text-[#D4421E]">*</span>
+          위치 <span className="text-brand">*</span>
         </Label>
         <Input
           id="location"
@@ -132,7 +132,7 @@ export function FixtureForm({
           defaultValue={defaultValues?.location ?? ''}
         />
         {state?.errors?.location && (
-          <p className="text-xs text-[#D4421E]">{state.errors.location[0]}</p>
+          <p className="text-xs text-brand">{state.errors.location[0]}</p>
         )}
       </div>
 

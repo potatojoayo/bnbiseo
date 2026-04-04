@@ -28,8 +28,8 @@ export function SidebarNavLink({
       className={cn(
         'flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors',
         isActive
-          ? 'bg-[#FFF0EC] text-[#D4421E] font-medium'
-          : 'text-[#4b5563] hover:bg-[#F6F4F0] hover:text-[#1a1a1a]',
+          ? 'bg-brand/6 text-brand font-medium'
+          : 'text-[#4b5563] hover:bg-surface hover:text-on-surface',
         className,
       )}
     >

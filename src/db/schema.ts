@@ -79,6 +79,7 @@ export const profiles = pgTable('profiles', {
   fullName: text('full_name'),
   phone: text('phone'),
   avatarUrl: text('avatar_url'),
+  onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
@@ -88,6 +89,7 @@ export const properties = pgTable('properties', {
   hostId: uuid('host_id')
     .notNull()
     .references(() => profiles.id, { onDelete: 'cascade' }),
+  airbnbListingId: text('airbnb_listing_id'),
   name: text('name').notNull(),
   address: text('address').notNull(),
   addressDetail: text('address_detail'),

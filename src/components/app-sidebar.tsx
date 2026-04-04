@@ -72,7 +72,7 @@ export function AppSidebar({ user, userProperties, ...props }: AppSidebarProps) 
               <Link href="/dashboard">
                 <span
                   className="text-lg font-bold"
-                  style={{ color: '#D4421E', fontFamily: 'var(--font-display, var(--font-sans))' }}
+                  style={{ color: 'var(--brand)', fontFamily: 'var(--font-display, var(--font-sans))' }}
                 >
                   비엔비서
                 </span>

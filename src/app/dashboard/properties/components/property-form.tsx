@@ -64,7 +64,7 @@ export function PropertyForm({ action, defaultValues, submitLabel = '저장' }: 
       {/* Name */}
       <div className="space-y-1.5">
         <Label htmlFor="name">
-          숙소 이름 <span className="text-[#D4421E]">*</span>
+          숙소 이름 <span className="text-brand">*</span>
         </Label>
         <Input
           id="name"
@@ -73,14 +73,14 @@ export function PropertyForm({ action, defaultValues, submitLabel = '저장' }: 
           defaultValue={defaultValues?.name ?? ''}
         />
         {state?.errors?.name && (
-          <p className="text-xs text-[#D4421E]">{state.errors.name[0]}</p>
+          <p className="text-xs text-brand">{state.errors.name[0]}</p>
         )}
       </div>
 
       {/* Property Type */}
       <div className="space-y-1.5">
         <Label>
-          숙소 유형 <span className="text-[#D4421E]">*</span>
+          숙소 유형 <span className="text-brand">*</span>
         </Label>
         <Select name="propertyType" defaultValue={defaultValues?.propertyType ?? 'apartment'}>
           <SelectTrigger>
@@ -95,14 +95,14 @@ export function PropertyForm({ action, defaultValues, submitLabel = '저장' }: 
           </SelectContent>
         </Select>
         {state?.errors?.propertyType && (
-          <p className="text-xs text-[#D4421E]">{state.errors.propertyType[0]}</p>
+          <p className="text-xs text-brand">{state.errors.propertyType[0]}</p>
         )}
       </div>
 
       {/* Address */}
       <div className="space-y-1.5">
         <Label htmlFor="address">
-          주소 <span className="text-[#D4421E]">*</span>
+          주소 <span className="text-brand">*</span>
         </Label>
         <Input
           id="address"
@@ -111,7 +111,7 @@ export function PropertyForm({ action, defaultValues, submitLabel = '저장' }: 
           defaultValue={defaultValues?.address ?? ''}
         />
         {state?.errors?.address && (
-          <p className="text-xs text-[#D4421E]">{state.errors.address[0]}</p>
+          <p className="text-xs text-brand">{state.errors.address[0]}</p>
         )}
       </div>
 

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useActionState } from 'react'
 import { useOnboarding } from './onboarding-context'
+import Link from 'next/link'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -18,15 +18,23 @@ import {
 import {
   Building2Icon,
   CheckIcon,
-  ExternalLinkIcon,
+  ArrowLeftIcon,
   Loader2Icon,
-  PenLineIcon,
-  WifiIcon,
+  PencilIcon,
 } from 'lucide-react'
-import DaumPostcodeEmbed from 'react-daum-postcode'
+import { AddressSearch } from '@/components/address-search'
+
+function AirbnbIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 93.3 100" fill="currentColor" className={className}>
+      <path d="M91.5,71c-0.5-1.2-1-2.5-1.5-3.6c-0.8-1.8-1.6-3.5-2.3-5.1l-0.1-0.1c-6.9-15-14.3-30.2-22.1-45.2l-0.3-0.6c-0.8-1.5-1.6-3.1-2.4-4.7c-1-1.8-2-3.7-3.6-5.5C56,2.2,51.4,0,46.5,0c-5,0-9.5,2.2-12.8,6c-1.5,1.8-2.6,3.7-3.6,5.5c-0.8,1.6-1.6,3.2-2.4,4.7l-0.3,0.6C19.7,31.8,12.2,47,5.3,62l-0.1,0.2c-0.7,1.6-1.5,3.3-2.3,5.1c-0.5,1.1-1,2.3-1.5,3.6c-1.3,3.7-1.7,7.2-1.2,10.8c1.1,7.5,6.1,13.8,13,16.6c2.6,1.1,5.3,1.6,8.1,1.6c0.8,0,1.8-0.1,2.6-0.2c3.3-0.4,6.7-1.5,10-3.4c4.1-2.3,8-5.6,12.4-10.4c4.4,4.8,8.4,8.1,12.4,10.4c3.3,1.9,6.7,3,10,3.4c0.8,0.1,1.8,0.2,2.6,0.2c2.8,0,5.6-0.5,8.1-1.6c7-2.8,11.9-9.2,13-16.6C93.2,78.2,92.8,74.7,91.5,71z M46.4,76.2c-5.4-6.8-8.9-13.2-10.1-18.6c-0.5-2.3-0.6-4.3-0.3-6.1c0.2-1.6,0.8-3,1.6-4.2c1.9-2.7,5.1-4.4,8.8-4.4c3.7,0,7,1.6,8.8,4.4c0.8,1.2,1.4,2.6,1.6,4.2c0.3,1.8,0.2,3.9-0.3,6.1C55.3,62.9,51.8,69.3,46.4,76.2z M86.3,80.9c-0.7,5.2-4.2,9.7-9.1,11.7c-2.4,1-5,1.3-7.6,1c-2.5-0.3-5-1.1-7.6-2.6c-3.6-2-7.2-5.1-11.4-9.7c6.6-8.1,10.6-15.5,12.1-22.1c0.7-3.1,0.8-5.9,0.5-8.5c-0.4-2.5-1.3-4.8-2.7-6.8c-3.1-4.5-8.3-7.1-14.1-7.1s-11,2.7-14.1,7.1c-1.4,2-2.3,4.3-2.7,6.8c-0.4,2.6-0.3,5.5,0.5,8.5c1.5,6.6,5.6,14.1,12.1,22.2c-4.1,4.6-7.8,7.7-11.4,9.7c-2.6,1.5-5.1,2.3-7.6,2.6c-2.7,0.3-5.3-0.1-7.6-1c-4.9-2-8.4-6.5-9.1-11.7c-0.3-2.5-0.1-5,0.9-7.8c0.3-1,0.8-2,1.3-3.2c0.7-1.6,1.5-3.3,2.3-5l0.1-0.2c6.9-14.9,14.3-30.1,22-44.9l0.3-0.6c0.8-1.5,1.6-3.1,2.4-4.6c0.8-1.6,1.7-3.1,2.8-4.4c2.1-2.4,4.9-3.7,8-3.7c3.1,0,5.9,1.3,8,3.7c1.1,1.3,2,2.8,2.8,4.4c0.8,1.5,1.6,3.1,2.4,4.6l0.3,0.6C67.7,34.8,75.1,50,82,64.9L82,65c0.8,1.6,1.5,3.4,2.3,5c0.5,1.2,1,2.2,1.3,3.2C86.4,75.8,86.7,78.3,86.3,80.9z" />
+    </svg>
+  )
+}
 import { fetchAirbnbListing } from '@/actions/airroi'
+import { extractListingId } from '@/lib/airbnb-scraper'
 import { createProperty } from '@/actions/properties'
-import type { AirroiListingDetail } from '@/lib/airroi'
+import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
 import type { PropertyFormState } from '@/actions/properties'
 
 // ─── Shared Components ───────────────────────────────────────────────────────
@@ -39,7 +47,7 @@ function SectionCard({
   className?: string
 }) {
   return (
-    <div className={cn('rounded-2xl border border-[#E8E3DC] bg-white p-5 sm:p-6', className)}>
+    <div className={cn('rounded-2xl border border-outline bg-white p-5 sm:p-6', className)}>
       {children}
     </div>
   )
@@ -62,14 +70,14 @@ function Field({
     <div className="flex flex-col gap-1.5">
       <Label
         htmlFor={id}
-        className="text-xs font-semibold tracking-wide uppercase text-[#6b6b63]"
+        className="text-xs font-semibold tracking-wide uppercase text-on-surface-muted"
       >
         {label}
-        {required && <span className="text-[#D4421E] ml-0.5">*</span>}
+        {required && <span className="text-brand ml-0.5">*</span>}
       </Label>
       {children}
       {error && (
-        <p className="text-xs text-[#D4421E] flex items-center gap-1 mt-0.5">{error}</p>
+        <p className="text-xs text-brand flex items-center gap-1 mt-0.5">{error}</p>
       )}
     </div>
   )
@@ -92,11 +100,11 @@ function PrimaryButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex items-center justify-center gap-2.5 h-11 rounded-xl text-sm font-semibold text-white transition-all',
+        'flex-1 flex items-center justify-center gap-2.5 h-11 rounded-xl text-sm font-semibold text-white transition-all',
         'disabled:opacity-60 disabled:cursor-not-allowed',
         'hover:opacity-90 active:scale-[0.99]',
       )}
-      style={{ backgroundColor: '#D4421E', boxShadow: '0 2px 12px rgba(212,66,30,0.25)' }}
+      style={{ backgroundColor: 'var(--brand)', boxShadow: '0 2px 12px rgba(212,66,30,0.25)' }}
     >
       {children}
     </button>
@@ -118,8 +126,8 @@ function SecondaryButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex items-center justify-center h-11 px-5 rounded-xl text-sm font-medium text-[#1a1a1a] border border-[#E8E3DC] bg-white transition-all',
-        'hover:bg-[#F6F4F0] active:scale-[0.99]',
+        'flex items-center justify-center h-11 px-5 rounded-xl text-sm font-medium text-on-surface border border-outline bg-white transition-all',
+        'hover:border-on-surface/25 active:scale-[0.99]',
         'disabled:opacity-50 disabled:cursor-not-allowed',
       )}
     >
@@ -130,38 +138,40 @@ function SecondaryButton({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function extractListingId(input: string): number | null {
-  // Handle full URL: https://www.airbnb.com/rooms/12345678 or airbnb.com/rooms/12345678?...
-  const urlMatch = input.match(/airbnb\.[a-z.]+\/rooms\/(\d+)/)
-  if (urlMatch) return Number(urlMatch[1])
-
-  // Handle just a number
-  const numMatch = input.trim().match(/^(\d+)$/)
-  if (numMatch) return Number(numMatch[1])
-
-  return null
-}
-
 // ─── Step 1: Airbnb registered? ──────────────────────────────────────────────
 
 function Step1({
+  backHref,
   onYes,
   onNo,
+  onBack,
 }: {
+  backHref?: string
   onYes: () => void
   onNo: () => void
+  onBack?: () => void
 }) {
   return (
     <div className="flex flex-col gap-8 animate-fade-in-fast">
+      {backHref && (
+        <Link
+          href={backHref}
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 text-sm text-on-surface-subtle hover:text-on-surface transition-colors"
+        >
+          <ArrowLeftIcon className="size-4" />
+          돌아가기
+        </Link>
+      )}
       <div>
         <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1a1a1a] leading-tight"
+          className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           에어비앤비에 등록된
           <br />숙소인가요?
         </h2>
-        <p className="text-sm text-[#8a8a82] mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+        <p className="text-sm text-on-surface-subtle mt-2" style={{ fontFamily: 'var(--font-body)' }}>
           등록된 숙소라면 정보를 자동으로 가져올 수 있어요.
         </p>
       </div>
@@ -170,35 +180,35 @@ function Step1({
         <button
           onClick={onYes}
           className={cn(
-            'flex items-center gap-4 p-5 rounded-2xl border border-[#E8E3DC] bg-white text-left transition-all',
-            'hover:border-[#D4421E]/40 hover:shadow-md',
+            'flex items-center gap-4 p-5 rounded-2xl border border-outline bg-white text-left transition-all',
+            'hover:border-brand/40 hover:shadow-md',
           )}
         >
           <div
             className="size-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: 'rgba(212,66,30,0.1)' }}
           >
-            <ExternalLinkIcon className="size-5 text-[#D4421E]" />
+            <AirbnbIcon className="size-5 text-brand-airbnb" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#1a1a1a]">네, 에어비앤비에 등록되어 있어요</p>
-            <p className="text-xs text-[#8a8a82] mt-0.5">숙소 링크를 입력하면 사진과 정보를 자동으로 채워드려요</p>
+            <p className="text-sm font-semibold text-on-surface">네, 에어비앤비에 등록되어 있어요</p>
+            <p className="text-xs text-on-surface-subtle mt-0.5">숙소 링크를 입력하면 사진과 정보를 자동으로 채워드려요</p>
           </div>
         </button>
 
         <button
           onClick={onNo}
           className={cn(
-            'flex items-center gap-4 p-5 rounded-2xl border border-[#E8E3DC] bg-white text-left transition-all',
-            'hover:border-[#8a8a82]/40 hover:shadow-md',
+            'flex items-center gap-4 p-5 rounded-2xl border border-outline bg-white text-left transition-all',
+            'hover:border-on-surface-subtle/40 hover:shadow-md',
           )}
         >
-          <div className="size-10 rounded-xl flex items-center justify-center shrink-0 bg-[#F6F4F0]">
-            <PenLineIcon className="size-5 text-[#8a8a82]" />
+          <div className="size-10 rounded-xl flex items-center justify-center shrink-0 bg-surface">
+            <PencilIcon className="size-5 text-on-surface-subtle" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#1a1a1a]">아니오, 직접 입력할게요</p>
-            <p className="text-xs text-[#8a8a82] mt-0.5">주소와 숙소 정보를 직접 입력해서 등록합니다</p>
+            <p className="text-sm font-semibold text-on-surface">아니오, 직접 입력할게요</p>
+            <p className="text-xs text-on-surface-subtle mt-0.5">주소와 숙소 정보를 직접 입력해서 등록합니다</p>
           </div>
         </button>
       </div>
@@ -209,13 +219,17 @@ function Step1({
 // ─── Step 2A: Airbnb URL input ───────────────────────────────────────────────
 
 function StepAirbnbUrl({
+  initialUrl,
+  onUrlChange,
   onFetched,
   onBack,
 }: {
-  onFetched: (detail: AirroiListingDetail) => void
+  initialUrl: string
+  onUrlChange: (url: string) => void
+  onFetched: (detail: AirbnbListingInfo) => void
   onBack: () => void
 }) {
-  const [url, setUrl] = useState('')
+  const [url, setUrl] = useState(initialUrl)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
@@ -240,13 +254,13 @@ function StepAirbnbUrl({
     <div className="flex flex-col gap-6 animate-fade-in-fast">
       <div>
         <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1a1a1a] leading-tight"
+          className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           에어비앤비 링크를
           <br />입력해주세요
         </h2>
-        <p className="text-sm text-[#8a8a82] mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+        <p className="text-sm text-on-surface-subtle mt-2" style={{ fontFamily: 'var(--font-body)' }}>
           에어비앤비 앱 또는 웹에서 숙소 링크를 복사해서 붙여넣어주세요.
         </p>
       </div>
@@ -255,40 +269,40 @@ function StepAirbnbUrl({
         <Field id="airbnb-url" label="에어비앤비 숙소 링크" required>
           <Input
             id="airbnb-url"
+            type="text"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => { setUrl(e.target.value); onUrlChange(e.target.value) }}
             placeholder="https://www.airbnb.com/rooms/12345678"
             className="h-10 text-sm"
+            autoComplete="off"
           />
         </Field>
-        <p className="text-xs text-[#8a8a82] mt-2">
+        <p className="text-xs text-on-surface-subtle mt-2">
           에어비앤비 앱 → 숙소 → 공유 → 링크 복사
         </p>
       </SectionCard>
 
       {error && (
-        <div className="flex items-center gap-2 text-sm text-[#D4421E] bg-[#D4421E]/8 border border-[#D4421E]/20 px-4 py-3 rounded-xl">
+        <div className="flex items-center gap-2 text-sm text-brand bg-brand/8 border border-brand/20 px-4 py-3 rounded-xl">
           <span>!</span>
           {error}
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex gap-3">
         <SecondaryButton onClick={onBack} disabled={isPending}>
           이전으로
         </SecondaryButton>
-        <div className="flex-1">
-          <PrimaryButton onClick={handleNext} disabled={isPending || !url.trim()}>
-            {isPending ? (
-              <>
-                <Loader2Icon className="size-4 animate-spin" />
-                정보 가져오는 중...
-              </>
-            ) : (
-              '다음'
-            )}
-          </PrimaryButton>
-        </div>
+        <PrimaryButton onClick={handleNext} disabled={isPending || !url.trim()}>
+          {isPending ? (
+            <>
+              <Loader2Icon className="size-4 animate-spin" />
+              정보 가져오는 중...
+            </>
+          ) : (
+            '다음'
+          )}
+        </PrimaryButton>
       </div>
     </div>
   )
@@ -303,15 +317,16 @@ type ManualData = {
 }
 
 function StepManualAddress({
+  initialData,
   onNext,
   onBack,
 }: {
+  initialData: ManualData | null
   onNext: (data: ManualData) => void
   onBack: () => void
 }) {
-  const [showPostcode, setShowPostcode] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [form, setForm] = useState<ManualData>({
+  const [form, setForm] = useState<ManualData>(initialData ?? {
     zonecode: '',
     address: '',
     addressDetail: '',
@@ -329,7 +344,7 @@ function StepManualAddress({
     <div className="flex flex-col gap-6 animate-fade-in-fast">
       <div>
         <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1a1a1a] leading-tight"
+          className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           숙소 주소를
@@ -339,54 +354,27 @@ function StepManualAddress({
 
       <SectionCard>
         <div className="flex flex-col gap-4">
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <Field id="zonecode" label="우편번호" required>
-                <Input
-                  id="zonecode"
-                  value={form.zonecode}
-                  disabled
-                  placeholder="우편번호"
-                  className="h-10 text-sm bg-[#F6F4F0]"
-                />
-              </Field>
-            </div>
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={() => setShowPostcode(true)}
-                className="h-10 px-4 rounded-lg text-sm font-medium border border-[#E8E3DC] bg-white hover:bg-[#F6F4F0] transition-colors"
-              >
-                주소 검색
-              </button>
-            </div>
-          </div>
-
-          {showPostcode && (
-            <div className="border border-[#E8E3DC] rounded-xl overflow-hidden">
-              <DaumPostcodeEmbed
-                onComplete={(data) => {
-                  setForm((prev) => ({
-                    ...prev,
-                    zonecode: data.zonecode,
-                    address: data.roadAddress || data.jibunAddress,
-                  }))
-                  setShowPostcode(false)
-                }}
-                style={{ height: 400 }}
-              />
-            </div>
-          )}
-
-          <Field id="address" label="주소" required>
-            <Input
-              id="address"
-              value={form.address}
-              disabled
-              placeholder="주소 검색을 해주세요"
-              className="h-10 text-sm bg-[#F6F4F0]"
+          <Field id="address-search-manual" label="주소 검색" required>
+            <AddressSearch
+              onSelect={(zonecode, address) => {
+                setForm((prev) => ({ ...prev, zonecode, address }))
+                setError(null)
+              }}
+              placeholder="도로명 주소 또는 지번을 입력하세요"
             />
           </Field>
+
+          {form.address && (
+            <Field id="address" label="주소" required>
+              <Input
+                id="address"
+                value={form.address}
+                disabled
+                placeholder="주소 검색을 해주세요"
+                className="h-10 text-sm bg-surface"
+              />
+            </Field>
+          )}
 
           <Field id="addressDetail" label="상세 주소">
             <Input
@@ -401,19 +389,17 @@ function StepManualAddress({
       </SectionCard>
 
       {error && (
-        <div className="flex items-center gap-2 text-sm text-[#D4421E] bg-[#D4421E]/8 border border-[#D4421E]/20 px-4 py-3 rounded-xl">
+        <div className="flex items-center gap-2 text-sm text-brand bg-brand/8 border border-brand/20 px-4 py-3 rounded-xl">
           <span>!</span>
           {error}
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex gap-3">
         <SecondaryButton onClick={onBack}>이전으로</SecondaryButton>
-        <div className="flex-1">
-          <PrimaryButton onClick={handleNext} disabled={!form.address}>
-            다음
-          </PrimaryButton>
-        </div>
+        <PrimaryButton onClick={handleNext} disabled={!form.address}>
+          다음
+        </PrimaryButton>
       </div>
     </div>
   )
@@ -424,112 +410,80 @@ function StepManualAddress({
 function StepRegister({
   airroiDetail,
   manualAddress,
+  airbnbListingId,
   onBack,
   onClearProgress,
+  onRestoreProgress,
 }: {
-  airroiDetail: AirroiListingDetail | null
+  airroiDetail: AirbnbListingInfo | null
   manualAddress: ManualData | null
+  airbnbListingId: string | null
   onBack: () => void
   onClearProgress: () => void
+  onRestoreProgress: () => void
 }) {
   const [state, formAction, isPending] = useActionState<PropertyFormState, FormData>(
     async (prev, formData) => {
+      // Optimistically clear progress before the server call.
+      // createProperty calls redirect() on success so if it returns, an error occurred.
       onClearProgress()
-      return createProperty(prev, formData)
+      const result = await createProperty(prev, formData)
+      // If we reach here, there was a validation/server error.
+      // Restore the step-2 data so the user can navigate back without losing info.
+      onRestoreProgress()
+      return result
     },
     undefined,
   )
 
-  const listingInfo = airroiDetail?.listing_info
-  const propertyDetails = airroiDetail?.property_details
-  const amenities = propertyDetails?.amenities ?? []
+  const defaultName = airroiDetail?.name ?? ''
+  const initialZonecode = manualAddress?.zonecode ?? ''
+  const initialAddress = manualAddress?.address ?? ''
+  const initialAddressDetail = manualAddress?.addressDetail ?? ''
 
-  const defaultName = listingInfo?.listing_name ?? ''
-  const defaultAddress = manualAddress?.address ?? propertyDetails?.address ?? ''
-  const defaultAddressDetail = manualAddress?.addressDetail ?? ''
-  const defaultDescription = listingInfo?.description ?? ''
+  const [zonecode, setZonecode] = useState(initialZonecode)
+  const [address, setAddress] = useState(initialAddress)
+  const [addressDetail, setAddressDetail] = useState(initialAddressDetail)
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in-fast">
       <div>
         <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1a1a1a] leading-tight"
+          className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {airroiDetail ? '숙소 정보를' : '숙소 정보를'}
           <br />{airroiDetail ? '확인해주세요' : '입력해주세요'}
         </h2>
-        <p className="text-sm text-[#8a8a82] mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+        <p className="text-sm text-on-surface-subtle mt-2" style={{ fontFamily: 'var(--font-body)' }}>
           {airroiDetail
             ? '에어비앤비에서 가져온 정보를 확인하고 수정할 수 있어요.'
             : '숙소 정보를 입력하면 등록이 완료됩니다.'}
         </p>
       </div>
 
-      {/* Photo gallery */}
-      {listingInfo?.photo_urls && listingInfo.photo_urls.length > 0 && (
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6b6b63] mb-2.5">
-            사진
-          </p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {listingInfo.photo_urls.slice(0, 6).map((url, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'relative flex-shrink-0 rounded-xl overflow-hidden border border-[#E8E3DC]',
-                  i === 0 ? 'w-40 h-28' : 'w-24 h-28',
-                )}
-              >
-                <Image
-                  src={url}
-                  alt={`사진 ${i + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="160px"
-                  unoptimized
-                />
-              </div>
-            ))}
-          </div>
+      {/* Thumbnail */}
+      {airroiDetail?.imageUrl && (
+        <div className="relative w-full h-48 rounded-2xl overflow-hidden border border-outline">
+          <Image
+            src={airroiDetail.imageUrl!}
+            alt="숙소 사진"
+            fill
+            className="object-cover"
+            sizes="560px"
+            unoptimized
+          />
         </div>
       )}
 
-      {/* Amenities */}
-      {amenities.length > 0 && (
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6b6b63] mb-2.5">
-            편의시설
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {amenities.slice(0, 14).map((a, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center h-6 px-2.5 rounded-full text-xs font-medium bg-[#F6F4F0] text-[#1a1a1a] border border-[#E8E3DC]"
-              >
-                {a}
-              </span>
-            ))}
-            {amenities.length > 14 && (
-              <span className="inline-flex items-center h-6 px-2.5 rounded-full text-xs font-medium border border-[#E8E3DC] text-[#8a8a82]">
-                +{amenities.length - 14}개
-              </span>
-            )}
-          </div>
-        </div>
-      )}
 
-      <form action={formAction} className="flex flex-col gap-5">
+      <form action={formAction} noValidate className="flex flex-col gap-5">
         <input type="hidden" name="propertyType" value="apartment" />
-        {defaultAddressDetail && (
-          <input type="hidden" name="addressDetail" value={defaultAddressDetail} />
+        {airbnbListingId && (
+          <input type="hidden" name="airbnbListingId" value={airbnbListingId} />
         )}
 
-        {/* Basic info */}
         <SectionCard>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6b6b63] mb-4">
-            기본 정보
-          </p>
           <div className="flex flex-col gap-4">
             <Field id="name" label="숙소 이름" required error={state?.errors?.name?.[0]}>
               <Input
@@ -541,76 +495,39 @@ function StepRegister({
                 className="h-10 text-sm"
               />
             </Field>
-            <Field id="address" label="주소" required error={state?.errors?.address?.[0]}>
-              <Input
-                id="address"
-                name="address"
-                required
-                defaultValue={defaultAddress}
-                disabled={!!manualAddress}
-                placeholder="예: 서울시 마포구 합정동 123-4"
-                className={cn('h-10 text-sm', manualAddress && 'bg-[#F6F4F0]')}
-              />
-            </Field>
-            <Field id="description" label="숙소 설명">
-              <Textarea
-                id="description"
-                name="description"
-                rows={3}
-                defaultValue={defaultDescription}
-                placeholder="게스트에게 보여줄 숙소 설명을 입력해주세요."
-                className="resize-none text-sm leading-relaxed"
-              />
-            </Field>
-          </div>
-        </SectionCard>
 
-        {/* Guest info */}
-        <SectionCard>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6b6b63] mb-4">
-            게스트 안내
-          </p>
-          <div className="flex flex-col gap-4">
-            <Field id="nearbyInfo" label="주변 정보">
-              <Textarea
-                id="nearbyInfo"
-                name="nearbyInfo"
-                rows={2}
-                placeholder="예: 합정역 도보 5분, 편의점 24시간 운영"
-                className="resize-none text-sm"
+            <Field id="address-search-register" label="주소 검색" required>
+              <AddressSearch
+                onSelect={(zc, addr) => {
+                  setZonecode(zc)
+                  setAddress(addr)
+                }}
+                placeholder="도로명 주소 또는 지번을 입력하세요"
               />
             </Field>
-            <Field id="checkinInfo" label="체크인 안내">
-              <Textarea
-                id="checkinInfo"
-                name="checkinInfo"
-                rows={2}
-                placeholder="예: 도어락 비밀번호: 1234#, 체크인 오후 3시"
-                className="resize-none text-sm"
-              />
-            </Field>
-          </div>
-        </SectionCard>
 
-        {/* Wifi */}
-        <SectionCard>
-          <div className="flex items-center gap-2 mb-4">
-            <WifiIcon className="size-4 text-[#D4421E]" />
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6b6b63]">
-              와이파이 정보
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field id="wifiSsid" label="네트워크 이름">
-              <Input id="wifiSsid" name="wifiSsid" placeholder="MyWifi_5G" className="h-10 text-sm" />
-            </Field>
-            <Field id="wifiPassword" label="비밀번호">
+            {/* hidden inputs so form submit always includes address values */}
+            <input type="hidden" name="address" value={address} />
+
+            {address ? (
+              <Field id="address-display" label="주소" required error={state?.errors?.address?.[0]}>
+                <Input
+                  value={address}
+                  readOnly
+                  className="h-10 text-sm bg-surface"
+                />
+              </Field>
+            ) : state?.errors?.address?.[0] ? (
+              <p className="text-xs text-brand">주소를 검색해서 선택해주세요.</p>
+            ) : null}
+
+            <Field id="addressDetail" label="상세 주소">
               <Input
-                id="wifiPassword"
-                name="wifiPassword"
-                type="password"
-                autoComplete="off"
-                placeholder="••••••••"
+                id="addressDetail"
+                name="addressDetail"
+                value={addressDetail}
+                onChange={(e) => setAddressDetail(e.target.value)}
+                placeholder="예: 3층 301호"
                 className="h-10 text-sm"
               />
             </Field>
@@ -618,18 +535,17 @@ function StepRegister({
         </SectionCard>
 
         {state?.message && (
-          <div className="flex items-center gap-2 text-sm text-[#D4421E] bg-[#D4421E]/8 border border-[#D4421E]/20 px-4 py-3 rounded-xl">
+          <div className="flex items-center gap-2 text-sm text-brand bg-brand/8 border border-brand/20 px-4 py-3 rounded-xl">
             <span>!</span>
             {state.message}
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-1">
+        <div className="flex gap-3 pt-1">
           <SecondaryButton onClick={onBack} disabled={isPending}>
             이전으로
           </SecondaryButton>
-          <div className="flex-1">
-            <PrimaryButton type="submit" disabled={isPending}>
+          <PrimaryButton type="submit" disabled={isPending}>
               {isPending ? (
                 <>
                   <Loader2Icon className="size-4 animate-spin" />
@@ -642,7 +558,6 @@ function StepRegister({
                 </>
               )}
             </PrimaryButton>
-          </div>
         </div>
       </form>
     </div>
@@ -653,26 +568,47 @@ function StepRegister({
 
 type WizardStep = 'ask' | 'airbnb-url' | 'manual-address' | 'register'
 
-export function OnboardingWizard() {
-  const { wizardStep, goTo, savedState, saveProgress, clearProgress } = useOnboarding()
-  const [airroiDetail, setAirroiDetail] = useState<AirroiListingDetail | null>(
-    (savedState?.airroiDetail as AirroiListingDetail) ?? null,
+export function OnboardingWizard({ backHref }: { backHref?: string } = {}) {
+  const { wizardStep, goTo, savedState, savedUrl: ctxSavedUrl, saveProgress, clearProgress, resetAll } = useOnboarding()
+  const [airroiDetail, setAirroiDetail] = useState<AirbnbListingInfo | null>(
+    (savedState?.airroiDetail as AirbnbListingInfo) ?? null,
   )
   const [manualAddress, setManualAddress] = useState<ManualData | null>(
     savedState?.manualAddress ?? null,
   )
+  // savedUrl is kept in sync with context so panel navigation preserves the typed URL
+  const [savedUrl, setSavedUrl] = useState(ctxSavedUrl ?? '')
+
+  function handleUrlChange(url: string) {
+    setSavedUrl(url)
+    saveProgress({ savedUrl: url })
+  }
 
   return (
     <div className="flex flex-col">
       {wizardStep === 'ask' && (
         <Step1
-          onYes={() => goTo('airbnb-url')}
-          onNo={() => goTo('manual-address')}
+          backHref={backHref}
+          onBack={resetAll}
+          onYes={() => {
+            setAirroiDetail(null)
+            setManualAddress(null)
+            setSavedUrl('')
+            goTo('airbnb-url', { resetFromStep1: true })
+          }}
+          onNo={() => {
+            setAirroiDetail(null)
+            setManualAddress(null)
+            setSavedUrl('')
+            goTo('manual-address', { resetFromStep1: true })
+          }}
         />
       )}
 
       {wizardStep === 'airbnb-url' && (
         <StepAirbnbUrl
+          initialUrl={savedUrl}
+          onUrlChange={handleUrlChange}
           onFetched={(detail) => {
             setAirroiDetail(detail)
             setManualAddress(null)
@@ -685,6 +621,7 @@ export function OnboardingWizard() {
 
       {wizardStep === 'manual-address' && (
         <StepManualAddress
+          initialData={manualAddress}
           onNext={(data) => {
             setManualAddress(data)
             setAirroiDetail(null)
@@ -699,11 +636,16 @@ export function OnboardingWizard() {
         <StepRegister
           airroiDetail={airroiDetail}
           manualAddress={manualAddress}
+          airbnbListingId={airroiDetail ? extractListingId(savedUrl) : null}
           onBack={() => {
+            // Use step2Path stored in context: airroiDetail present → came via airbnb-url
             if (airroiDetail) goTo('airbnb-url')
             else goTo('manual-address')
           }}
           onClearProgress={clearProgress}
+          onRestoreProgress={() =>
+            saveProgress({ airroiDetail: airroiDetail ?? null, manualAddress: manualAddress ?? null })
+          }
         />
       )}
     </div>

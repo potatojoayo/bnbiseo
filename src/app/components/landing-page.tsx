@@ -89,7 +89,7 @@ export default function LandingPage() {
       className={`min-h-screen bg-[#F6F4F0] text-[#1a1a1a] ${FONT_BODY} antialiased`}
     >
       {/* Nav */}
-      <nav className="bg-[#F6F4F0] sticky top-0 z-50 px-12 py-3 flex justify-between items-center border-b border-[#d5d2cc] max-md:px-6 max-md:py-2.5">
+      <nav className="bg-[#F6F4F0] sticky top-0 z-50 h-14 max-md:h-12 px-12 flex justify-between items-center border-b border-[#d5d2cc] max-md:px-6">
         <div className={`${FONT_DISPLAY} text-xl font-medium tracking-tighter`}>
           비앤비서
         </div>

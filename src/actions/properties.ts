@@ -20,6 +20,7 @@ const PropertySchema = z.object({
   checkinInfo: z.string().optional(),
   wifiSsid: z.string().optional(),
   wifiPassword: z.string().optional(),
+  airbnbListingId: z.string().optional(),
 })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -64,17 +65,19 @@ export async function createProperty(
     checkinInfo: formData.get('checkinInfo') || undefined,
     wifiSsid: formData.get('wifiSsid') || undefined,
     wifiPassword: formData.get('wifiPassword') || undefined,
+    airbnbListingId: formData.get('airbnbListingId') || undefined,
   })
 
   if (!validated.success) {
     return { errors: validated.error.flatten().fieldErrors }
   }
 
-  const { name, address, addressDetail, propertyType, description, nearbyInfo, checkinInfo, wifiSsid, wifiPassword } = validated.data
+  const { name, address, addressDetail, propertyType, description, nearbyInfo, checkinInfo, wifiSsid, wifiPassword, airbnbListingId } = validated.data
 
   try {
     await db.insert(properties).values({
       hostId: user.id,
+      airbnbListingId,
       name,
       address,
       addressDetail,
@@ -90,7 +93,8 @@ export async function createProperty(
   }
 
   revalidatePath('/dashboard/properties')
-  redirect('/dashboard/properties')
+  revalidatePath('/onboarding/complete')
+  redirect('/onboarding/complete')
 }
 
 export async function updateProperty(

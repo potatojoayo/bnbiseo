@@ -40,7 +40,7 @@ export default function AuthLayout({
           </p>
           <p
             className="text-base leading-relaxed"
-            style={{ color: '#8a8a82', fontFamily: 'var(--font-body)' }}
+            style={{ color: 'var(--on-surface-subtle)', fontFamily: 'var(--font-body)' }}
           >
             AI가 게스트 문의를 대신 답하고,
             <br />
@@ -57,13 +57,13 @@ export default function AuthLayout({
               <div key={item.text} className="flex items-center gap-3">
                 <span
                   className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                  style={{ backgroundColor: '#D4421E', color: '#fff' }}
+                  style={{ backgroundColor: 'var(--brand)', color: '#fff' }}
                 >
                   {item.icon}
                 </span>
                 <span
                   className="text-sm"
-                  style={{ color: '#d5d2cc', fontFamily: 'var(--font-body)' }}
+                  style={{ color: 'var(--outline-dim)', fontFamily: 'var(--font-body)' }}
                 >
                   {item.text}
                 </span>
@@ -75,7 +75,7 @@ export default function AuthLayout({
         {/* Footer tagline */}
         <p
           className="relative text-xs"
-          style={{ color: '#6b6b63', fontFamily: 'var(--font-body)' }}
+          style={{ color: 'var(--on-surface-muted)', fontFamily: 'var(--font-body)' }}
         >
           에어비앤비 호스트를 위한 AI 공간 관리 대행 서비스
         </p>
@@ -84,13 +84,13 @@ export default function AuthLayout({
       {/* Right form panel */}
       <div
         className="flex-1 flex flex-col items-center justify-center px-6 py-14"
-        style={{ backgroundColor: '#F6F4F0' }}
+        style={{ backgroundColor: 'var(--surface)' }}
       >
         {/* Mobile-only logo */}
         <Link href="/" className="mb-10 block lg:hidden">
           <span
             className="text-2xl font-bold tracking-tight"
-            style={{ fontFamily: 'var(--font-display)', color: '#1a1a1a' }}
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--on-surface)' }}
           >
             비엔비서
           </span>

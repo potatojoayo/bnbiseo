@@ -233,10 +233,10 @@ export default async function PropertyDetailPage({
                 <Card className="hover:shadow-md transition-all cursor-pointer group">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-sm group-hover:text-[#D4421E] transition-colors">
+                      <CardTitle className="text-sm group-hover:text-brand transition-colors">
                         {fixture.name}
                       </CardTitle>
-                      <ChevronRight className="h-4 w-4 text-[#9ca3af] shrink-0 group-hover:text-[#D4421E] transition-colors" />
+                      <ChevronRight className="h-4 w-4 text-[#9ca3af] shrink-0 group-hover:text-brand transition-colors" />
                     </div>
                   </CardHeader>
                   <CardContent>

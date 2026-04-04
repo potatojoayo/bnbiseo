@@ -13,18 +13,18 @@ function SubmitButton() {
       disabled={pending}
       className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold text-white transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
       style={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: 'var(--on-surface)',
         fontFamily: 'var(--font-body)',
       }}
       onMouseEnter={(e) => {
         if (!pending)
           (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-            '#D4421E'
+            'var(--brand)'
       }}
       onMouseLeave={(e) => {
         if (!pending)
           (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-            '#1a1a1a'
+            'var(--on-surface)'
       }}
     >
       {pending ? (
@@ -68,7 +68,7 @@ function Field({
       <label
         htmlFor={id}
         className="text-sm font-medium"
-        style={{ color: '#1a1a1a', fontFamily: 'var(--font-body)' }}
+        style={{ color: 'var(--on-surface)', fontFamily: 'var(--font-body)' }}
       >
         {label}
       </label>
@@ -83,20 +83,20 @@ function Field({
         aria-describedby={hasError ? `${id}-error` : undefined}
         className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-150"
         style={{
-          borderColor: hasError ? '#D4421E' : '#d5d2cc',
+          borderColor: hasError ? 'var(--brand)' : 'var(--outline-dim)',
           backgroundColor: '#FDFCFA',
-          color: '#1a1a1a',
+          color: 'var(--on-surface)',
           fontFamily: 'var(--font-body)',
           boxShadow: 'none',
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = hasError ? '#D4421E' : '#1a1a1a'
+          e.currentTarget.style.borderColor = hasError ? 'var(--brand)' : 'var(--on-surface)'
           e.currentTarget.style.boxShadow = hasError
             ? '0 0 0 3px rgba(212,66,30,0.12)'
             : '0 0 0 3px rgba(26,26,26,0.08)'
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = hasError ? '#D4421E' : '#d5d2cc'
+          e.currentTarget.style.borderColor = hasError ? 'var(--brand)' : 'var(--outline-dim)'
           e.currentTarget.style.boxShadow = 'none'
         }}
       />
@@ -106,7 +106,7 @@ function Field({
             <li
               key={err}
               className="text-xs"
-              style={{ color: '#D4421E', fontFamily: 'var(--font-body)' }}
+              style={{ color: 'var(--brand)', fontFamily: 'var(--font-body)' }}
             >
               {err}
             </li>
@@ -182,19 +182,19 @@ export function SignupForm() {
 
       <p
         className="text-xs text-center leading-relaxed"
-        style={{ color: '#8a8a82', fontFamily: 'var(--font-body)' }}
+        style={{ color: 'var(--on-surface-subtle)', fontFamily: 'var(--font-body)' }}
       >
         가입 시{' '}
         <a
           href="/terms"
-          className="underline underline-offset-2 transition-colors hover:text-[#1a1a1a]"
+          className="underline underline-offset-2 transition-colors hover:text-on-surface"
         >
           이용약관
         </a>{' '}
         및{' '}
         <a
           href="/privacy"
-          className="underline underline-offset-2 transition-colors hover:text-[#1a1a1a]"
+          className="underline underline-offset-2 transition-colors hover:text-on-surface"
         >
           개인정보처리방침
         </a>
