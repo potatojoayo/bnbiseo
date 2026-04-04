@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Marquee from "react-fast-marquee";
 import ChatDemo from "./chat-demo";
 import GuestDemo from "./guest-demo";
@@ -92,7 +93,7 @@ export default function LandingPage() {
         <div className={`${FONT_DISPLAY} text-xl font-medium tracking-tighter`}>
           비앤비서
         </div>
-        <button className={`${FONT_BODY} bg-[#1a1a1a] text-[#F6F4F0] border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-[#D4421E] hover:scale-[1.03]`}>무료 등록</button>
+        <Link href="/signup" className={`${FONT_BODY} bg-[#1a1a1a] text-[#F6F4F0] border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-[#D4421E] hover:scale-[1.03]`}>무료 등록</Link>
       </nav>
 
       {/* Hero */}
@@ -115,12 +116,12 @@ export default function LandingPage() {
           <br />
           수리도, 게스트 문의도 한마디면 알아서 처리해 드립니다.
         </p>
-        <button className={BTN_MAIN}>
+        <Link href="/signup" className={BTN_MAIN}>
           무료로 숙소 등록하기
           <span className="text-lg transition-transform duration-300 group-hover:translate-x-1.5">
             →
           </span>
-        </button>
+        </Link>
         <div className="text-[#8a8a82] text-xs mt-4 font-normal">
           등록비 무료 · 서울 전 지역 · 가입 후 3일 내 방문
         </div>
@@ -309,12 +310,12 @@ export default function LandingPage() {
         <p className="text-[#8a8a82] text-sm sm:text-base mb-10">
           등록비 무료 · 서울 전 지역 · 지금 바로 시작할 수 있어요
         </p>
-        <button className={`${BTN_MAIN} mx-auto`}>
+        <Link href="/signup" className={`${BTN_MAIN} mx-auto`}>
           무료로 숙소 등록하기
           <span className="text-lg transition-transform duration-300 group-hover:translate-x-1.5">
             →
           </span>
-        </button>
+        </Link>
       </section>
 
       {/* Footer */}

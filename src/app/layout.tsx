@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { TopLoader } from "./components/top-loader";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const sbAggro = localFont({
   variable: "--font-display",
@@ -43,9 +48,12 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${sbAggro.variable} ${paperlogy.variable} h-full antialiased`}
+      className={cn("h-full", "antialiased", sbAggro.variable, paperlogy.variable, "font-sans", geist.variable)}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+          <TopLoader />
+          {children}
+        </body>
     </html>
   );
 }

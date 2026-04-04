@@ -1,0 +1,16 @@
+import { config } from 'dotenv'
+import { defineConfig } from 'drizzle-kit'
+
+config({ path: '.env.local' })
+
+export default defineConfig({
+  schema: './src/db/schema.ts',
+  out: './src/db/migrations',
+  dialect: 'postgresql',
+  dbCredentials: {
+    // Use direct connection (not pgbouncer) for migrations
+    url: process.env.DIRECT_URL!,
+  },
+  verbose: true,
+  strict: true,
+})
