@@ -35,9 +35,9 @@ const paperlogy = localFont({
 
 
 export const metadata: Metadata = {
-  title: "비앤비서 — 에어비앤비 호스트를 위한 올인원 유지보수 서비스",
+  title: "비앤비서 — 에어비앤비 전문 청소·시설관리 서비스",
   description:
-    "숙소를 디지털 트윈으로 만들어 수리·게스트 응대·시설 관리를 대신합니다. 등록비 무료, 서울 전 지역.",
+    "에어비앤비 전문 호텔식 청소 + 15항목 시설 점검 리포트. 이모님 펑크에도 당일 긴급 대응. 마포구·서대문구.",
 };
 
 export default function RootLayout({
