@@ -391,20 +391,31 @@ export default function LandingPage() {
         </h2>
 
         <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
-          <div className="bg-brand/5 border border-brand/15 rounded-2xl p-7 max-md:p-5">
-            <div className="text-3xl mb-4">🎁</div>
-            <div className="text-[17px] font-bold mb-2">첫 청소 10,000원 할인</div>
-            <div className="text-on-surface-subtle text-sm leading-relaxed">
-              숙소 정보를 무료로 등록하기만 하면, 첫 청소 시 즉시 적용됩니다.
+          {[
+            {
+              emoji: "🎁",
+              title: "첫 청소 10,000원 할인",
+              desc: "숙소 정보를 무료로 등록하기만 하면, 첫 청소 시 즉시 적용됩니다.",
+            },
+            {
+              emoji: "💐",
+              title: "웰컴 세팅 무료",
+              desc: "웰컴메시지 엽서 & 조화 침대 위 세팅을 무료로 진행해 드립니다. 게스트 첫인상을 확 바꿔드려요.",
+            },
+          ].map((item) => (
+            <div
+              key={item.title}
+              className="relative overflow-hidden bg-white border border-brand/25 rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-brand/60 rounded-t-2xl" />
+              <span className="inline-block text-[11px] font-semibold tracking-wide text-brand bg-brand/8 rounded-full px-2.5 py-0.5 mb-4">
+                런치 이벤트
+              </span>
+              <div className="text-3xl mb-3">{item.emoji}</div>
+              <div className="text-[17px] font-bold mb-2">{item.title}</div>
+              <div className="text-on-surface-subtle text-sm leading-relaxed">{item.desc}</div>
             </div>
-          </div>
-          <div className="bg-brand/5 border border-brand/15 rounded-2xl p-7 max-md:p-5">
-            <div className="text-3xl mb-4">💐</div>
-            <div className="text-[17px] font-bold mb-2">웰컴 세팅 무료</div>
-            <div className="text-on-surface-subtle text-sm leading-relaxed">
-              웰컴메시지 엽서 & 조화 침대 위 세팅을 무료로 진행해 드립니다. 게스트 첫인상을 확 바꿔드려요.
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
