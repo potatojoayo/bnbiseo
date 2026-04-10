@@ -286,7 +286,7 @@ export default function LandingPage() {
               {[
                 { icon: "🧹", label: "청소", steps: "에어비앤비 전문 매니저가 호텔식 세팅. 35,000원부터.", time: "터치 한 번" },
                 { icon: "🚨", label: "긴급 대응", steps: "할증만 내면 당일 매니저 출동. 해외에서도, 새벽에도.", time: "당일 해결" },
-                { icon: "📋", label: "시설 점검", steps: "매 청소마다 15항목 체크리스트 + 사진 리포트 전송", time: "매회 자동" },
+                { icon: "📋", label: "시설 점검", steps: "매 청소마다 15항목 체크리스트 + 사진 리포트 전송", time: "첫 청소 시" },
               ].map((item, i) => (
                 <div key={i} className="flex gap-3 py-4 first:pt-0 last:pb-0">
                   <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
@@ -412,7 +412,7 @@ export default function LandingPage() {
               >
                 <div className="absolute top-0 left-0 right-0 h-[3px] bg-brand/60 rounded-t-2xl" />
                 <span className="inline-block text-[11px] font-semibold tracking-wide text-brand bg-brand/8 rounded-full px-2.5 py-0.5 mb-4">
-                  런치 이벤트
+                  오픈 이벤트
                 </span>
                 <div className="text-3xl mb-3">{item.emoji}</div>
                 <div className="text-[17px] font-bold mb-2">{item.title}</div>

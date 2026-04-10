@@ -21,7 +21,7 @@ export default function SignupPage() {
           className="text-sm leading-relaxed"
           style={{ color: 'var(--on-surface-subtle)', fontFamily: 'var(--font-body)' }}
         >
-          비엔비서와 함께 숙소를 스마트하게 관리하세요
+          마포구·서대문구 에어비앤비 호스트를 위한 전문 청소 서비스
         </p>
       </div>
 
