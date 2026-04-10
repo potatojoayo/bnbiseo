@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Marquee from "react-fast-marquee";
 import CleaningRequestDemo from "./cleaning-request-demo";
+import ChecklistDemo from "./checklist-demo";
+import PropertyCardDemo from "./property-card-demo";
 
 const PROBLEMS = [
   {
@@ -211,25 +213,25 @@ export default function LandingPage() {
           에어비앤비 전문 청소 + 시설 점검.<br className='sm:hidden'/> 급할 때도, 정기적으로도.
         </p>
 
-        {/* Steps */}
-        <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4 mb-16">
-          {STEPS.map((s, i) => (
-            <div
-              key={i}
-              className="bg-surface-dim rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
-            >
-              <div className="text-3xl mb-4">{s.icon}</div>
-              <div className="text-[17px] font-bold mb-2">{s.t}</div>
-              <div className="text-on-surface-subtle text-sm leading-relaxed">
-                {s.d}
+        {/* Steps + Demos: 2 columns, 3 rows */}
+        <div className="flex flex-col gap-24 max-md:gap-10">
+          {[
+            { step: STEPS[0], demo: <PropertyCardDemo /> },
+            { step: STEPS[1], demo: <CleaningRequestDemo /> },
+            { step: STEPS[2], demo: <ChecklistDemo /> },
+          ].map(({ step, demo }, i) => (
+            <div key={i} className="grid grid-cols-2 max-md:grid-cols-1 gap-6 items-center">
+              <div className="bg-surface-dim rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02] h-full flex flex-col justify-center">
+                <div className="text-on-surface-subtle text-xs font-semibold tracking-widest uppercase mb-3">Step {i + 1}</div>
+                <div className="text-3xl mb-4">{step.icon}</div>
+                <div className="text-[17px] font-bold mb-2">{step.t}</div>
+                <div className="text-on-surface-subtle text-sm leading-relaxed">
+                  {step.d}
+                </div>
               </div>
+              {demo}
             </div>
           ))}
-        </div>
-
-        {/* Demo */}
-        <div className="max-w-sm mx-auto">
-          <CleaningRequestDemo />
         </div>
       </section>
 
@@ -375,51 +377,53 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <hr className="border-t border-outline-dim mx-0" />
+      <hr className="border-t border-brand/15 mx-0" />
 
       {/* Launch Event */}
       <section
         id="event"
         data-a
-        className={`${SECTION} py-24 max-md:py-16 ${v("event")}`}
+        className={`bg-brand/5 py-24 max-md:py-16 ${v("event")}`}
       >
-        <div className={BADGE}>Launch Event</div>
-        <h2 className={SEC_TITLE}>
-          지금 등록하면
-          <br />
-          특별 혜택을 드려요
-        </h2>
+        <div className={SECTION}>
+          <div className={BADGE}>Launch Event</div>
+          <h2 className={SEC_TITLE}>
+            지금 등록하면
+            <br />
+            특별 혜택을 드려요
+          </h2>
 
-        <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
-          {[
-            {
-              emoji: "🎁",
-              title: "첫 청소 10,000원 할인",
-              desc: "숙소 정보를 무료로 등록하기만 하면, 첫 청소 시 즉시 적용됩니다.",
-            },
-            {
-              emoji: "💐",
-              title: "웰컴 세팅 무료",
-              desc: "웰컴메시지 엽서 & 조화 침대 위 세팅을 무료로 진행해 드립니다. 게스트 첫인상을 확 바꿔드려요.",
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="relative overflow-hidden bg-white border border-brand/25 rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
-            >
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-brand/60 rounded-t-2xl" />
-              <span className="inline-block text-[11px] font-semibold tracking-wide text-brand bg-brand/8 rounded-full px-2.5 py-0.5 mb-4">
-                런치 이벤트
-              </span>
-              <div className="text-3xl mb-3">{item.emoji}</div>
-              <div className="text-[17px] font-bold mb-2">{item.title}</div>
-              <div className="text-on-surface-subtle text-sm leading-relaxed">{item.desc}</div>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
+            {[
+              {
+                emoji: "🎁",
+                title: "첫 청소 10,000원 할인",
+                desc: "숙소 정보를 무료로 등록하기만 하면, 첫 청소 시 즉시 적용됩니다.",
+              },
+              {
+                emoji: "💐",
+                title: "웰컴 세팅 무료",
+                desc: "웰컴메시지 엽서 & 조화 침대 위 세팅을 무료로 진행해 드립니다. 게스트 첫인상을 확 바꿔드려요.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="relative overflow-hidden bg-white border border-brand/25 rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
+              >
+                <div className="absolute top-0 left-0 right-0 h-[3px] bg-brand/60 rounded-t-2xl" />
+                <span className="inline-block text-[11px] font-semibold tracking-wide text-brand bg-brand/8 rounded-full px-2.5 py-0.5 mb-4">
+                  런치 이벤트
+                </span>
+                <div className="text-3xl mb-3">{item.emoji}</div>
+                <div className="text-[17px] font-bold mb-2">{item.title}</div>
+                <div className="text-on-surface-subtle text-sm leading-relaxed">{item.desc}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <hr className="border-t border-outline-dim mx-0" />
+      <hr className="border-t border-brand/15 mx-0" />
 
       {/* CTA */}
       <section
