@@ -141,8 +141,8 @@ export default function LandingPage() {
             →
           </span>
         </Link>
-        <div className="text-on-surface-subtle text-xs mt-4 font-normal">
-          마포구·서대문구 · 첫 청소 10,000원 할인
+        <div className="text-on-surface-subtle text-xs mt-4 font-normal max-md:text-center">
+          마포구·서대문구 먼저 시작해요 · 첫 청소 10,000원 할인
         </div>
       </section>
 
@@ -435,7 +435,7 @@ export default function LandingPage() {
           호스팅을 시작하세요
         </h2>
         <p className="text-on-surface-subtle text-sm sm:text-base mb-10">
-          마포구·서대문구 · 첫 청소 10,000원 할인
+          마포구·서대문구 먼저 시작해요 · 첫 청소 10,000원 할인
         </p>
         <Link href="/signup" className={`${BTN_MAIN} mx-auto`}>
           무료로 숙소 등록하기
