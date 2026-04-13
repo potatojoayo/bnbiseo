@@ -3,46 +3,42 @@ import { Metadata } from 'next'
 import { SignupForm } from './signup-form'
 
 export const metadata: Metadata = {
-  title: '회원가입 — 비엔비서',
+  title: '회원가입 — 비앤비서',
 }
 
 export default function SignupPage() {
   return (
     <div>
-      {/* Heading */}
-      <div className="mb-8 animate-fade-in-d1">
-        <h1
-          className="text-2xl font-bold tracking-tight mb-2"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--on-surface)' }}
-        >
-          시작하기
-        </h1>
-        <p
-          className="text-sm leading-relaxed"
-          style={{ color: 'var(--on-surface-subtle)', fontFamily: 'var(--font-body)' }}
-        >
-          마포구·서대문구 에어비앤비 호스트를 위한 전문 청소 서비스
-        </p>
-      </div>
-
-      <div className="animate-fade-in-d2">
-        <SignupForm />
-      </div>
-
-      {/* Login redirect */}
-      <p
-        className="mt-7 text-sm text-center animate-fade-in-d3"
-        style={{ color: 'var(--on-surface-subtle)', fontFamily: 'var(--font-body)' }}
+      {/* Title */}
+      <h1
+        className="text-[22px] font-bold tracking-tight mb-2"
+        style={{ fontFamily: 'var(--font-display)' }}
       >
-        이미 계정이 있으신가요?{' '}
-        <Link
-          href="/login"
-          className="font-semibold underline underline-offset-2 transition-colors"
-          style={{ color: 'var(--brand)' }}
-        >
-          로그인
-        </Link>
+        회원가입
+      </h1>
+      <p className="text-[15px] text-[#717171] mb-8" style={{ fontFamily: 'var(--font-body)' }}>
+        에어비앤비 호스트를 위한 청소·시설관리 서비스
       </p>
+
+      <SignupForm />
+
+      {/* Divider */}
+      <div className="flex items-center gap-4 my-7">
+        <div className="flex-1 h-px bg-[#DDDDDD]" />
+        <span className="text-xs text-[#717171] shrink-0" style={{ fontFamily: 'var(--font-body)' }}>
+          이미 계정이 있으신가요?
+        </span>
+        <div className="flex-1 h-px bg-[#DDDDDD]" />
+      </div>
+
+      {/* Login link */}
+      <Link
+        href="/login"
+        className="flex items-center justify-center w-full h-12 rounded-lg border border-[#222222] text-sm font-semibold text-[#222222] transition-all hover:bg-[#F7F7F7] active:scale-[0.98]"
+        style={{ fontFamily: 'var(--font-body)' }}
+      >
+        로그인
+      </Link>
     </div>
   )
 }

@@ -336,10 +336,10 @@ export default function LandingPage() {
 
       <hr className="border-t border-brand/15 mx-0" />
 
-      {/* Launch Event */}
-      <AnimatedSection className="bg-brand/5 py-24 max-md:py-16">
+      {/* Launch Icon */}
+      <AnimatedSection className="py-24 max-md:py-16">
         <div className={SECTION}>
-          <div className={BADGE}>Launch Event</div>
+          <div className={BADGE}>Launch Icon</div>
           <h2 className={SEC_TITLE}>
             지금 등록하면
             <br />

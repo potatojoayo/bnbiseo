@@ -186,7 +186,7 @@ function Step1({
             className="size-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: 'rgba(212,66,30,0.1)' }}
           >
-            <AirbnbIcon className="size-5 text-brand-airbnb" />
+            <AirbnbIcon className="size-5 text-brand" />
           </div>
           <div>
             <p className="text-sm font-semibold text-on-surface">네, 에어비앤비에 등록되어 있어요</p>
