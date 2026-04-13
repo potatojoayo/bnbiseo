@@ -1,11 +1,9 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Marquee from "react-fast-marquee";
 import CleaningRequestDemo from "./cleaning-request-demo";
 import ChecklistDemo from "./checklist-demo";
 import PropertyCardDemo from "./property-card-demo";
+import { AnimatedSection } from "./animated-section";
 
 const PROBLEMS = [
   {
@@ -87,27 +85,6 @@ const SEC_DESC =
 const BTN_MAIN = `${FONT_BODY} bg-on-surface text-surface border-none px-9 py-4 rounded-full text-base font-semibold cursor-pointer inline-flex items-center gap-3 transition-all duration-200 hover:bg-brand hover:scale-[1.03] group`;
 
 export default function LandingPage() {
-  const [vis, setVis] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (es) => {
-        es.forEach((e) => {
-          if (e.isIntersecting)
-            setVis((p) => ({ ...p, [e.target.id]: true }));
-        });
-      },
-      { threshold: 0.1 }
-    );
-    document.querySelectorAll("[data-a]").forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, []);
-
-  const v = (id: string) =>
-    `transition-all duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-      vis[id] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-    }`;
-
   return (
     <div
       className={`min-h-screen bg-surface text-on-surface ${FONT_BODY} antialiased`}
@@ -164,11 +141,7 @@ export default function LandingPage() {
       </div>
 
       {/* Problem */}
-      <section
-        id="prob"
-        data-a
-        className={`${SECTION} py-24 max-md:py-16 ${v("prob")}`}
-      >
+      <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
         <div className={BADGE}>Problem</div>
         <h2 className={SEC_TITLE}>
           숙소 관리,
@@ -193,16 +166,12 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
+      </AnimatedSection>
 
       <hr className="border-t border-outline-dim mx-0" />
 
       {/* Solution */}
-      <section
-        id="sol"
-        data-a
-        className={`${SECTION} py-24 max-md:py-16 ${v("sol")}`}
-      >
+      <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
         <div className={BADGE}>Solution</div>
         <h2 className={SEC_TITLE}>
           터치 한 번이면
@@ -233,16 +202,12 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
+      </AnimatedSection>
 
       <hr className="border-t border-outline-dim mx-0" />
 
       {/* Before & After */}
-      <section
-        id="compare"
-        data-a
-        className={`${SECTION} py-24 max-md:py-16 ${v("compare")}`}
-      >
+      <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
         <div className={BADGE}>Before & After</div>
         <h2 className={SEC_TITLE}>
           혼자 전전긍긍 vs 터치 한 번
@@ -300,16 +265,12 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
       <hr className="border-t border-outline-dim mx-0" />
 
       {/* Pricing */}
-      <section
-        id="pricing"
-        data-a
-        className={`${SECTION} py-24 max-md:py-16 ${v("pricing")}`}
-      >
+      <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
         <div className={BADGE}>Pricing</div>
         <h2 className={SEC_TITLE}>
           단건 요청, 단건 결제
@@ -344,16 +305,12 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
       <hr className="border-t border-outline-dim mx-0" />
 
       {/* Use Cases */}
-      <section
-        id="usecases"
-        data-a
-        className={`${SECTION} py-24 max-md:py-16 ${v("usecases")}`}
-      >
+      <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
         <div className={BADGE}>Use Cases</div>
         <h2 className={SEC_TITLE}>
           이럴 때
@@ -375,16 +332,12 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
+      </AnimatedSection>
 
       <hr className="border-t border-brand/15 mx-0" />
 
       {/* Launch Event */}
-      <section
-        id="event"
-        data-a
-        className={`bg-brand/5 py-24 max-md:py-16 ${v("event")}`}
-      >
+      <AnimatedSection className="bg-brand/5 py-24 max-md:py-16">
         <div className={SECTION}>
           <div className={BADGE}>Launch Event</div>
           <h2 className={SEC_TITLE}>
@@ -421,16 +374,12 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
       <hr className="border-t border-brand/15 mx-0" />
 
       {/* CTA */}
-      <section
-        id="cta"
-        data-a
-        className={`px-12 py-28 text-center max-md:px-6 max-md:py-20 ${v("cta")}`}
-      >
+      <AnimatedSection className="px-12 py-28 text-center max-md:px-6 max-md:py-20">
         <h2
           className={`${FONT_DISPLAY} text-[clamp(32px,5vw,56px)] font-medium leading-tight tracking-tighter mb-5`}
         >
@@ -447,7 +396,7 @@ export default function LandingPage() {
             →
           </span>
         </Link>
-      </section>
+      </AnimatedSection>
 
       {/* Footer */}
       <footer className="px-12 py-7 border-t border-outline-dim flex justify-between items-center text-on-surface-subtle text-xs max-md:px-6 max-md:flex-col max-md:gap-3">

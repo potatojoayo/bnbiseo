@@ -1,9 +1,8 @@
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createServerClient } from '@/lib/supabase/server'
-import { db } from '@/db'
-import { properties, fixtures, repairRequests } from '@/db/schema'
-import { eq, inArray, count } from 'drizzle-orm'
+import { api } from '@/lib/api-client'
 import { SiteHeader } from '@/components/site-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,105 +14,50 @@ import {
   ChevronRightIcon,
 } from 'lucide-react'
 
-const REPAIR_STATUS_LABELS: Record<string, string> = {
-  submitted: '접수됨',
-  reviewing: '검토 중',
-  scheduled: '일정 예약됨',
-  in_progress: '진행 중',
-  completed: '완료',
-  cancelled: '취소됨',
-}
+type Property = { id: string; name: string }
 
-const REPAIR_PRIORITY_LABELS: Record<string, string> = {
-  low: '낮음',
-  normal: '보통',
-  high: '높음',
-  urgent: '긴급',
-}
+export default function DashboardPage() {
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
 
-const PRIORITY_COLORS: Record<string, string> = {
-  low: 'text-muted-foreground',
-  normal: 'text-foreground',
-  high: 'text-orange-600',
-  urgent: 'text-destructive font-semibold',
-}
-
-export default async function DashboardPage() {
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  // Fetch user's properties
-  const userProperties = await db
-    .select({ id: properties.id, name: properties.name })
-    .from(properties)
-    .where(eq(properties.hostId, user.id))
-
-  const propertyIds = userProperties.map((p) => p.id)
-
-  // Counts
-  const [fixtureCount, activeRepairCount] = await Promise.all([
-    propertyIds.length > 0
-      ? db
-          .select({ count: count() })
-          .from(fixtures)
-          .where(inArray(fixtures.propertyId, propertyIds))
-          .then((r) => r[0]?.count ?? 0)
-      : Promise.resolve(0),
-    propertyIds.length > 0
-      ? db
-          .select({ count: count() })
-          .from(repairRequests)
-          .where(
-            inArray(repairRequests.propertyId, propertyIds),
-          )
-          .then((r) => r[0]?.count ?? 0)
-      : Promise.resolve(0),
-  ])
-
-  // Recent repair requests (last 5)
-  const recentRepairs = propertyIds.length > 0
-    ? await db
-        .select({
-          id: repairRequests.id,
-          title: repairRequests.title,
-          status: repairRequests.status,
-          priority: repairRequests.priority,
-          createdAt: repairRequests.createdAt,
-          propertyId: repairRequests.propertyId,
-        })
-        .from(repairRequests)
-        .where(inArray(repairRequests.propertyId, propertyIds))
-        .orderBy(repairRequests.createdAt)
-        .limit(5)
-    : []
-
-  // Map propertyId → name for display
-  const propertyMap = Object.fromEntries(userProperties.map((p) => [p.id, p.name]))
+  useEffect(() => {
+    api.get<Property[]>('/properties').then((data) => {
+      setProperties(data)
+      setLoading(false)
+    })
+  }, [])
 
   const summaryCards = [
     {
       title: '등록된 숙소',
-      value: userProperties.length,
+      value: properties.length,
       icon: <Building2Icon className="size-5 text-muted-foreground" />,
       href: '/dashboard/properties',
     },
     {
       title: '총 시설물',
-      value: fixtureCount,
+      value: '—',
       icon: <ClipboardListIcon className="size-5 text-muted-foreground" />,
       href: '/dashboard/properties',
     },
     {
       title: '수리 요청',
-      value: activeRepairCount,
+      value: '—',
       icon: <WrenchIcon className="size-5 text-muted-foreground" />,
       href: '/dashboard/repairs',
     },
   ]
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <SiteHeader title="대시보드" />
+        <div className="flex items-center justify-center flex-1">
+          <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-1 flex-col">
@@ -154,7 +98,7 @@ export default async function DashboardPage() {
           </Button>
         </div>
 
-        {/* Recent repairs */}
+        {/* Recent repairs placeholder */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">최근 수리 요청</CardTitle>
@@ -166,36 +110,13 @@ export default async function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            {recentRepairs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-                <WrenchIcon className="size-10 mb-3 opacity-30" />
-                <p className="text-sm">아직 수리 요청이 없습니다.</p>
-                <Button asChild variant="outline" size="sm" className="mt-4">
-                  <Link href="/dashboard/repairs/new">첫 수리 접수하기</Link>
-                </Button>
-              </div>
-            ) : (
-              <ul className="divide-y divide-border">
-                {recentRepairs.map((repair) => (
-                  <li key={repair.id} className="flex items-center justify-between py-3">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-medium">{repair.title}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {propertyMap[repair.propertyId] ?? '—'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs ${PRIORITY_COLORS[repair.priority]}`}>
-                        {REPAIR_PRIORITY_LABELS[repair.priority] ?? repair.priority}
-                      </span>
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
-                        {REPAIR_STATUS_LABELS[repair.status] ?? repair.status}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+              <WrenchIcon className="size-10 mb-3 opacity-30" />
+              <p className="text-sm">아직 수리 요청이 없습니다.</p>
+              <Button asChild variant="outline" size="sm" className="mt-4">
+                <Link href="/dashboard/repairs/new">첫 수리 접수하기</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

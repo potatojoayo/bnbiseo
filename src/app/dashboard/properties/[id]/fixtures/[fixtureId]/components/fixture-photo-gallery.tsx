@@ -1,7 +1,8 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
-import { deleteFixturePhoto } from '@/actions/fixtures'
+import { useState } from 'react'
+import { supabase } from '@/lib/api-client'
+import { api } from '@/lib/api-client'
 import { X } from 'lucide-react'
 
 interface Photo {
@@ -17,12 +18,18 @@ interface FixturePhotoGalleryProps {
   fixtureId: string
 }
 
-export function FixturePhotoGallery({ photos, propertyId, fixtureId }: FixturePhotoGalleryProps) {
-  const supabase = createClient()
+export function FixturePhotoGallery({ photos: initialPhotos, propertyId, fixtureId }: FixturePhotoGalleryProps) {
+  const [photos, setPhotos] = useState(initialPhotos)
 
   function getPublicUrl(path: string) {
     const { data } = supabase.storage.from('fixture-photos').getPublicUrl(path)
     return data.publicUrl
+  }
+
+  async function handleDelete(photoId: string) {
+    if (!confirm('사진을 삭제하시겠습니까?')) return
+    await api.delete(`/fixtures/photos/${photoId}`)
+    setPhotos((prev) => prev.filter((p) => p.id !== photoId))
   }
 
   if (photos.length === 0) {
@@ -42,23 +49,13 @@ export function FixturePhotoGallery({ photos, propertyId, fixtureId }: FixturePh
             alt={photo.caption ?? ''}
             className="w-full h-full object-cover"
           />
-          <form
-            action={deleteFixturePhoto}
-            className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          <button
+            type="button"
+            onClick={() => handleDelete(photo.id)}
+            className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 p-0.5 text-white hover:bg-black/80 m-0.5 rounded-full"
           >
-            <input type="hidden" name="photoId" value={photo.id} />
-            <input type="hidden" name="propertyId" value={propertyId} />
-            <input type="hidden" name="fixtureId" value={fixtureId} />
-            <button
-              type="submit"
-              onClick={(e) => {
-                if (!confirm('사진을 삭제하시겠습니까?')) e.preventDefault()
-              }}
-              className="bg-black/60 p-0.5 text-white hover:bg-black/80 m-0.5 rounded-full"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </form>
+            <X className="h-3 w-3" />
+          </button>
         </div>
       ))}
     </div>

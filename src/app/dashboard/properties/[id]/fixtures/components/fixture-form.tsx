@@ -1,8 +1,8 @@
 'use client'
 
-import { useActionState, useState } from 'react'
-import { useFormStatus } from 'react-dom'
-import { type FixtureFormState } from '@/actions/fixtures'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { api, ApiError } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,10 +17,9 @@ import {
 import { PhotoUploader } from './photo-uploader'
 
 interface FixtureFormProps {
-  action: (state: FixtureFormState, formData: FormData) => Promise<FixtureFormState>
   propertyId: string
+  fixtureId?: string
   defaultValues?: {
-    fixtureId?: string
     category?: string
     name?: string
     location?: string
@@ -33,51 +32,72 @@ interface FixtureFormProps {
   submitLabel?: string
 }
 
-function SubmitButton({ label }: { label: string }) {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-      {pending ? '저장 중...' : label}
-    </Button>
-  )
-}
-
 export function FixtureForm({
-  action,
   propertyId,
+  fixtureId,
   defaultValues,
   submitLabel = '저장',
 }: FixtureFormProps) {
-  const [state, formAction] = useActionState<FixtureFormState, FormData>(
-    action,
-    undefined,
-  )
+  const router = useRouter()
+  const [pending, setPending] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string[]>>({})
+  const [message, setMessage] = useState<string | undefined>()
   const [uploadedPaths, setUploadedPaths] = useState<string[]>([])
 
-  const photoFolder = defaultValues?.fixtureId
-    ? `fixtures/${defaultValues.fixtureId}`
+  const photoFolder = fixtureId
+    ? `fixtures/${fixtureId}`
     : `fixtures/temp-${propertyId}`
 
-  return (
-    <form action={formAction} className="space-y-5">
-      {/* Hidden fields */}
-      <input type="hidden" name="propertyId" value={propertyId} />
-      {defaultValues?.fixtureId && (
-        <input type="hidden" name="fixtureId" value={defaultValues.fixtureId} />
-      )}
-      {/* Pass uploaded photo paths as repeated hidden inputs */}
-      {uploadedPaths.map((p, i) => (
-        <input key={i} type="hidden" name="photoPaths[]" value={p} />
-      ))}
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setPending(true)
+    setErrors({})
+    setMessage(undefined)
 
-      {/* Global error */}
-      {state?.message && (
+    const form = new FormData(e.currentTarget)
+    const body = {
+      propertyId,
+      category: form.get('category') as string,
+      name: form.get('name') as string,
+      location: form.get('location') as string,
+      brand: (form.get('brand') as string) || undefined,
+      modelNumber: (form.get('modelNumber') as string) || undefined,
+      specNotes: (form.get('specNotes') as string) || undefined,
+      installedAt: (form.get('installedAt') as string) || undefined,
+      notes: (form.get('notes') as string) || undefined,
+      photoPaths: uploadedPaths.length > 0 ? uploadedPaths : undefined,
+    }
+
+    try {
+      if (fixtureId) {
+        const { propertyId: _, ...updateBody } = body
+        await api.patch(`/fixtures/${fixtureId}`, updateBody)
+        router.push(`/dashboard/properties/${propertyId}/fixtures/${fixtureId}`)
+      } else {
+        await api.post('/fixtures', body)
+        router.push(`/dashboard/properties/${propertyId}`)
+      }
+      router.refresh()
+    } catch (err) {
+      if (err instanceof ApiError && err.data.errors) {
+        setErrors(err.data.errors as Record<string, string[]>)
+      } else if (err instanceof ApiError) {
+        setMessage(err.message)
+      } else {
+        setMessage('오류가 발생했습니다. 다시 시도해주세요.')
+      }
+      setPending(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {message && (
         <div className="text-sm px-4 py-3 rounded-lg bg-red-50 text-red-700 border border-red-200">
-          {state.message}
+          {message}
         </div>
       )}
 
-      {/* Category */}
       <div className="space-y-1.5">
         <Label>
           카테고리 <span className="text-brand">*</span>
@@ -99,111 +119,60 @@ export function FixtureForm({
             <SelectItem value="other">기타</SelectItem>
           </SelectContent>
         </Select>
-        {state?.errors?.category && (
-          <p className="text-xs text-brand">{state.errors.category[0]}</p>
-        )}
+        {errors.category && <p className="text-xs text-brand">{errors.category[0]}</p>}
       </div>
 
-      {/* Name */}
       <div className="space-y-1.5">
         <Label htmlFor="name">
           시설물 이름 <span className="text-brand">*</span>
         </Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="예) 거실 천장 조명"
-          defaultValue={defaultValues?.name ?? ''}
-        />
-        {state?.errors?.name && (
-          <p className="text-xs text-brand">{state.errors.name[0]}</p>
-        )}
+        <Input id="name" name="name" placeholder="예) 거실 천장 조명" defaultValue={defaultValues?.name ?? ''} />
+        {errors.name && <p className="text-xs text-brand">{errors.name[0]}</p>}
       </div>
 
-      {/* Location */}
       <div className="space-y-1.5">
         <Label htmlFor="location">
           위치 <span className="text-brand">*</span>
         </Label>
-        <Input
-          id="location"
-          name="location"
-          placeholder="예) 거실, 안방 욕실, 주방"
-          defaultValue={defaultValues?.location ?? ''}
-        />
-        {state?.errors?.location && (
-          <p className="text-xs text-brand">{state.errors.location[0]}</p>
-        )}
+        <Input id="location" name="location" placeholder="예) 거실, 안방 욕실, 주방" defaultValue={defaultValues?.location ?? ''} />
+        {errors.location && <p className="text-xs text-brand">{errors.location[0]}</p>}
       </div>
 
-      {/* Brand + Model */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="brand">브랜드</Label>
-          <Input
-            id="brand"
-            name="brand"
-            placeholder="예) 삼성, LG"
-            defaultValue={defaultValues?.brand ?? ''}
-          />
+          <Input id="brand" name="brand" placeholder="예) 삼성, LG" defaultValue={defaultValues?.brand ?? ''} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="modelNumber">모델 번호</Label>
-          <Input
-            id="modelNumber"
-            name="modelNumber"
-            placeholder="예) WF21BB6600AW"
-            defaultValue={defaultValues?.modelNumber ?? ''}
-          />
+          <Input id="modelNumber" name="modelNumber" placeholder="예) WF21BB6600AW" defaultValue={defaultValues?.modelNumber ?? ''} />
         </div>
       </div>
 
-      {/* Spec Notes */}
       <div className="space-y-1.5">
         <Label htmlFor="specNotes">사양 메모</Label>
-        <Textarea
-          id="specNotes"
-          name="specNotes"
-          placeholder="용량, 전압 등 사양 정보를 입력하세요."
-          rows={2}
-          defaultValue={defaultValues?.specNotes ?? ''}
-        />
+        <Textarea id="specNotes" name="specNotes" placeholder="용량, 전압 등 사양 정보를 입력하세요." rows={2} defaultValue={defaultValues?.specNotes ?? ''} />
       </div>
 
-      {/* Installed At */}
       <div className="space-y-1.5">
         <Label htmlFor="installedAt">설치일</Label>
-        <Input
-          id="installedAt"
-          name="installedAt"
-          type="date"
-          defaultValue={defaultValues?.installedAt ?? ''}
-        />
+        <Input id="installedAt" name="installedAt" type="date" defaultValue={defaultValues?.installedAt ?? ''} />
       </div>
 
-      {/* Notes */}
       <div className="space-y-1.5">
         <Label htmlFor="notes">메모</Label>
-        <Textarea
-          id="notes"
-          name="notes"
-          placeholder="추가 메모를 입력하세요."
-          rows={2}
-          defaultValue={defaultValues?.notes ?? ''}
-        />
+        <Textarea id="notes" name="notes" placeholder="추가 메모를 입력하세요." rows={2} defaultValue={defaultValues?.notes ?? ''} />
       </div>
 
-      {/* Photo upload */}
       <div className="space-y-1.5">
         <Label>사진</Label>
-        <PhotoUploader
-          folder={photoFolder}
-          onUploaded={setUploadedPaths}
-        />
+        <PhotoUploader folder={photoFolder} onUploaded={setUploadedPaths} />
       </div>
 
       <div className="pt-2">
-        <SubmitButton label={submitLabel} />
+        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+          {pending ? '저장 중...' : submitLabel}
+        </Button>
       </div>
     </form>
   )

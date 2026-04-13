@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { useActionState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useOnboarding } from './onboarding-context'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -31,11 +31,9 @@ function AirbnbIcon({ className }: { className?: string }) {
     </svg>
   )
 }
-import { fetchAirbnbListing } from '@/actions/airroi'
+import { api, ApiError } from '@/lib/api-client'
 import { extractListingId } from '@/lib/airbnb-scraper'
-import { createProperty } from '@/actions/properties'
 import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
-import type { PropertyFormState } from '@/actions/properties'
 
 // ─── Shared Components ───────────────────────────────────────────────────────
 
@@ -241,12 +239,12 @@ function StepAirbnbUrl({
     }
     setError(null)
     startTransition(async () => {
-      const result = await fetchAirbnbListing(listingId)
-      if (!result.success) {
+      try {
+        const listing = await api.get<AirbnbListingInfo>(`/airroi/listing/${listingId}`)
+        onFetched(listing)
+      } catch {
         setError('리스팅 정보를 가져올 수 없습니다. URL을 확인해주세요.')
-        return
       }
-      onFetched(result.listing)
     })
   }
 
@@ -422,19 +420,10 @@ function StepRegister({
   onClearProgress: () => void
   onRestoreProgress: () => void
 }) {
-  const [state, formAction, isPending] = useActionState<PropertyFormState, FormData>(
-    async (prev, formData) => {
-      // Optimistically clear progress before the server call.
-      // createProperty calls redirect() on success so if it returns, an error occurred.
-      onClearProgress()
-      const result = await createProperty(prev, formData)
-      // If we reach here, there was a validation/server error.
-      // Restore the step-2 data so the user can navigate back without losing info.
-      onRestoreProgress()
-      return result
-    },
-    undefined,
-  )
+  const router = useRouter()
+  const [isPending, setIsPending] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string[]>>({})
+  const [message, setMessage] = useState<string | undefined>()
 
   const defaultName = airroiDetail?.name ?? ''
   const initialZonecode = manualAddress?.zonecode ?? ''
@@ -444,6 +433,38 @@ function StepRegister({
   const [zonecode, setZonecode] = useState(initialZonecode)
   const [address, setAddress] = useState(initialAddress)
   const [addressDetail, setAddressDetail] = useState(initialAddressDetail)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setIsPending(true)
+    setErrors({})
+    setMessage(undefined)
+    onClearProgress()
+
+    const formData = new FormData(e.currentTarget)
+    const body = {
+      name: formData.get('name') as string,
+      address: formData.get('address') as string,
+      addressDetail: (formData.get('addressDetail') as string) || undefined,
+      propertyType: formData.get('propertyType') as string,
+      airbnbListingId: (formData.get('airbnbListingId') as string) || undefined,
+    }
+
+    try {
+      await api.post('/properties', body)
+      router.push('/onboarding/complete')
+    } catch (err) {
+      onRestoreProgress()
+      if (err instanceof ApiError && err.data.errors) {
+        setErrors(err.data.errors as Record<string, string[]>)
+      } else if (err instanceof ApiError) {
+        setMessage(err.message)
+      } else {
+        setMessage('숙소 등록 중 오류가 발생했습니다. 다시 시도해주세요.')
+      }
+      setIsPending(false)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in-fast">
@@ -477,7 +498,7 @@ function StepRegister({
       )}
 
 
-      <form action={formAction} noValidate className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
         <input type="hidden" name="propertyType" value="apartment" />
         {airbnbListingId && (
           <input type="hidden" name="airbnbListingId" value={airbnbListingId} />
@@ -485,7 +506,7 @@ function StepRegister({
 
         <SectionCard>
           <div className="flex flex-col gap-4">
-            <Field id="name" label="숙소 이름" required error={state?.errors?.name?.[0]}>
+            <Field id="name" label="숙소 이름" required error={errors.name?.[0]}>
               <Input
                 id="name"
                 name="name"
@@ -510,14 +531,14 @@ function StepRegister({
             <input type="hidden" name="address" value={address} />
 
             {address ? (
-              <Field id="address-display" label="주소" required error={state?.errors?.address?.[0]}>
+              <Field id="address-display" label="주소" required error={errors.address?.[0]}>
                 <Input
                   value={address}
                   readOnly
                   className="h-10 text-sm bg-surface"
                 />
               </Field>
-            ) : state?.errors?.address?.[0] ? (
+            ) : errors.address?.[0] ? (
               <p className="text-xs text-brand">주소를 검색해서 선택해주세요.</p>
             ) : null}
 
@@ -534,10 +555,10 @@ function StepRegister({
           </div>
         </SectionCard>
 
-        {state?.message && (
+        {message && (
           <div className="flex items-center gap-2 text-sm text-brand bg-brand/8 border border-brand/20 px-4 py-3 rounded-xl">
             <span>!</span>
-            {state.message}
+            {message}
           </div>
         )}
 

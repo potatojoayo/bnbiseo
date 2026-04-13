@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { CheckIcon, LogOutIcon, MessageCircleIcon, WrenchIcon, LayoutDashboardIcon } from 'lucide-react'
-import { logout } from '@/actions/auth'
+import { supabase } from '@/lib/api-client'
 import { useOnboarding } from './onboarding-context'
 
 const STEPS = [
@@ -15,6 +16,7 @@ const STEPS = [
 
 export function OnboardingPanel() {
   const pathname = usePathname()
+  const router = useRouter()
   const isComplete = pathname === '/onboarding/complete'
   const isAdd = pathname === '/onboarding/add'
   const { panelStep: step, maxReachedPanel, goToPanel } = useOnboarding()
@@ -210,15 +212,17 @@ export function OnboardingPanel() {
         >
           에어비앤비 호스트를 위한 AI 공간 관리 대행 서비스
         </p>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
-          >
-            <LogOutIcon className="size-3" />
-            로그아웃
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={async () => {
+            await supabase.auth.signOut()
+            router.push('/')
+          }}
+          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
+        >
+          <LogOutIcon className="size-3" />
+          로그아웃
+        </button>
       </div>
     </div>
   )

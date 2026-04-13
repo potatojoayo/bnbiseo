@@ -19,7 +19,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { EllipsisVerticalIcon, LogOutIcon } from "lucide-react"
-import { logout } from "@/actions/auth"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/api-client"
 
 export function NavUser({
   user,
@@ -29,6 +30,7 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
 
   // Use first letter of email as avatar fallback
   const initials = user.email ? user.email[0].toUpperCase() : "U"
@@ -76,13 +78,14 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <form action={logout} className="w-full">
-                <button type="submit" className="flex w-full items-center gap-2">
-                  <LogOutIcon className="size-4" />
-                  <span>로그아웃</span>
-                </button>
-              </form>
+            <DropdownMenuItem
+              onSelect={async () => {
+                await supabase.auth.signOut()
+                router.push('/')
+              }}
+            >
+              <LogOutIcon className="size-4" />
+              <span>로그아웃</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

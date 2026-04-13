@@ -1,12 +1,10 @@
 'use client'
 
-import { useActionState } from 'react'
-import { useFormStatus } from 'react-dom'
-import { login, type LoginFormState } from '@/actions/auth'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/api-client'
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
+function SubmitButton({ pending }: { pending: boolean }) {
   return (
     <button
       type="submit"
@@ -118,15 +116,35 @@ function Field({
 }
 
 export function LoginForm() {
-  const [state, formAction] = useActionState<LoginFormState, FormData>(
-    login,
-    undefined,
-  )
+  const router = useRouter()
+  const [pending, setPending] = useState(false)
+  const [errors, setErrors] = useState<{ email?: string[]; password?: string[] }>({})
+  const [message, setMessage] = useState<string | undefined>()
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setPending(true)
+    setErrors({})
+    setMessage(undefined)
+
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      setMessage('이메일 또는 비밀번호가 올바르지 않습니다.')
+      setPending(false)
+      return
+    }
+
+    router.push('/dashboard')
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate>
-      {/* Global error */}
-      {state?.message && (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      {message && (
         <div
           className="text-sm px-4 py-3 rounded-xl flex items-start gap-2.5"
           style={{
@@ -143,7 +161,7 @@ export function LoginForm() {
               <circle cx="7" cy="10.5" r="0.75" fill="#991B1B" />
             </svg>
           </span>
-          {state.message}
+          {message}
         </div>
       )}
 
@@ -154,7 +172,7 @@ export function LoginForm() {
         autoComplete="email"
         placeholder="you@example.com"
         label="이메일"
-        error={state?.errors?.email}
+        error={errors.email}
       />
 
       <Field
@@ -164,11 +182,11 @@ export function LoginForm() {
         autoComplete="current-password"
         placeholder="••••••••"
         label="비밀번호"
-        error={state?.errors?.password}
+        error={errors.password}
       />
 
       <div className="pt-1">
-        <SubmitButton />
+        <SubmitButton pending={pending} />
       </div>
     </form>
   )

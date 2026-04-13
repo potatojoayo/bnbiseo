@@ -1,20 +1,12 @@
-import { redirect } from 'next/navigation'
+'use client'
+
 import Link from 'next/link'
-import { createServerClient } from '@/lib/supabase/server'
-import { createProperty } from '@/actions/properties'
 import { PropertyForm } from '../components/property-form'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft } from 'lucide-react'
 
-export default async function NewPropertyPage() {
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
+export default function NewPropertyPage() {
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-6 flex items-center gap-3">
@@ -31,7 +23,7 @@ export default async function NewPropertyPage() {
           <CardTitle style={{ fontFamily: 'var(--font-display)' }}>숙소 등록</CardTitle>
         </CardHeader>
         <CardContent>
-          <PropertyForm action={createProperty} submitLabel="숙소 등록" />
+          <PropertyForm submitLabel="숙소 등록" />
         </CardContent>
       </Card>
     </div>

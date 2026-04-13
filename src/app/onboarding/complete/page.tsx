@@ -1,47 +1,65 @@
-import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { createServerClient } from '@/lib/supabase/server'
-import { db } from '@/db'
-import { properties } from '@/db/schema'
-import { eq } from 'drizzle-orm'
-import { CheckIcon, MapPinIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
-import { completeOnboarding } from '@/actions/profiles'
+'use client'
 
-function formatDate(date: Date): string {
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useAuth } from '@/lib/auth-provider'
+import { api } from '@/lib/api-client'
+import { CheckIcon, MapPinIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
+
+function formatDate(date: string): string {
   return new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }).format(date)
+  }).format(new Date(date))
 }
 
-export default async function CompletePage() {
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+type Property = {
+  id: string
+  name: string
+  address: string
+  addressDetail: string | null
+  createdAt: string
+}
 
-  if (!user) redirect('/login')
+export default function CompletePage() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const [properties, setProperties] = useState<Property[]>([])
+  const [ready, setReady] = useState(false)
+  const [completing, setCompleting] = useState(false)
 
-  const userProperties = await db
-    .select({
-      id: properties.id,
-      name: properties.name,
-      address: properties.address,
-      addressDetail: properties.addressDetail,
-      createdAt: properties.createdAt,
+  useEffect(() => {
+    if (authLoading || !user) return
+
+    api.get<Property[]>('/properties').then((data) => {
+      if (data.length === 0) {
+        router.replace('/onboarding')
+        return
+      }
+      setProperties(data)
+      setReady(true)
     })
-    .from(properties)
-    .where(eq(properties.hostId, user.id))
-    .orderBy(properties.createdAt)
+  }, [user, authLoading, router])
 
-  if (userProperties.length === 0) redirect('/onboarding')
+  async function handleComplete() {
+    setCompleting(true)
+    await api.post('/profiles/complete-onboarding')
+    router.push('/dashboard')
+  }
+
+  if (!ready) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in-fast">
-      {/* Success header */}
       <div className="flex flex-col gap-5">
-        {/* Success icon — 명확하게 '성공/완료' 색상 사용 */}
         <div className="flex items-center gap-3">
           <div
             className="size-16 rounded-2xl flex items-center justify-center shrink-0"
@@ -87,7 +105,6 @@ export default async function CompletePage() {
         </div>
       </div>
 
-      {/* Property list */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-widest text-on-surface-muted">
@@ -96,24 +113,22 @@ export default async function CompletePage() {
           <span
             className="text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full bg-surface-dim text-on-surface-muted"
           >
-            {userProperties.length}개
+            {properties.length}개
           </span>
         </div>
 
         <div className="flex flex-col gap-2.5">
-          {userProperties.map((property, index) => (
+          {properties.map((property, index) => (
             <div
               key={property.id}
               className="flex items-start gap-4 rounded-2xl border border-outline bg-white p-4"
             >
-              {/* Number badge */}
               <div
                 className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold bg-surface-dim text-on-surface-muted"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 {index + 1}
               </div>
-
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-on-surface leading-snug">
                   {property.name}
@@ -134,17 +149,16 @@ export default async function CompletePage() {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex flex-col gap-3">
-        <form action={completeOnboarding}>
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2.5 h-12 rounded-xl text-sm font-semibold text-white bg-brand transition-all duration-200 hover:scale-[1.03] group"
-          >
-            시작하기
-            <ArrowRightIcon className="size-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={2} />
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={handleComplete}
+          disabled={completing}
+          className="w-full flex items-center justify-center gap-2.5 h-12 rounded-xl text-sm font-semibold text-white bg-brand transition-all duration-200 hover:scale-[1.03] group disabled:opacity-60"
+        >
+          {completing ? '처리 중...' : '시작하기'}
+          <ArrowRightIcon className="size-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={2} />
+        </button>
         <Link
           href="/onboarding/add"
           className="flex items-center justify-center gap-2.5 h-11 rounded-xl text-sm font-medium text-on-surface-subtle border border-outline bg-white transition-all hover:border-outline-dim hover:text-on-surface active:scale-[0.99]"

@@ -1,12 +1,11 @@
 'use client'
 
-import { useActionState } from 'react'
-import { useFormStatus } from 'react-dom'
-import { signup, type SignupFormState } from '@/actions/auth'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/api-client'
+import { api, ApiError } from '@/lib/api-client'
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
+function SubmitButton({ pending }: { pending: boolean }) {
   return (
     <button
       type="submit"
@@ -118,15 +117,63 @@ function Field({
 }
 
 export function SignupForm() {
-  const [state, formAction] = useActionState<SignupFormState, FormData>(
-    signup,
-    undefined,
-  )
+  const router = useRouter()
+  const [pending, setPending] = useState(false)
+  const [errors, setErrors] = useState<{
+    fullName?: string[]
+    email?: string[]
+    password?: string[]
+  }>({})
+  const [message, setMessage] = useState<string | undefined>()
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setPending(true)
+    setErrors({})
+    setMessage(undefined)
+
+    const formData = new FormData(e.currentTarget)
+    const fullName = formData.get('fullName') as string
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    try {
+      // Sign up via Supabase client SDK (stores session in localStorage)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      })
+
+      if (error) {
+        if (error.message.toLowerCase().includes('already registered')) {
+          setMessage('이미 가입된 이메일입니다. 로그인해주세요.')
+        } else {
+          setMessage('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.')
+        }
+        setPending(false)
+        return
+      }
+
+      // Create profile via API (token is now available from SDK)
+      if (data.user) {
+        // The auth route on the server handles profile creation,
+        // but since we signed up client-side, we call the API to ensure profile exists
+        await api.post('/auth/signup', { fullName, email, password }).catch(() => {
+          // Profile may already be created by Supabase trigger, ignore
+        })
+      }
+
+      router.push('/dashboard')
+    } catch {
+      setMessage('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.')
+      setPending(false)
+    }
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate>
-      {/* Global error */}
-      {state?.message && (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      {message && (
         <div
           className="text-sm px-4 py-3 rounded-xl flex items-start gap-2.5"
           style={{
@@ -143,7 +190,7 @@ export function SignupForm() {
               <circle cx="7" cy="10.5" r="0.75" fill="#991B1B" />
             </svg>
           </span>
-          {state.message}
+          {message}
         </div>
       )}
 
@@ -153,7 +200,7 @@ export function SignupForm() {
         autoComplete="name"
         placeholder="홍길동"
         label="이름"
-        error={state?.errors?.fullName}
+        error={errors.fullName}
       />
 
       <Field
@@ -163,7 +210,7 @@ export function SignupForm() {
         autoComplete="email"
         placeholder="you@example.com"
         label="이메일"
-        error={state?.errors?.email}
+        error={errors.email}
       />
 
       <Field
@@ -173,11 +220,11 @@ export function SignupForm() {
         autoComplete="new-password"
         placeholder="영문·숫자 포함 8자 이상"
         label="비밀번호"
-        error={state?.errors?.password}
+        error={errors.password}
       />
 
       <div className="pt-1">
-        <SubmitButton />
+        <SubmitButton pending={pending} />
       </div>
 
       <p

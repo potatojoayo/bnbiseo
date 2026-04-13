@@ -1,9 +1,8 @@
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createServerClient } from '@/lib/supabase/server'
-import { db } from '@/db'
-import { properties } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { api } from '@/lib/api-client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,27 +17,37 @@ const propertyTypeLabel: Record<string, string> = {
   other: '기타',
 }
 
-export default async function PropertiesPage() {
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+type Property = {
+  id: string
+  name: string
+  address: string
+  addressDetail: string | null
+  propertyType: string
+  isActive: boolean
+  createdAt: string
+}
 
-  if (!user) redirect('/login')
+export default function PropertiesPage() {
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const userProperties = await db
-    .select({
-      id: properties.id,
-      name: properties.name,
-      address: properties.address,
-      addressDetail: properties.addressDetail,
-      propertyType: properties.propertyType,
-      isActive: properties.isActive,
-      createdAt: properties.createdAt,
+  useEffect(() => {
+    api.get<Property[]>('/properties').then((data) => {
+      setProperties(data)
+      setLoading(false)
     })
-    .from(properties)
-    .where(eq(properties.hostId, user.id))
-    .orderBy(properties.createdAt)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <SiteHeader title="숙소 목록" />
+        <div className="flex items-center justify-center flex-1">
+          <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-1 flex-col">
@@ -46,7 +55,7 @@ export default async function PropertiesPage() {
       <div className="p-4 md:p-6">
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-muted-foreground">
-          총 {userProperties.length}개의 숙소가 등록되어 있습니다.
+          총 {properties.length}개의 숙소가 등록되어 있습니다.
         </p>
         <Button asChild>
           <Link href="/dashboard/properties/new">
@@ -56,7 +65,7 @@ export default async function PropertiesPage() {
         </Button>
       </div>
 
-      {userProperties.length === 0 ? (
+      {properties.length === 0 ? (
         <Card>
           <CardContent className="py-16 flex flex-col items-center gap-4">
             <Building2 className="h-14 w-14 text-[#D1C9BC]" />
@@ -76,7 +85,7 @@ export default async function PropertiesPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {userProperties.map((property) => (
+          {properties.map((property) => (
             <Link key={property.id} href={`/dashboard/properties/${property.id}`}>
               <Card className="hover:shadow-md transition-all cursor-pointer group h-full">
                 <CardHeader className="pb-3">

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 /**
  * Supabase Auth Callback Route
@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
-    const supabase = await createServerClient()
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!,
+    )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
@@ -21,6 +24,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Redirect to error page or login on failure
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
 }

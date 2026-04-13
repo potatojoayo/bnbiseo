@@ -1,50 +1,51 @@
-import { notFound, redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createServerClient } from '@/lib/supabase/server'
-import { db } from '@/db'
-import { properties, fixtures } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
-import { updateFixture } from '@/actions/fixtures'
+import { api } from '@/lib/api-client'
 import { FixtureForm } from '../../components/fixture-form'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 
-export default async function EditFixturePage({
-  params,
-}: {
-  params: Promise<{ id: string; fixtureId: string }>
-}) {
-  const { id, fixtureId } = await params
+type Fixture = {
+  id: string
+  category: string
+  name: string
+  location: string
+  brand: string | null
+  modelNumber: string | null
+  specNotes: string | null
+  installedAt: string | null
+  notes: string | null
+}
 
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+export default function EditFixturePage() {
+  const params = useParams<{ id: string; fixtureId: string }>()
+  const [fixture, setFixture] = useState<Fixture | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  if (!user) redirect('/login')
+  useEffect(() => {
+    api.get<Fixture>(`/fixtures/${params.fixtureId}`)
+      .then(setFixture)
+      .catch(() => notFound())
+      .finally(() => setLoading(false))
+  }, [params.fixtureId])
 
-  const [property] = await db
-    .select({ id: properties.id, name: properties.name })
-    .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.hostId, user.id)))
-    .limit(1)
-
-  if (!property) notFound()
-
-  const [fixture] = await db
-    .select()
-    .from(fixtures)
-    .where(and(eq(fixtures.id, fixtureId), eq(fixtures.propertyId, id)))
-    .limit(1)
-
-  if (!fixture) notFound()
+  if (loading || !fixture) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="p-8 max-w-2xl">
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/dashboard/properties/${id}/fixtures/${fixtureId}`}>
+          <Link href={`/dashboard/properties/${params.id}/fixtures/${params.fixtureId}`}>
             <ArrowLeft className="h-4 w-4" />
             시설물로 돌아가기
           </Link>
@@ -54,14 +55,13 @@ export default async function EditFixturePage({
       <Card>
         <CardHeader>
           <CardTitle style={{ fontFamily: 'var(--font-display)' }}>시설물 수정</CardTitle>
-          <CardDescription>{fixture.name} — {property.name}</CardDescription>
+          <CardDescription>{fixture.name}</CardDescription>
         </CardHeader>
         <CardContent>
           <FixtureForm
-            action={updateFixture}
-            propertyId={id}
+            propertyId={params.id}
+            fixtureId={fixture.id}
             defaultValues={{
-              fixtureId: fixture.id,
               category: fixture.category,
               name: fixture.name,
               location: fixture.location,

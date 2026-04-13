@@ -1,10 +1,9 @@
-import { notFound, redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createServerClient } from '@/lib/supabase/server'
-import { db } from '@/db'
-import { properties, fixtures } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
-import { deleteProperty } from '@/actions/properties'
+import { api } from '@/lib/api-client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -43,46 +42,60 @@ const fixtureCategoryLabel: Record<string, string> = {
   other: '기타',
 }
 
-export default async function PropertyDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id } = await params
+type Fixture = {
+  id: string
+  name: string
+  category: string
+  location: string
+  brand: string | null
+  isActive: boolean
+}
 
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+type Property = {
+  id: string
+  name: string
+  address: string
+  addressDetail: string | null
+  propertyType: string
+  description: string | null
+  nearbyInfo: string | null
+  checkinInfo: string | null
+  wifiSsid: string | null
+  wifiPassword: string | null
+  isActive: boolean
+  fixtures: Fixture[]
+}
 
-  if (!user) redirect('/login')
+export default function PropertyDetailPage() {
+  const params = useParams<{ id: string }>()
+  const [property, setProperty] = useState<Property | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const [property] = await db
-    .select()
-    .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.hostId, user.id)))
-    .limit(1)
+  useEffect(() => {
+    api.get<Property>(`/properties/${params.id}`)
+      .then(setProperty)
+      .catch(() => notFound())
+      .finally(() => setLoading(false))
+  }, [params.id])
 
-  if (!property) notFound()
+  if (loading || !property) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <SiteHeader title="" />
+        <div className="flex items-center justify-center flex-1">
+          <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+        </div>
+      </div>
+    )
+  }
 
-  const propertyFixtures = await db
-    .select({
-      id: fixtures.id,
-      name: fixtures.name,
-      category: fixtures.category,
-      location: fixtures.location,
-      brand: fixtures.brand,
-      isActive: fixtures.isActive,
-    })
-    .from(fixtures)
-    .where(eq(fixtures.propertyId, id))
-    .orderBy(fixtures.category, fixtures.name)
+  const id = property.id
+  const propertyFixtures = property.fixtures
 
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader title={property.name} />
       <div className="p-4 md:p-6">
-      {/* Back + actions */}
       <div className="flex items-center justify-between mb-6">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/properties">
@@ -97,11 +110,10 @@ export default async function PropertyDetailPage({
               수정
             </Link>
           </Button>
-          <DeleteButton propertyId={id} action={deleteProperty} />
+          <DeleteButton propertyId={id} />
         </div>
       </div>
 
-      {/* Property info */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -120,7 +132,6 @@ export default async function PropertyDetailPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Details */}
         <div className="lg:col-span-2 space-y-4">
           {property.description && (
             <Card>
@@ -159,7 +170,6 @@ export default async function PropertyDetailPage({
           )}
         </div>
 
-        {/* WiFi */}
         {(property.wifiSsid || property.wifiPassword) && (
           <Card>
             <CardHeader className="pb-2">
@@ -188,7 +198,6 @@ export default async function PropertyDetailPage({
 
       <Separator className="my-6" />
 
-      {/* Fixtures section */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>

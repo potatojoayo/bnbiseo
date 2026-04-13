@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { ImagePlus, X, Loader2 } from 'lucide-react'
 
@@ -17,8 +17,6 @@ export function PhotoUploader({ folder, onUploaded }: PhotoUploaderProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadedPaths, setUploadedPaths] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
-
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
     const newPreviews = files.map((file) => ({

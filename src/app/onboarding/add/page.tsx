@@ -1,14 +1,7 @@
-import { redirect } from 'next/navigation'
-import { createServerClient } from '@/lib/supabase/server'
+'use client'
+
 import { OnboardingWizard } from '../onboarding-wizard'
 
-export default async function AddPropertyPage() {
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
+export default function AddPropertyPage() {
   return <OnboardingWizard backHref="/onboarding/complete" />
 }

@@ -1,12 +1,5 @@
-import { createBrowserClient } from '@supabase/ssr'
-
 /**
- * Creates a Supabase client for browser use.
- * Only used for Supabase Storage file uploads — all DB operations go via Drizzle.
+ * Re-export the shared Supabase browser client.
+ * Used for Supabase Storage file uploads.
  */
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!,
-  )
-}
+export { supabase as createClient } from '@/lib/api-client'

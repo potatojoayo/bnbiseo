@@ -1,10 +1,9 @@
-import { notFound, redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createServerClient } from '@/lib/supabase/server'
-import { db } from '@/db'
-import { properties, fixtures, fixturePhotos } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
-import { deleteFixture } from '@/actions/fixtures'
+import { api } from '@/lib/api-client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -25,51 +24,56 @@ const fixtureCategoryLabel: Record<string, string> = {
   other: '기타',
 }
 
-export default async function FixtureDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string; fixtureId: string }>
-}) {
-  const { id, fixtureId } = await params
+type Photo = {
+  id: string
+  storagePath: string
+  caption: string | null
+  sortOrder: number | null
+}
 
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+type Fixture = {
+  id: string
+  propertyId: string
+  category: string
+  name: string
+  location: string
+  brand: string | null
+  modelNumber: string | null
+  specNotes: string | null
+  installedAt: string | null
+  notes: string | null
+  photos: Photo[]
+}
 
-  if (!user) redirect('/login')
+export default function FixtureDetailPage() {
+  const params = useParams<{ id: string; fixtureId: string }>()
+  const [fixture, setFixture] = useState<Fixture | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Ownership check via property
-  const [property] = await db
-    .select({ id: properties.id, name: properties.name })
-    .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.hostId, user.id)))
-    .limit(1)
+  useEffect(() => {
+    api.get<Fixture>(`/fixtures/${params.fixtureId}`)
+      .then(setFixture)
+      .catch(() => notFound())
+      .finally(() => setLoading(false))
+  }, [params.fixtureId])
 
-  if (!property) notFound()
+  if (loading || !fixture) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+      </div>
+    )
+  }
 
-  const [fixture] = await db
-    .select()
-    .from(fixtures)
-    .where(and(eq(fixtures.id, fixtureId), eq(fixtures.propertyId, id)))
-    .limit(1)
-
-  if (!fixture) notFound()
-
-  const photos = await db
-    .select()
-    .from(fixturePhotos)
-    .where(eq(fixturePhotos.fixtureId, fixtureId))
-    .orderBy(fixturePhotos.sortOrder)
+  const { id, fixtureId } = params
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/dashboard/properties/${id}`}>
             <ArrowLeft className="h-4 w-4" />
-            {property.name}
+            숙소로
           </Link>
         </Button>
         <div className="flex items-center gap-2">
@@ -79,15 +83,10 @@ export default async function FixtureDetailPage({
               수정
             </Link>
           </Button>
-          <DeleteFixtureButton
-            fixtureId={fixtureId}
-            propertyId={id}
-            action={deleteFixture}
-          />
+          <DeleteFixtureButton fixtureId={fixtureId} propertyId={id} />
         </div>
       </div>
 
-      {/* Fixture title */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -104,7 +103,6 @@ export default async function FixtureDetailPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Details card */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">기기 정보</CardTitle>
@@ -149,14 +147,13 @@ export default async function FixtureDetailPage({
           </CardContent>
         </Card>
 
-        {/* Photos */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">사진 ({photos.length}장)</CardTitle>
+            <CardTitle className="text-sm">사진 ({fixture.photos.length}장)</CardTitle>
           </CardHeader>
           <CardContent>
             <FixturePhotoGallery
-              photos={photos}
+              photos={fixture.photos}
               propertyId={id}
               fixtureId={fixtureId}
             />

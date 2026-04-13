@@ -1,38 +1,53 @@
-import { redirect } from 'next/navigation'
-import { createServerClient } from '@/lib/supabase/server'
-import { db } from '@/db'
-import { properties, profiles } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-provider'
+import { api } from '@/lib/api-client'
 import { OnboardingWizard } from './onboarding-wizard'
 
-export default async function OnboardingPage() {
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+type Profile = { onboardingCompleted: boolean }
+type Property = { id: string }
 
-  if (!user) redirect('/login')
+export default function OnboardingPage() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const [ready, setReady] = useState(false)
 
-  // Check existing properties and profile in parallel
-  const [existing, profile] = await Promise.all([
-    db
-      .select({ id: properties.id })
-      .from(properties)
-      .where(eq(properties.hostId, user.id))
-      .limit(1),
-    db
-      .select({ onboardingCompleted: profiles.onboardingCompleted })
-      .from(profiles)
-      .where(eq(profiles.id, user.id))
-      .limit(1)
-      .then((rows) => rows[0] ?? null),
-  ])
+  useEffect(() => {
+    if (authLoading || !user) return
 
-  if (existing.length > 0) {
-    // Has properties and completed onboarding → dashboard
-    if (profile?.onboardingCompleted) redirect('/dashboard')
-    // Has properties but not completed → complete page
-    redirect('/onboarding/complete')
+    async function check() {
+      try {
+        const [profile, properties] = await Promise.all([
+          api.get<Profile>('/profiles/me'),
+          api.get<Property[]>('/properties'),
+        ])
+
+        if (properties.length > 0) {
+          if (profile.onboardingCompleted) {
+            router.replace('/dashboard')
+          } else {
+            router.replace('/onboarding/complete')
+          }
+          return
+        }
+
+        setReady(true)
+      } catch {
+        setReady(true)
+      }
+    }
+
+    check()
+  }, [user, authLoading, router])
+
+  if (!ready) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+      </div>
+    )
   }
 
   return <OnboardingWizard />
