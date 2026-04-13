@@ -256,6 +256,10 @@ body {
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /* Prevent iOS Safari auto-zoom on input focus (requires >= 16px) */
+  input, textarea, select {
+    font-size: 16px;
+  }
 }
 
 /* Sidebar: active item uses brand, hover stays neutral */
@@ -272,20 +276,46 @@ body {
 
 /* Ticket / coupon card — semicircle notches cut out */
 .ticket-card {
-  --notch: 12px;
-  --notch-x: 170px;
-  mask-image:
-    radial-gradient(circle var(--notch) at var(--notch-x) 0, transparent 99%, black 100%),
-    radial-gradient(circle var(--notch) at var(--notch-x) 100%, transparent 99%, black 100%);
-  mask-composite: intersect;
   -webkit-mask-image:
-    radial-gradient(circle var(--notch) at var(--notch-x) 0, transparent 99%, black 100%),
-    radial-gradient(circle var(--notch) at var(--notch-x) 100%, transparent 99%, black 100%);
+    radial-gradient(circle 12px at 170px 0, transparent 99%, black 100%),
+    radial-gradient(circle 12px at 170px 100%, transparent 99%, black 100%);
   -webkit-mask-composite: destination-in;
+  mask-image:
+    radial-gradient(circle 12px at 170px 0, transparent 99%, black 100%),
+    radial-gradient(circle 12px at 170px 100%, transparent 99%, black 100%);
+  mask-composite: intersect;
 }
 
 @media (max-width: 767px) {
   .ticket-card {
-    --notch-x: 116px;
+    -webkit-mask-image:
+      radial-gradient(circle 10px at 116px 0, transparent 99%, black 100%),
+      radial-gradient(circle 10px at 116px 100%, transparent 99%, black 100%);
+    mask-image:
+      radial-gradient(circle 10px at 116px 0, transparent 99%, black 100%),
+      radial-gradient(circle 10px at 116px 100%, transparent 99%, black 100%);
+  }
+}
+
+.ticket-dash {
+  width: 1px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #B0B0B0 0,
+    #B0B0B0 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+@media (max-width: 767px) {
+  .ticket-dash {
+    background: repeating-linear-gradient(
+      to bottom,
+      #B0B0B0 0,
+      #B0B0B0 3px,
+      transparent 3px,
+      transparent 6px
+    );
   }
 }

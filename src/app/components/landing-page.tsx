@@ -91,10 +91,10 @@ export default function LandingPage() {
     >
       {/* Nav */}
       <nav className="bg-surface sticky top-0 z-50 h-14 max-md:h-12 px-12 flex justify-between items-center border-b border-outline-dim max-md:px-6">
-        <Link href="/" className={`${FONT_DISPLAY} text-xl font-medium tracking-tighter transition-all duration-200 hover:text-brand hover:scale-[1.05]`}>
+        <Link href="/" className={`${FONT_DISPLAY} text-xl font-medium tracking-tighter text-brand transition-all duration-200 hover:scale-[1.05]`}>
           비앤비서
         </Link>
-        <Link href="/signup" className={`${FONT_BODY} bg-on-surface text-surface border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-brand hover:scale-[1.03]`}>무료 등록</Link>
+        <Link href="/login" className={`${FONT_BODY} bg-on-surface text-surface border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-brand hover:scale-[1.03]`}>무료 등록</Link>
       </nav>
 
       {/* Hero */}
@@ -114,7 +114,7 @@ export default function LandingPage() {
           <br />
           비앤비서가 전문 매니저를 바로 보내드릴게요.
         </p>
-        <Link href="/signup" className={`${BTN_MAIN} max-md:w-full max-md:justify-center`}>
+        <Link href="/login" className={`${BTN_MAIN} max-md:w-full max-md:justify-center`}>
           무료로 숙소 등록하기
           <span className="text-lg transition-transform duration-300 group-hover:translate-x-1.5">
             →
@@ -317,6 +317,9 @@ export default function LandingPage() {
           <br />
           비앤비서를 찾으세요
         </h2>
+        <p className={SEC_DESC}>
+          급한 상황부터 루틴 관리까지,<br className='sm:hidden'/> 호스트가 가장 많이 겪는 순간들이에요.
+        </p>
 
         <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
           {SCENARIOS.map((s, i) => (
@@ -339,12 +342,15 @@ export default function LandingPage() {
       {/* Launch Icon */}
       <AnimatedSection className="py-24 max-md:py-16">
         <div className={SECTION}>
-          <div className={BADGE}>Launch Icon</div>
+          <div className={BADGE}>Open Event</div>
           <h2 className={SEC_TITLE}>
             지금 등록하면
             <br />
             특별 혜택을 드려요
           </h2>
+          <p className={SEC_DESC}>
+            오픈 기념 한정 혜택이에요.<br className='sm:hidden'/> 숙소 등록만 하면 바로 적용됩니다.
+          </p>
 
           <div className="flex flex-col md:flex-row gap-5">
             {[
@@ -365,8 +371,8 @@ export default function LandingPage() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="group relative transition-transform duration-300 hover:scale-[1.02]"
-                style={{ filter: 'drop-shadow(0 0 0.5px #DDDDDD) drop-shadow(0 0 0.5px #DDDDDD)' }}
+                className="group relative md:flex-1 transition-transform duration-300 hover:scale-[1.02]"
+                style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.08)) drop-shadow(0 0 1px rgba(0,0,0,0.1))' }}
               >
                 <div className="ticket-card flex bg-white rounded-2xl">
                   <div className="relative flex flex-col items-center justify-center px-6 py-7 bg-brand text-white w-[170px] max-md:w-[116px] shrink-0 rounded-l-2xl">
@@ -381,7 +387,7 @@ export default function LandingPage() {
 
                   {/* Vertical dashed line */}
                   <div className="w-0 relative">
-                    <div className="absolute top-4 bottom-4 left-0 border-l-[1.5px] border-dashed border-[#D0D0D0]" />
+                    <div className="ticket-dash absolute top-4 bottom-4 left-0" />
                   </div>
 
                   <div className="flex-1 flex flex-col justify-center px-6 py-5 max-md:px-4">
@@ -409,7 +415,7 @@ export default function LandingPage() {
         <p className="text-on-surface-subtle text-sm sm:text-base mb-10">
           마포구·서대문구 먼저 시작해요 · 첫 청소 10,000원 할인
         </p>
-        <Link href="/signup" className={`${BTN_MAIN} mx-auto`}>
+        <Link href="/login" className={`${BTN_MAIN} mx-auto`}>
           무료로 숙소 등록하기
           <span className="text-lg transition-transform duration-300 group-hover:translate-x-1.5">
             →

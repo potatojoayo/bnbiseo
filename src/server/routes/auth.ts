@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
+import { sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { profiles } from '@/db/schema'
 
@@ -26,7 +27,23 @@ function getSupabase() {
   )
 }
 
+
 export const authRoutes = new Hono()
+
+authRoutes.post('/check-email', async (c) => {
+  const { email } = await c.req.json()
+  const parsed = z.string().email().safeParse(email)
+  if (!parsed.success) {
+    return c.json({ error: '유효한 이메일 주소를 입력해주세요.' }, 400)
+  }
+
+  const result = await db.execute<{ exists: boolean }>(
+    sql`SELECT EXISTS(SELECT 1 FROM auth.users WHERE email = ${parsed.data}) AS exists`
+  )
+  const exists = result[0]?.exists ?? false
+
+  return c.json({ exists })
+})
 
 authRoutes.post('/login', async (c) => {
   const body = await c.req.json()
