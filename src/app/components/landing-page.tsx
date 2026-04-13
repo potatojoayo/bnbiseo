@@ -346,30 +346,49 @@ export default function LandingPage() {
             특별 혜택을 드려요
           </h2>
 
-          <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
+          <div className="flex flex-col md:flex-row gap-5">
             {[
               {
                 emoji: "🎁",
                 title: "첫 청소 10,000원 할인",
-                desc: "숙소 정보를 무료로 등록하기만 하면, 첫 청소 시 즉시 적용됩니다.",
+                desc: "숙소 무료 등록만 하면 즉시 적용",
+                value: "10,000원",
+                label: "할인",
               },
               {
                 emoji: "💐",
                 title: "웰컴 세팅 무료",
-                desc: "웰컴메시지 엽서 & 조화 침대 위 세팅을 무료로 진행해 드립니다. 게스트 첫인상을 확 바꿔드려요.",
+                desc: "엽서 & 조화 침대 위 세팅 제공",
+                value: "FREE",
+                label: "무료 제공",
               },
             ].map((item) => (
               <div
                 key={item.title}
-                className="relative overflow-hidden bg-white border border-brand/25 rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
+                className="group relative transition-transform duration-300 hover:scale-[1.02]"
+                style={{ filter: 'drop-shadow(0 0 0.5px #DDDDDD) drop-shadow(0 0 0.5px #DDDDDD)' }}
               >
-                <div className="absolute top-0 left-0 right-0 h-[3px] bg-brand/60 rounded-t-2xl" />
-                <span className="inline-block text-[11px] font-semibold tracking-wide text-brand bg-brand/8 rounded-full px-2.5 py-0.5 mb-4">
-                  오픈 이벤트
-                </span>
-                <div className="text-3xl mb-3">{item.emoji}</div>
-                <div className="text-[17px] font-bold mb-2">{item.title}</div>
-                <div className="text-on-surface-subtle text-sm leading-relaxed">{item.desc}</div>
+                <div className="ticket-card flex bg-white rounded-2xl">
+                  <div className="relative flex flex-col items-center justify-center px-6 py-7 bg-brand text-white w-[170px] max-md:w-[116px] shrink-0 rounded-l-2xl">
+                    <span className="text-2xl mb-2">{item.emoji}</span>
+                    <span className={`${FONT_BODY} text-[24px] max-md:text-[15px] font-bold tracking-tight leading-none`}>
+                      {item.value}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mt-1.5">
+                      {item.label}
+                    </span>
+                  </div>
+
+                  {/* Vertical dashed line */}
+                  <div className="w-0 relative">
+                    <div className="absolute top-4 bottom-4 left-0 border-l-[1.5px] border-dashed border-[#D0D0D0]" />
+                  </div>
+
+                  <div className="flex-1 flex flex-col justify-center px-6 py-5 max-md:px-4">
+                    <div className="text-[16px] max-md:text-[15px] font-bold mb-1.5">{item.title}</div>
+                    <div className="text-[14px] max-md:text-[13px] text-[#717171] leading-relaxed">{item.desc}</div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

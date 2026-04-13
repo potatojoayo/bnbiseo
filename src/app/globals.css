@@ -269,3 +269,23 @@ body {
 [data-slot="sidebar-menu"] > [data-slot="sidebar-menu-item"] + [data-slot="sidebar-menu-item"] {
   margin-top: 4px;
 }
+
+/* Ticket / coupon card — semicircle notches cut out */
+.ticket-card {
+  --notch: 12px;
+  --notch-x: 170px;
+  mask-image:
+    radial-gradient(circle var(--notch) at var(--notch-x) 0, transparent 99%, black 100%),
+    radial-gradient(circle var(--notch) at var(--notch-x) 100%, transparent 99%, black 100%);
+  mask-composite: intersect;
+  -webkit-mask-image:
+    radial-gradient(circle var(--notch) at var(--notch-x) 0, transparent 99%, black 100%),
+    radial-gradient(circle var(--notch) at var(--notch-x) 100%, transparent 99%, black 100%);
+  -webkit-mask-composite: destination-in;
+}
+
+@media (max-width: 767px) {
+  .ticket-card {
+    --notch-x: 116px;
+  }
+}
