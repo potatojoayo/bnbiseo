@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircleIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/lib/auth-provider'
-import { useProperties } from '@/lib/hooks/use-properties'
+import { calculateCleaningPrice, MIN_BOOKING_LEAD_HOURS } from '@/lib/cleaning-pricing'
+import { useProperties, useInvalidateProperties } from '@/lib/hooks/use-properties'
 import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
 
@@ -20,15 +20,38 @@ function getToday(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-export default function CleaningPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+/** 최소 3시간 후, 30분 단위로 올림 */
+function getMinTime(selectedDate: string): string | undefined {
+  if (selectedDate !== getToday()) return undefined
+  const now = new Date()
+  now.setHours(now.getHours() + MIN_BOOKING_LEAD_HOURS)
+  // 30분 단위 올림: 분이 0이면 그대로, 1~30이면 30, 31~59이면 다음 정시
+  const m = now.getMinutes()
+  if (m === 0) {
+    // 이미 정각
+  } else if (m <= 30) {
+    now.setMinutes(30)
+  } else {
+    now.setHours(now.getHours() + 1)
+    now.setMinutes(0)
+  }
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
 
+function getDefaultTime(selectedDate: string): string {
+  const minTime = getMinTime(selectedDate)
+  if (!minTime) return '11:00'
+  return minTime > '11:00' ? minTime : '11:00'
+}
+
+export default function CleaningPage() {
+  const searchParams = useSearchParams()
   const { data: properties = [], isLoading: propertiesLoading } = useProperties()
 
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string>('')
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>(searchParams.get('propertyId') ?? '')
   const [date, setDate] = useState(getTomorrow())
   const [time, setTime] = useState('11:00')
+  const minTime = getMinTime(date)
   const [memo, setMemo] = useState('')
   const [dateFocused, setDateFocused] = useState(false)
   const [timeFocused, setTimeFocused] = useState(false)
@@ -37,12 +60,15 @@ export default function CleaningPage() {
   const [success, setSuccess] = useState(false)
 
   const isUrgent = date === getToday()
+  const selectedProperty = properties.find((p) => p.id === selectedPropertyId)
 
+  // Invalidate cache if returning from property creation
+  const invalidateProperties = useInvalidateProperties()
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login')
+    if (searchParams.get('propertyId')) {
+      invalidateProperties()
     }
-  }, [user, loading, router])
+  }, [searchParams, invalidateProperties])
 
   // Auto-select if single property
   useEffect(() => {
@@ -51,19 +77,13 @@ export default function CleaningPage() {
     }
   }, [properties, propertiesLoading, selectedPropertyId])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
-      </div>
-    )
-  }
-
-  if (!user) return null
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedPropertyId) return
+    if (minTime && time < minTime) {
+      setTime(minTime)
+      return
+    }
     setSubmitting(true)
     await new Promise((res) => setTimeout(res, 1500))
     setSubmitting(false)
@@ -136,12 +156,14 @@ export default function CleaningPage() {
                 )
               })}
             </div>
-            <Link
-              href="/my/properties/new"
-              className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors mt-1 px-1"
-            >
-              + 숙소 추가
-            </Link>
+            <div className="flex justify-end mt-2">
+              <Link
+                href="/properties/new"
+                className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors"
+              >
+                + 숙소 추가
+              </Link>
+            </div>
           </div>
         )}
 
@@ -157,7 +179,13 @@ export default function CleaningPage() {
                 type="date"
                 value={date}
                 min={getToday()}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => {
+                  const newDate = e.target.value
+                  setDate(newDate)
+                  const newMin = getMinTime(newDate)
+                  if (newMin && time < newMin) setTime(newMin)
+                  if (!newMin && time !== '11:00') setTime('11:00')
+                }}
                 onFocus={() => setDateFocused(true)}
                 onBlur={() => setDateFocused(false)}
                 required
@@ -172,8 +200,14 @@ export default function CleaningPage() {
             >
               <input
                 type="time"
+                step={1800}
+                min={minTime}
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (minTime && val < minTime) return
+                  setTime(val)
+                }}
                 onFocus={() => setTimeFocused(true)}
                 onBlur={() => setTimeFocused(false)}
                 required
@@ -200,6 +234,30 @@ export default function CleaningPage() {
             borderRadius="12px"
           />
         </CompoundInput>
+
+        {/* Price estimate */}
+        {selectedProperty?.pyeong && (
+          <div className="rounded-xl border border-[#EBEBEB] px-4 py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[14px] text-[#717171]">
+                {isUrgent ? '긴급 청소 예상 금액' : '예상 청소 금액'}
+              </span>
+              <span className="text-[20px] font-semibold text-[#222222]">
+                {calculateCleaningPrice({
+                  pyeong: selectedProperty.pyeong,
+                  bedrooms: selectedProperty.bedrooms,
+                  bathrooms: selectedProperty.bathrooms,
+                  isUrgent,
+                }).total.toLocaleString()}원
+              </span>
+            </div>
+            {isUrgent && (
+              <p className="text-[12px] text-[#717171] mt-1.5">
+                긴급 할증 50% 포함
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Submit */}
         <LoadingButton

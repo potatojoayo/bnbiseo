@@ -1,33 +1,15 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth-provider'
 import Image from 'next/image'
+import { useAuth } from '@/lib/auth-provider'
 import { Logo } from '@/components/logo'
 import { BellIcon } from 'lucide-react'
 
 export default function HomePage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login')
-    }
-  }, [user, loading, router])
+  const { user } = useAuth()
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
-      </div>
-    )
-  }
-
-  if (!user) return null
-
-  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || ''
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
   const today = new Intl.DateTimeFormat('ko-KR', {
     month: 'long',
     day: 'numeric',
@@ -63,7 +45,7 @@ export default function HomePage() {
           className="mb-5 object-contain"
         />
         <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
-          아직 청소 내역이 없어요
+          처음 오셨나요?
         </h2>
         <p className="text-[14px] text-[#717171] leading-relaxed">
           10,000원 할인을 받고 첫 청소를 요청해보세요!
@@ -75,7 +57,6 @@ export default function HomePage() {
           청소 요청하기
         </Link>
       </div>
-
     </div>
   )
 }

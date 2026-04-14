@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
+import { useInvalidateProfile } from '@/lib/hooks/use-profile'
 import { MapPinIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
 
@@ -17,6 +18,7 @@ type Property = {
 
 export default function CompletePage() {
   const { user, loading: authLoading } = useAuth()
+  const invalidateProfile = useInvalidateProfile()
   const router = useRouter()
   const [properties, setProperties] = useState<Property[]>([])
   const [ready, setReady] = useState(false)
@@ -38,6 +40,7 @@ export default function CompletePage() {
   async function handleComplete() {
     setCompleting(true)
     await api.post('/profiles/complete-onboarding')
+    await invalidateProfile()
     router.push('/home')
   }
 

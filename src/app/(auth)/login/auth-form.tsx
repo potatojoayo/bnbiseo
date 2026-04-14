@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api-client'
 import { api } from '@/lib/api-client'
+import { useInvalidateProfile } from '@/lib/hooks/use-profile'
 import { CompoundInput, CompoundField, FloatingInput } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
 
@@ -11,6 +12,7 @@ type Step = 'email' | 'login' | 'signup'
 
 export function AuthForm() {
   const router = useRouter()
+  const invalidateProfile = useInvalidateProfile()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [pending, setPending] = useState(false)
@@ -145,6 +147,7 @@ export function AuthForm() {
       return
     }
 
+    await invalidateProfile()
     try {
       const profile = await api.get<{ onboardingCompleted: boolean }>('/profiles/me')
       router.push(profile.onboardingCompleted ? '/home' : '/onboarding')
@@ -215,6 +218,7 @@ export function AuthForm() {
       })
 
       await api.post('/auth/signup', { fullName: name.trim(), email: email.trim() }).catch(() => {})
+      await invalidateProfile()
 
       router.push('/onboarding')
     } catch {

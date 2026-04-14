@@ -9,7 +9,7 @@ import { LoadingButton } from '@/components/ui/loading-button'
 import { api, ApiError } from '@/lib/api-client'
 import { extractListingId } from '@/lib/airbnb-scraper'
 import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
-import { FloatingTextarea, CompoundField } from '@/components/ui/floating-input'
+import { FloatingTextarea, CompoundInput, CompoundField } from '@/components/ui/floating-input'
 import {
   Drawer,
   DrawerTrigger,
@@ -24,6 +24,9 @@ type PropertyData = {
   name?: string
   address?: string
   addressDetail?: string | null
+  pyeong?: number | null
+  bedrooms?: number | null
+  bathrooms?: number | null
   airbnbListingId?: string | null
 }
 
@@ -47,6 +50,9 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
   const [name, setName] = useState(initialData?.name ?? '')
   const [address, setAddress] = useState(initialData?.address ?? '')
   const [addressDetail, setAddressDetail] = useState(initialData?.addressDetail ?? '')
+  const [pyeong, setPyeong] = useState(initialData?.pyeong?.toString() ?? '')
+  const [bedrooms, setBedrooms] = useState(initialData?.bedrooms?.toString() ?? '1')
+  const [bathrooms, setBathrooms] = useState(initialData?.bathrooms?.toString() ?? '1')
   const [airbnbUrl, setAirbnbUrl] = useState(initialData?.airbnbListingId ?? '')
 
   // Airbnb preview
@@ -128,6 +134,16 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
     setErrors({})
     setMessage(undefined)
 
+    const newErrors: Record<string, string[]> = {}
+    if (!name.trim()) newErrors.name = ['숙소 이름을 알려주세요']
+    if (!address) newErrors.address = ['주소를 검색해주세요']
+    if (!pyeong || Number(pyeong) < 1) newErrors.pyeong = ['면적을 입력해주세요']
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      setIsPending(false)
+      return
+    }
+
     // Clean airbnb URL
     let cleanUrl = airbnbUrl.trim()
     if (cleanUrl.includes('airbnb') && cleanUrl.includes('?')) {
@@ -138,24 +154,30 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
       name: name.trim(),
       address,
       addressDetail: addressDetail.trim() || undefined,
+      pyeong: pyeong ? Number(pyeong) : undefined,
+      bedrooms: Number(bedrooms) || 1,
+      bathrooms: Number(bathrooms) || 1,
       propertyType: 'apartment',
       airbnbListingId: cleanUrl || undefined,
     }
 
     try {
+      let createdId: string | undefined
       if (mode === 'edit' && initialData?.id) {
         await api.patch(`/properties/${initialData.id}`, body)
       } else {
-        await api.post('/properties', body)
+        const created = await api.post<{ id: string }>('/properties', body)
+        createdId = created.id
       }
-      router.push(redirectTo ?? '/onboarding/complete', { scroll: false })
+      const dest = redirectTo ?? '/onboarding/complete'
+      router.push(createdId ? `${dest}?propertyId=${createdId}` : dest, { scroll: false })
     } catch (err) {
       if (err instanceof ApiError && err.data.errors) {
         setErrors(err.data.errors as Record<string, string[]>)
       } else if (err instanceof ApiError) {
         setMessage(err.message)
       } else {
-        setMessage(mode === 'edit' ? '수정 중 오류가 발생했습니다.' : '숙소 등록 중 오류가 발생했습니다.')
+        setMessage(mode === 'edit' ? '수정 중 문제가 생겼어요. 다시 시도해주세요' : '등록 중 문제가 생겼어요. 다시 시도해주세요')
       }
       setIsPending(false)
     }
@@ -169,7 +191,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
       const remaining = await api.get<{ id: string }[]>('/properties').catch(() => [])
       router.push(remaining.length > 0 ? '/onboarding/complete' : '/onboarding', { scroll: false })
     } catch {
-      setMessage('삭제 중 오류가 발생했습니다.')
+      setMessage('삭제 중 문제가 생겼어요. 다시 시도해주세요')
       setDeleting(false)
     }
   }
@@ -311,6 +333,80 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
           )}
         </div>
 
+        {/* 면적 · 침실 · 욕실 */}
+        <CompoundInput>
+          <CompoundField
+            label="실평수"
+            focused={focused === 'pyeong'}
+            borderRadius="12px 12px 0 0"
+          >
+            <input
+              id="onboarding-pyeong"
+              type="number"
+              inputMode="numeric"
+              value={pyeong}
+              onChange={(e) => {
+                setPyeong(e.target.value)
+                if (errors.pyeong) setErrors((prev) => { const { pyeong: _, ...rest } = prev; return rest })
+              }}
+              onFocus={() => setFocused('pyeong')}
+              onBlur={() => setFocused(null)}
+              placeholder="예: 15"
+              className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
+              style={{ MozAppearance: 'textfield' } as React.CSSProperties}
+            />
+            {errors.pyeong?.[0] && (
+              <p className="text-[12px] text-[#C13515] mt-1">{errors.pyeong[0]}</p>
+            )}
+          </CompoundField>
+          <CompoundField
+            label="방 수"
+            focused={focused === 'bedrooms'}
+          >
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setBedrooms(String(Math.max(1, Number(bedrooms) - 1)))}
+                disabled={Number(bedrooms) <= 1}
+                className="w-8 h-8 rounded-full border border-[#B0B0B0] flex items-center justify-center text-[#717171] hover:border-[#222222] hover:text-[#222222] transition-colors active:scale-95 disabled:opacity-0 disabled:pointer-events-none"
+              >
+                <span className="text-[18px] leading-none">−</span>
+              </button>
+              <span className="text-[16px] font-semibold text-[#222222] tabular-nums">{bedrooms || '0'}</span>
+              <button
+                type="button"
+                onClick={() => setBedrooms(String(Number(bedrooms) + 1))}
+                className="w-8 h-8 rounded-full border border-[#B0B0B0] flex items-center justify-center text-[#717171] hover:border-[#222222] hover:text-[#222222] transition-colors active:scale-95"
+              >
+                <span className="text-[18px] leading-none">+</span>
+              </button>
+            </div>
+          </CompoundField>
+          <CompoundField
+            label="욕실 수"
+            focused={focused === 'bathrooms'}
+            borderRadius="0 0 12px 12px"
+          >
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setBathrooms(String(Math.max(0, Number(bathrooms) - 1)))}
+                className="w-8 h-8 rounded-full border border-[#B0B0B0] flex items-center justify-center text-[#717171] hover:border-[#222222] hover:text-[#222222] transition-colors active:scale-95"
+              >
+                <span className="text-[18px] leading-none">−</span>
+              </button>
+              <span className="text-[16px] font-semibold text-[#222222] tabular-nums">{bathrooms || '0'}</span>
+              <button
+                type="button"
+                onClick={() => setBathrooms(String(Number(bathrooms) + 1))}
+                className="w-8 h-8 rounded-full border border-[#B0B0B0] flex items-center justify-center text-[#717171] hover:border-[#222222] hover:text-[#222222] transition-colors active:scale-95"
+              >
+                <span className="text-[18px] leading-none">+</span>
+              </button>
+            </div>
+          </CompoundField>
+        </CompoundInput>
+
         {/* 에어비앤비 링크 (선택) */}
         <div className="rounded-xl border border-[#B0B0B0]">
           <FloatingTextarea
@@ -343,7 +439,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                   const data = await api.get<AirbnbListingInfo>(`/airroi/listing/${listingId}`)
                   if (!data.name && !data.imageUrl) {
                     setAirbnbPreview(null)
-                    setAirbnbError('숙소 정보를 가져올 수 없습니다. 링크를 확인해주세요.')
+                    setAirbnbError('숙소 정보를 가져오지 못했어요. 링크를 다시 확인해주세요')
                   } else {
                     setAirbnbPreview(data)
                     lastFetchedId.current = listingId
@@ -487,11 +583,11 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
               <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
                 <DrawerHeader className="px-0">
                   <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                    숙소를 삭제하시겠습니까?
+                    정말 삭제할까요?
                   </DrawerTitle>
                 </DrawerHeader>
                 <p className="text-[14px] text-[#717171] mb-6">
-                  삭제된 숙소는 복구할 수 없습니다.
+                  삭제하면 되돌릴 수 없어요.
                 </p>
                 <div className="flex flex-col gap-3">
                   <LoadingButton

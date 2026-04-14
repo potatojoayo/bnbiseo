@@ -1,30 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-provider'
 import { supabase } from '@/lib/api-client'
 import { LogOutIcon } from 'lucide-react'
 
 export default function MyPage() {
-  const { user, loading } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login')
-    }
-  }, [user, loading, router])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
-      </div>
-    )
-  }
-
-  if (!user) return null
 
   return (
     <div className="min-h-[calc(100dvh-80px)] flex flex-col">
