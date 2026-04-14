@@ -229,7 +229,7 @@ export default function CleaningPage() {
             : price.total
 
           return (
-            <div className="rounded-xl border border-[#EBEBEB] px-4 py-4">
+            <div className="rounded-xl border border-[#B0B0B0] px-4 py-4">
               <div className="flex items-center justify-between">
                 <span className="text-[14px] text-[#717171]">
                   {isUrgent ? '긴급 청소 예상 금액' : '예상 청소 금액'}
