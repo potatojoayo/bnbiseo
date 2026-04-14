@@ -20,7 +20,7 @@ export default function NewPropertyPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle style={{ fontFamily: 'var(--font-display)' }}>숙소 등록</CardTitle>
+          <CardTitle >숙소 등록</CardTitle>
         </CardHeader>
         <CardContent>
           <PropertyForm submitLabel="숙소 등록" />

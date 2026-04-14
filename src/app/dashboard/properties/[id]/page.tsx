@@ -116,7 +116,7 @@ export default function PropertyDetailPage() {
 
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-2xl font-bold" >
             {property.name}
           </h1>
           <Badge variant="secondary">
@@ -201,7 +201,7 @@ export default function PropertyDetailPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-semibold" >
               시설물 목록
             </h2>
             <p className="text-sm text-[#6b7280]">총 {propertyFixtures.length}개</p>

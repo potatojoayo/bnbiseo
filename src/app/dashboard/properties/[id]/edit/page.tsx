@@ -55,7 +55,7 @@ export default function EditPropertyPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle style={{ fontFamily: 'var(--font-display)' }}>숙소 정보 수정</CardTitle>
+          <CardTitle >숙소 정보 수정</CardTitle>
         </CardHeader>
         <CardContent>
           <PropertyForm

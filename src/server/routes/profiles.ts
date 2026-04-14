@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
+import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import { profiles } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
@@ -15,7 +15,7 @@ profilesRoutes.get('/me', async (c) => {
   const [profile] = await db
     .select()
     .from(profiles)
-    .where(eq(profiles.id, userId))
+    .where(and(eq(profiles.id, userId), isNull(profiles.deletedAt)))
     .limit(1)
 
   if (!profile) {
@@ -32,7 +32,7 @@ profilesRoutes.post('/complete-onboarding', async (c) => {
   const [updated] = await db
     .update(profiles)
     .set({ onboardingCompleted: true, updatedAt: new Date() })
-    .where(eq(profiles.id, userId))
+    .where(and(eq(profiles.id, userId), isNull(profiles.deletedAt)))
     .returning()
 
   if (!updated) {

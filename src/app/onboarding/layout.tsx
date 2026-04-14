@@ -1,7 +1,5 @@
-import { OnboardingProvider } from './onboarding-context'
-import { OnboardingPanel } from './onboarding-panel'
-import { MobileStepHeader } from './mobile-step-header'
-import { ContentPanel } from './content-panel'
+import Link from 'next/link'
+import { Logo } from '@/components/logo'
 
 export default function OnboardingLayout({
   children,
@@ -9,20 +7,13 @@ export default function OnboardingLayout({
   children: React.ReactNode
 }) {
   return (
-    <OnboardingProvider>
-      <div className="min-h-screen flex overflow-hidden">
-        {/* Left brand panel with dynamic steps */}
-        <OnboardingPanel />
-
-        {/* Right content panel */}
-        <ContentPanel>
-          <MobileStepHeader />
-
-          <main className="flex-1 flex flex-col items-center justify-center px-6 py-10 lg:py-14">
-            <div className="w-full max-w-[560px]">{children}</div>
-          </main>
-        </ContentPanel>
+    <div className="min-h-[100dvh] bg-white flex flex-col items-center px-6 pt-24 max-md:pt-8 pb-8">
+      <div className="w-full max-w-[560px]">
+        <div className="text-center mb-8">
+          <Link href="/"><Logo size="lg" /></Link>
+        </div>
+        {children}
       </div>
-    </OnboardingProvider>
+    </div>
   )
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { TopLoader } from "./components/top-loader";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth-provider";
@@ -53,7 +52,6 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
           <AuthProvider>
-            <TopLoader />
             {children}
           </AuthProvider>
         </body>

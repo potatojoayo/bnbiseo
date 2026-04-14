@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api-client'
 import { api } from '@/lib/api-client'
+import { CompoundInput, CompoundField, FloatingInput } from '@/components/ui/floating-input'
 
 type Step = 'email' | 'login' | 'signup'
 
@@ -21,6 +22,8 @@ export function AuthForm() {
   const extraRef = useRef<HTMLDivElement>(null)
   const [extraHeight, setExtraHeight] = useState(0)
   const [visibleStep, setVisibleStep] = useState<Step>('email')
+
+  const font = { fontFamily: 'var(--font-body)' }
 
   // When step changes, update visibleStep (for open) or start close animation
   useEffect(() => {
@@ -141,7 +144,7 @@ export function AuthForm() {
       return
     }
 
-    router.push('/dashboard')
+    router.push('/onboarding')
   }
 
   async function handleSignup() {
@@ -169,16 +172,45 @@ export function AuthForm() {
       })
 
       if (error) {
-        setMessage('회원가입 중 오류가 발생했습니다.')
-        setPending(false)
-        return
+        // Already registered — sign in instead
+        if (error.message.toLowerCase().includes('already registered')) {
+          const { error: loginError } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          })
+          if (loginError) {
+            setMessage('이미 가입된 이메일입니다. 비밀번호를 확인해주세요.')
+            setPending(false)
+            return
+          }
+          // Fall through to profile creation below
+        } else {
+          setMessage('회원가입 중 오류가 발생했습니다.')
+          setPending(false)
+          return
+        }
       }
 
-      if (data.user) {
-        await api.post('/auth/signup', { fullName: name.trim(), email: email.trim(), password }).catch(() => {})
-      }
+      // Wait for session to be set before calling authenticated API
+      await new Promise<void>((resolve) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+          if (event === 'SIGNED_IN') {
+            subscription.unsubscribe()
+            resolve()
+          }
+        })
+        // Already signed in — resolve immediately
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            subscription.unsubscribe()
+            resolve()
+          }
+        })
+      })
 
-      router.push('/dashboard')
+      await api.post('/auth/signup', { fullName: name.trim(), email: email.trim() }).catch(() => {})
+
+      router.push('/onboarding')
     } catch {
       setMessage('회원가입 중 오류가 발생했습니다.')
       setPending(false)
@@ -191,18 +223,6 @@ export function AuthForm() {
     setPassword('')
     setMessage(undefined)
     setErrors({})
-  }
-
-  const inputCls = 'w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none'
-  const labelCls = 'absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]'
-  const font = { fontFamily: 'var(--font-body)' }
-
-  function focusStyle(field: string, radius?: string) {
-    return {
-      boxShadow: focused === field ? 'inset 0 0 0 1px #222222' : 'inset 0 0 0 0px #222222',
-      borderRadius: radius ?? undefined,
-      transition: 'box-shadow 0.2s ease',
-    }
   }
 
   const isExpanded = step !== 'email'
@@ -227,15 +247,14 @@ export function AuthForm() {
       )}
 
       <form onSubmit={handleSubmit} noValidate>
+        {/* Outer container — no divide-y here because extra fields slide in */}
         <div className="rounded-xl border border-[#B0B0B0] overflow-hidden">
           {/* Email — always visible */}
-          <div
-            className="relative px-4 pt-[22px] pb-[10px]"
-            style={focusStyle('email', emailRadius)}
+          <CompoundField
+            label="이메일"
+            focused={focused === 'email'}
+            borderRadius={emailRadius}
           >
-            <label htmlFor="email" className={labelCls} style={font}>
-              이메일
-            </label>
             <input
               id="email"
               type="email"
@@ -245,14 +264,14 @@ export function AuthForm() {
               onChange={(e) => onEmailChange(e.target.value)}
               onFocus={() => setFocused('email')}
               onBlur={() => setFocused(null)}
-              className={inputCls}
+              className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
               style={font}
               autoFocus
             />
             {errors.email && (
               <p className="text-[12px] text-[#C13515] mt-1" style={font}>{errors.email}</p>
             )}
-          </div>
+          </CompoundField>
 
           {/* Extra fields — slide down */}
           <div
@@ -267,13 +286,11 @@ export function AuthForm() {
               {/* Login: password only */}
               {visibleStep === 'login' && (
                 <div className="border-t border-[#B0B0B0]">
-                  <div
-                    className="relative px-4 pt-[22px] pb-[10px]"
-                    style={focusStyle('password', '0 0 12px 12px')}
+                  <CompoundField
+                    label="비밀번호"
+                    focused={focused === 'password'}
+                    borderRadius="0 0 12px 12px"
                   >
-                    <label htmlFor="password" className={labelCls} style={font}>
-                      비밀번호
-                    </label>
                     <input
                       id="password"
                       type="password"
@@ -283,10 +300,10 @@ export function AuthForm() {
                       onChange={(e) => onPasswordChange(e.target.value)}
                       onFocus={() => setFocused('password')}
                       onBlur={() => setFocused(null)}
-                      className={inputCls}
+                      className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
                       style={font}
                     />
-                  </div>
+                  </CompoundField>
                 </div>
               )}
 
@@ -294,13 +311,10 @@ export function AuthForm() {
               {visibleStep === 'signup' && (
                 <>
                   <div className="border-t border-[#B0B0B0]">
-                    <div
-                      className="relative px-4 pt-[22px] pb-[10px]"
-                      style={focusStyle('fullName')}
+                    <CompoundField
+                      label="이름"
+                      focused={focused === 'fullName'}
                     >
-                      <label htmlFor="fullName" className={labelCls} style={font}>
-                        이름
-                      </label>
                       <input
                         id="fullName"
                         type="text"
@@ -310,22 +324,20 @@ export function AuthForm() {
                         onChange={(e) => onNameChange(e.target.value)}
                         onFocus={() => setFocused('fullName')}
                         onBlur={() => setFocused(null)}
-                        className={inputCls}
+                        className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
                         style={font}
                       />
                       {errors.fullName && (
                         <p className="text-[12px] text-[#C13515] mt-1" style={font}>{errors.fullName}</p>
                       )}
-                    </div>
+                    </CompoundField>
                   </div>
                   <div className="border-t border-[#B0B0B0]">
-                    <div
-                      className="relative px-4 pt-[22px] pb-[10px]"
-                      style={focusStyle('password', '0 0 12px 12px')}
+                    <CompoundField
+                      label="비밀번호"
+                      focused={focused === 'password'}
+                      borderRadius="0 0 12px 12px"
                     >
-                      <label htmlFor="password" className={labelCls} style={font}>
-                        비밀번호
-                      </label>
                       <input
                         id="password"
                         type="password"
@@ -335,13 +347,13 @@ export function AuthForm() {
                         onChange={(e) => onPasswordChange(e.target.value)}
                         onFocus={() => setFocused('password')}
                         onBlur={() => setFocused(null)}
-                        className={inputCls}
+                        className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
                         style={font}
                       />
                       {errors.password && (
                         <p className="text-[12px] text-[#C13515] mt-1" style={font}>{errors.password}</p>
                       )}
-                    </div>
+                    </CompoundField>
                   </div>
                 </>
               )}

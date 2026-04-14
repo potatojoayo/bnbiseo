@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
-import { OnboardingWizard } from './onboarding-wizard'
+import { PropertyForm } from './property-form'
 
 type Profile = { onboardingCompleted: boolean }
 type Property = { id: string }
@@ -20,12 +20,12 @@ export default function OnboardingPage() {
     async function check() {
       try {
         const [profile, properties] = await Promise.all([
-          api.get<Profile>('/profiles/me'),
-          api.get<Property[]>('/properties'),
+          api.get<Profile>('/profiles/me').catch(() => null),
+          api.get<Property[]>('/properties').catch(() => []),
         ])
 
         if (properties.length > 0) {
-          if (profile.onboardingCompleted) {
+          if (profile?.onboardingCompleted) {
             router.replace('/dashboard')
           } else {
             router.replace('/onboarding/complete')
@@ -50,5 +50,5 @@ export default function OnboardingPage() {
     )
   }
 
-  return <OnboardingWizard />
+  return <PropertyForm />
 }

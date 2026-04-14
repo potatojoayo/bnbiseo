@@ -27,24 +27,24 @@ export default function DashboardLayout({
     async function check() {
       try {
         const [profile, props] = await Promise.all([
-          api.get<Profile>('/profiles/me'),
-          api.get<Property[]>('/properties'),
+          api.get<Profile>('/profiles/me').catch(() => null),
+          api.get<Property[]>('/properties').catch(() => []),
         ])
+
+        if (!profile || !profile.onboardingCompleted) {
+          router.replace(props.length === 0 ? '/onboarding' : '/onboarding/complete')
+          return
+        }
 
         if (props.length === 0) {
           router.replace('/onboarding')
           return
         }
 
-        if (!profile.onboardingCompleted) {
-          router.replace('/onboarding/complete')
-          return
-        }
-
         setProperties(props)
         setReady(true)
       } catch {
-        router.replace('/login')
+        // Only redirect to login if truly unauthenticated
       }
     }
 

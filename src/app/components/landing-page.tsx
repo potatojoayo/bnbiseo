@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Marquee from "react-fast-marquee";
+import { Logo } from "@/components/logo";
+import { CtaButton } from "./cta-button";
 import CleaningRequestDemo from "./cleaning-request-demo";
 import ChecklistDemo from "./checklist-demo";
 import PropertyCardDemo from "./property-card-demo";
@@ -91,16 +93,14 @@ export default function LandingPage() {
     >
       {/* Nav */}
       <nav className="bg-surface sticky top-0 z-50 h-14 max-md:h-12 px-12 flex justify-between items-center border-b border-outline-dim max-md:px-6">
-        <Link href="/" className={`${FONT_DISPLAY} text-xl font-medium tracking-tighter text-brand transition-all duration-200 hover:scale-[1.05]`}>
-          비앤비서
-        </Link>
-        <Link href="/login" className={`${FONT_BODY} bg-on-surface text-surface border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-brand hover:scale-[1.03]`}>무료 등록</Link>
+        <a href="#"><Logo /></a>
+        <CtaButton className={`${FONT_BODY} bg-on-surface text-surface border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-brand hover:scale-[1.03]`}>무료 등록</CtaButton>
       </nav>
 
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-12 pt-24 pb-20 max-md:px-6 max-md:pt-16 max-md:pb-14">
         <h1
-          className={`${FONT_DISPLAY} font-medium tracking-tight mb-9`}
+          className={`${FONT_DISPLAY} font-semibold tracking-tight mb-9`}
         >
           <span className="block text-[clamp(36px,5.5vw,64px)] max-md:text-[34px] leading-tight animate-fade-in-d1">
             체크인 3시간 전,
@@ -114,12 +114,12 @@ export default function LandingPage() {
           <br />
           비앤비서가 전문 매니저를 바로 보내드릴게요.
         </p>
-        <Link href="/login" className={`${BTN_MAIN} max-md:w-full max-md:justify-center`}>
+        <CtaButton className={`${BTN_MAIN} max-md:w-full max-md:justify-center`}>
           무료로 숙소 등록하기
           <span className="text-lg transition-transform duration-300 group-hover:translate-x-1.5">
             →
           </span>
-        </Link>
+        </CtaButton>
         <div className="text-on-surface-subtle text-xs mt-4 font-normal max-md:text-center">
           마포구·서대문구 먼저 시작해요 · 첫 청소 10,000원 할인
         </div>
@@ -131,7 +131,7 @@ export default function LandingPage() {
           {MARQUEE_ITEMS.map((t, i) => (
             <span
               key={i}
-              className={`${FONT_DISPLAY} text-sm text-on-surface-subtle whitespace-nowrap flex items-center gap-3 mx-8`}
+              className={`${FONT_BODY} text-sm font-normal text-on-surface-subtle whitespace-nowrap flex items-center gap-3 mx-8`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-brand opacity-50" />
               {t}
@@ -189,8 +189,8 @@ export default function LandingPage() {
             { step: STEPS[1], demo: <CleaningRequestDemo /> },
             { step: STEPS[2], demo: <ChecklistDemo /> },
           ].map(({ step, demo }, i) => (
-            <div key={i} className="grid grid-cols-2 max-md:grid-cols-1 gap-6 items-center">
-              <div className="bg-surface-dim rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02] h-full flex flex-col justify-center">
+            <div key={i} className="grid grid-cols-2 max-md:grid-cols-1 gap-6 items-start">
+              <div className="bg-surface-dim rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]">
                 <div className="text-on-surface-subtle text-xs font-semibold tracking-widest uppercase mb-3">Step {i + 1}</div>
                 <div className="text-3xl mb-4">{step.icon}</div>
                 <div className="text-[17px] font-bold mb-2">{step.t}</div>
@@ -415,12 +415,12 @@ export default function LandingPage() {
         <p className="text-on-surface-subtle text-sm sm:text-base mb-10">
           마포구·서대문구 먼저 시작해요 · 첫 청소 10,000원 할인
         </p>
-        <Link href="/login" className={`${BTN_MAIN} mx-auto`}>
+        <CtaButton className={`${BTN_MAIN} mx-auto`}>
           무료로 숙소 등록하기
           <span className="text-lg transition-transform duration-300 group-hover:translate-x-1.5">
             →
           </span>
-        </Link>
+        </CtaButton>
       </AnimatedSection>
 
       {/* Footer */}

@@ -54,7 +54,7 @@ export default function EditFixturePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle style={{ fontFamily: 'var(--font-display)' }}>시설물 수정</CardTitle>
+          <CardTitle >시설물 수정</CardTitle>
           <CardDescription>{fixture.name}</CardDescription>
         </CardHeader>
         <CardContent>

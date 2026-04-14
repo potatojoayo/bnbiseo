@@ -76,12 +76,14 @@ export const chatRoleEnum = pgEnum('chat_role', ['user', 'assistant', 'system'])
 
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey(), // references auth.users
+  email: text('email'),
   fullName: text('full_name'),
   phone: text('phone'),
   avatarUrl: text('avatar_url'),
   onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 })
 
 export const properties = pgTable('properties', {
@@ -100,9 +102,9 @@ export const properties = pgTable('properties', {
   wifiSsid: text('wifi_ssid'),
   wifiPassword: text('wifi_password'),
   qrToken: uuid('qr_token').defaultRandom().notNull(),
-  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 })
 
 export const propertyPhotos = pgTable('property_photos', {

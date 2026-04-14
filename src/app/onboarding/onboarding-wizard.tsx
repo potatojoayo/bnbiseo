@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useOnboarding } from './onboarding-context'
 import Link from 'next/link'
@@ -21,8 +21,18 @@ import {
   ArrowLeftIcon,
   Loader2Icon,
   PencilIcon,
+  HelpCircleIcon,
 } from 'lucide-react'
 import { AddressSearch } from '@/components/address-search'
+import { FloatingInput, FloatingTextarea, CompoundInput, CompoundField } from '@/components/ui/floating-input'
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose,
+} from '@/components/ui/drawer'
 
 function AirbnbIcon({ className }: { className?: string }) {
   return (
@@ -34,6 +44,63 @@ function AirbnbIcon({ className }: { className?: string }) {
 import { api, ApiError } from '@/lib/api-client'
 import { extractListingId } from '@/lib/airbnb-scraper'
 import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
+
+// ─── Airbnb Link Help Drawer ─────────────────────────────────────────────────
+
+function AirbnbLinkHelp() {
+  const steps = [
+    { num: 1, text: '에어비앤비 앱 또는 웹사이트를 열어주세요' },
+    { num: 2, text: '등록된 숙소의 상세 페이지로 이동하세요' },
+    { num: 3, text: '공유 버튼을 눌러 링크를 복사하세요' },
+    { num: 4, text: '복사한 링크를 위 입력란에 붙여넣으세요' },
+  ]
+
+  return (
+    <Drawer>
+      <DrawerTrigger asChild>
+        <button
+          type="button"
+          className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors -mt-5"
+        >
+          링크는 어디서 복사하나요?
+        </button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
+          <DrawerHeader className="px-0">
+            <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+              에어비앤비 숙소 링크 복사 방법
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex flex-col gap-4 mt-2">
+            {steps.map((step, i) => (
+              <div key={step.num} className="flex items-start gap-3">
+                <div className="size-7 rounded-full bg-[#F7F7F7] flex items-center justify-center shrink-0 text-[13px] font-semibold text-[#222222]">
+                  {step.num}
+                </div>
+                <p className="text-[15px] text-[#222222] pt-0.5 leading-relaxed">{step.text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">링크 예시</p>
+            <div className="rounded-lg bg-[#F7F7F7] px-4 py-3">
+              <p className="text-[14px] text-[#222222] break-all">https://www.airbnb.com/rooms/12345678</p>
+            </div>
+          </div>
+          <DrawerClose asChild>
+            <button
+              type="button"
+              className="w-full h-12 rounded-lg text-[15px] font-semibold text-white mt-6 bg-[#222222] transition-all active:scale-[0.98]"
+            >
+              확인
+            </button>
+          </DrawerClose>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  )
+}
 
 // ─── Shared Components ───────────────────────────────────────────────────────
 
@@ -98,11 +165,10 @@ function PrimaryButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex-1 flex items-center justify-center gap-2.5 h-11 rounded-xl text-sm font-semibold text-white transition-all',
-        'disabled:opacity-60 disabled:cursor-not-allowed',
-        'hover:opacity-90 active:scale-[0.99]',
+        'flex-1 flex items-center justify-center gap-2.5 h-12 rounded-lg text-sm font-semibold text-white transition-all',
+        'bg-[#222222] hover:bg-[#333333] active:scale-[0.99]',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
       )}
-      style={{ backgroundColor: 'var(--brand)', boxShadow: '0 2px 12px rgba(212,66,30,0.25)' }}
     >
       {children}
     </button>
@@ -124,8 +190,8 @@ function SecondaryButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex items-center justify-center h-11 px-5 rounded-xl text-sm font-medium text-on-surface border border-outline bg-white transition-all',
-        'hover:border-on-surface/25 active:scale-[0.99]',
+        'flex items-center justify-center h-12 px-5 rounded-lg text-sm font-medium text-on-surface border border-outline bg-white transition-all',
+        'hover:border-[#B0B0B0] active:scale-[0.99]',
         'disabled:opacity-50 disabled:cursor-not-allowed',
       )}
     >
@@ -150,7 +216,7 @@ function Step1({
   onBack?: () => void
 }) {
   return (
-    <div className="flex flex-col gap-8 animate-fade-in-fast">
+    <div className="flex flex-col gap-8 animate-fade-up-fast">
       {backHref && (
         <Link
           href={backHref}
@@ -163,50 +229,32 @@ function Step1({
       )}
       <div>
         <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface leading-tight"
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           에어비앤비에 등록된
           <br />숙소인가요?
         </h2>
-        <p className="text-sm text-on-surface-subtle mt-2" style={{ fontFamily: 'var(--font-body)' }}>
-          등록된 숙소라면 정보를 자동으로 가져올 수 있어요.
-        </p>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="rounded-xl border border-[#B0B0B0] overflow-hidden divide-y divide-[#B0B0B0]">
         <button
           onClick={onYes}
-          className={cn(
-            'flex items-center gap-4 p-5 rounded-2xl border border-outline bg-white text-left transition-all',
-            'hover:border-brand/40 hover:shadow-md',
-          )}
+          className="flex items-center gap-4 px-4 py-4 w-full text-left transition-all hover:bg-[#F7F7F7] active:scale-[0.99]"
         >
-          <div
-            className="size-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: 'rgba(212,66,30,0.1)' }}
-          >
-            <AirbnbIcon className="size-5 text-brand" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-on-surface">네, 에어비앤비에 등록되어 있어요</p>
-            <p className="text-xs text-on-surface-subtle mt-0.5">숙소 링크를 입력하면 사진과 정보를 자동으로 채워드려요</p>
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold text-[#222222]">네, 에어비앤비에 등록되어 있어요</p>
+            <p className="text-[13px] text-[#717171] mt-0.5">링크를 입력하면 정보를 자동으로 채워드려요</p>
           </div>
         </button>
 
         <button
           onClick={onNo}
-          className={cn(
-            'flex items-center gap-4 p-5 rounded-2xl border border-outline bg-white text-left transition-all',
-            'hover:border-on-surface-subtle/40 hover:shadow-md',
-          )}
+          className="flex items-center gap-4 px-4 py-4 w-full text-left transition-all hover:bg-[#F7F7F7] active:scale-[0.99]"
         >
-          <div className="size-10 rounded-xl flex items-center justify-center shrink-0 bg-surface">
-            <PencilIcon className="size-5 text-on-surface-subtle" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-on-surface">아니오, 직접 입력할게요</p>
-            <p className="text-xs text-on-surface-subtle mt-0.5">주소와 숙소 정보를 직접 입력해서 등록합니다</p>
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold text-[#222222]">아니요, 직접 입력할게요</p>
+            <p className="text-[13px] text-[#717171] mt-0.5">주소와 숙소 정보를 직접 입력합니다</p>
           </div>
         </button>
       </div>
@@ -249,36 +297,37 @@ function StepAirbnbUrl({
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in-fast">
+    <div className="flex flex-col gap-8 animate-fade-up-fast">
       <div>
         <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface leading-tight"
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           에어비앤비 링크를
           <br />입력해주세요
         </h2>
-        <p className="text-sm text-on-surface-subtle mt-2" style={{ fontFamily: 'var(--font-body)' }}>
-          에어비앤비 앱 또는 웹에서 숙소 링크를 복사해서 붙여넣어주세요.
-        </p>
       </div>
 
-      <SectionCard>
-        <Field id="airbnb-url" label="에어비앤비 숙소 링크" required>
-          <Input
-            id="airbnb-url"
-            type="text"
-            value={url}
-            onChange={(e) => { setUrl(e.target.value); onUrlChange(e.target.value) }}
-            placeholder="https://www.airbnb.com/rooms/12345678"
-            className="h-10 text-sm"
-            autoComplete="off"
-          />
-        </Field>
-        <p className="text-xs text-on-surface-subtle mt-2">
-          에어비앤비 앱 → 숙소 → 공유 → 링크 복사
-        </p>
-      </SectionCard>
+      <CompoundInput>
+        <FloatingTextarea
+          id="airbnb-url"
+          label="에어비앤비 숙소 링크"
+          value={url}
+          onChange={(e) => {
+            let val = e.target.value
+            // Strip query params from airbnb URL on paste
+            if (val.includes('airbnb') && val.includes('?')) {
+              val = val.split('?')[0]
+            }
+            setUrl(val)
+            onUrlChange(val)
+          }}
+          placeholder="https://airbnb.com/rooms/12345678"
+          autoComplete="off"
+          borderRadius="12px"
+        />
+      </CompoundInput>
+      <AirbnbLinkHelp />
 
       {error && (
         <div className="flex items-center gap-2 text-sm text-brand bg-brand/8 border border-brand/20 px-4 py-3 rounded-xl">
@@ -288,9 +337,6 @@ function StepAirbnbUrl({
       )}
 
       <div className="flex gap-3">
-        <SecondaryButton onClick={onBack} disabled={isPending}>
-          이전으로
-        </SecondaryButton>
         <PrimaryButton onClick={handleNext} disabled={isPending || !url.trim()}>
           {isPending ? (
             <>
@@ -329,6 +375,73 @@ function StepManualAddress({
     address: '',
     addressDetail: '',
   })
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<{ roadAddress: string; jibunAddress: string; zonecode: string; buildingName: string }[]>([])
+  const [searching, setSearching] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [focused, setFocused] = useState(false)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowResults(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  function handleQueryChange(val: string) {
+    setQuery(val)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (val.trim().length < 2) {
+      setResults([])
+      setShowResults(false)
+      return
+    }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true)
+      try {
+        const key = process.env.NEXT_PUBLIC_JUSO_API_KEY
+        if (!key) return
+        const url = new URL('https://business.juso.go.kr/addrlink/addrLinkApi.do')
+        url.searchParams.set('confmKey', key)
+        url.searchParams.set('keyword', val)
+        url.searchParams.set('currentPage', '1')
+        url.searchParams.set('countPerPage', '10')
+        url.searchParams.set('resultType', 'json')
+        const res = await fetch(url.toString())
+        const json = await res.json()
+        const juso = json.results?.juso ?? []
+        setResults(juso.map((item: Record<string, string>) => ({
+          roadAddress: item.roadAddr ?? '',
+          jibunAddress: item.jibunAddr ?? '',
+          zonecode: item.zipNo ?? '',
+          buildingName: item.bdNm ?? '',
+        })))
+        setShowResults(true)
+      } catch {
+        setResults([])
+      } finally {
+        setSearching(false)
+      }
+    }, 500)
+  }
+
+  function handleSelect(result: typeof results[0]) {
+    const address = result.roadAddress || result.jibunAddress
+    setForm((prev) => ({ ...prev, zonecode: result.zonecode, address }))
+    setQuery('')
+    setResults([])
+    setShowResults(false)
+    setError(null)
+    // Focus detail input after slide-down animation
+    setTimeout(() => {
+      document.getElementById('addressDetail')?.focus()
+    }, 380)
+  }
 
   function handleNext() {
     if (!form.address.trim()) {
@@ -339,52 +452,105 @@ function StepManualAddress({
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in-fast">
+    <div className="flex flex-col gap-6 animate-fade-up-fast">
       <div>
         <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface leading-tight"
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           숙소 주소를
           <br />알려주세요
         </h2>
       </div>
 
-      <SectionCard>
-        <div className="flex flex-col gap-4">
-          <Field id="address-search-manual" label="주소 검색" required>
-            <AddressSearch
-              onSelect={(zonecode, address) => {
-                setForm((prev) => ({ ...prev, zonecode, address }))
-                setError(null)
-              }}
-              placeholder="도로명 주소 또는 지번을 입력하세요"
-            />
-          </Field>
-
-          {form.address && (
-            <Field id="address" label="주소" required>
-              <Input
-                id="address"
-                value={form.address}
-                disabled
-                placeholder="주소 검색을 해주세요"
-                className="h-10 text-sm bg-surface"
+      <div ref={containerRef}>
+        <div className={`rounded-xl border border-[#B0B0B0] ${form.address ? 'divide-y divide-[#B0B0B0]' : ''}`}>
+          {/* 주소 검색 / 선택된 주소 */}
+          {!form.address ? (
+            <CompoundField
+              label="주소 검색"
+              focused={focused}
+              borderRadius="12px"
+            >
+              <input
+                type="search"
+                enterKeyHint="search"
+                value={query}
+                onChange={(e) => handleQueryChange(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur() } }}
+                onFocus={() => { setFocused(true); if (results.length > 0) setShowResults(true) }}
+                onBlur={() => setFocused(false)}
+                placeholder="도로명 주소 또는 지번을 입력하세요"
+                className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none [&::-webkit-search-cancel-button]:hidden"
+                autoComplete="off"
               />
-            </Field>
+            </CompoundField>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, zonecode: '', address: '' }))}
+              className="relative w-full px-4 pt-[22px] pb-[10px] text-left bg-[#F7F7F7] rounded-t-xl hover:bg-[#EFEFEF] transition-colors"
+            >
+              <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
+                주소
+              </span>
+              <p className="text-[16px] text-[#222222]">{form.address}</p>
+              <span className="absolute top-[8px] right-4 text-[11px] text-[#717171]">변경</span>
+            </button>
           )}
 
-          <Field id="addressDetail" label="상세 주소">
-            <Input
-              id="addressDetail"
-              placeholder="예: 3층 301호"
-              value={form.addressDetail}
-              onChange={(e) => setForm((prev) => ({ ...prev, addressDetail: e.target.value }))}
-              className="h-10 text-sm"
-            />
-          </Field>
+          {/* 상세 주소 — slide down */}
+          <div
+            style={{
+              maxHeight: form.address ? 80 : 0,
+              opacity: form.address ? 1 : 0,
+              transition: 'max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
+              overflow: 'hidden',
+            }}
+          >
+            <CompoundField label="상세 주소">
+              <input
+                id="addressDetail"
+                placeholder="예: 3층 301호"
+                value={form.addressDetail}
+                onChange={(e) => setForm((prev) => ({ ...prev, addressDetail: e.target.value }))}
+                className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+              />
+            </CompoundField>
+          </div>
         </div>
-      </SectionCard>
+
+      </div>
+
+      {/* 검색 결과 목록 */}
+      {showResults && results.length > 0 && (
+        <div className="rounded-xl border border-[#EBEBEB] overflow-hidden shadow-sm -mt-2">
+          {results.map((r, i) => (
+            <div key={i}>
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(r) }}
+                className="w-full text-left py-3 px-4 hover:bg-[#F7F7F7] transition-colors"
+              >
+                <p className="text-[15px] text-[#222222]">
+                  {r.roadAddress}
+                  {r.buildingName && <span className="text-[#717171] ml-1.5">({r.buildingName})</span>}
+                </p>
+                {r.jibunAddress && (
+                  <p className="text-[13px] text-[#717171] mt-0.5">{r.jibunAddress}</p>
+                )}
+              </button>
+              {i < results.length - 1 && <div className="h-px bg-[#EBEBEB] mx-4" />}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showResults && !searching && results.length === 0 && query.trim().length >= 2 && (
+        <div className="rounded-xl border border-[#EBEBEB] py-4 text-center text-[14px] text-[#717171] -mt-2">
+          검색 결과가 없습니다
+        </div>
+      )}
 
       {error && (
         <div className="flex items-center gap-2 text-sm text-brand bg-brand/8 border border-brand/20 px-4 py-3 rounded-xl">
@@ -394,7 +560,6 @@ function StepManualAddress({
       )}
 
       <div className="flex gap-3">
-        <SecondaryButton onClick={onBack}>이전으로</SecondaryButton>
         <PrimaryButton onClick={handleNext} disabled={!form.address}>
           다음
         </PrimaryButton>
@@ -430,9 +595,77 @@ function StepRegister({
   const initialAddress = manualAddress?.address ?? ''
   const initialAddressDetail = manualAddress?.addressDetail ?? ''
 
+  const [name, setName] = useState(defaultName)
   const [zonecode, setZonecode] = useState(initialZonecode)
   const [address, setAddress] = useState(initialAddress)
   const [addressDetail, setAddressDetail] = useState(initialAddressDetail)
+  const [focused, setFocused] = useState<string | null>(null)
+
+  // Address search state
+  const [addrQuery, setAddrQuery] = useState('')
+  const [addrResults, setAddrResults] = useState<{ roadAddress: string; jibunAddress: string; zonecode: string; buildingName: string }[]>([])
+  const [addrSearching, setAddrSearching] = useState(false)
+  const [showAddrResults, setShowAddrResults] = useState(false)
+  const addrDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const addrContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (addrContainerRef.current && !addrContainerRef.current.contains(e.target as Node)) {
+        setShowAddrResults(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  function handleAddrQueryChange(val: string) {
+    setAddrQuery(val)
+    if (addrDebounceRef.current) clearTimeout(addrDebounceRef.current)
+    if (val.trim().length < 2) {
+      setAddrResults([])
+      setShowAddrResults(false)
+      return
+    }
+    addrDebounceRef.current = setTimeout(async () => {
+      setAddrSearching(true)
+      try {
+        const key = process.env.NEXT_PUBLIC_JUSO_API_KEY
+        if (!key) return
+        const url = new URL('https://business.juso.go.kr/addrlink/addrLinkApi.do')
+        url.searchParams.set('confmKey', key)
+        url.searchParams.set('keyword', val)
+        url.searchParams.set('currentPage', '1')
+        url.searchParams.set('countPerPage', '10')
+        url.searchParams.set('resultType', 'json')
+        const res = await fetch(url.toString())
+        const json = await res.json()
+        const juso = json.results?.juso ?? []
+        setAddrResults(juso.map((item: Record<string, string>) => ({
+          roadAddress: item.roadAddr ?? '',
+          jibunAddress: item.jibunAddr ?? '',
+          zonecode: item.zipNo ?? '',
+          buildingName: item.bdNm ?? '',
+        })))
+        setShowAddrResults(true)
+      } catch {
+        setAddrResults([])
+      } finally {
+        setAddrSearching(false)
+      }
+    }, 500)
+  }
+
+  function handleAddrSelect(result: typeof addrResults[0]) {
+    setAddress(result.roadAddress || result.jibunAddress)
+    setZonecode(result.zonecode)
+    setAddrQuery('')
+    setAddrResults([])
+    setShowAddrResults(false)
+    setTimeout(() => {
+      document.getElementById('register-addressDetail')?.focus()
+    }, 380)
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -441,13 +674,12 @@ function StepRegister({
     setMessage(undefined)
     onClearProgress()
 
-    const formData = new FormData(e.currentTarget)
     const body = {
-      name: formData.get('name') as string,
-      address: formData.get('address') as string,
-      addressDetail: (formData.get('addressDetail') as string) || undefined,
-      propertyType: formData.get('propertyType') as string,
-      airbnbListingId: (formData.get('airbnbListingId') as string) || undefined,
+      name: name.trim(),
+      address,
+      addressDetail: addressDetail.trim() || undefined,
+      propertyType: 'apartment',
+      airbnbListingId: airbnbListingId || undefined,
     }
 
     try {
@@ -467,20 +699,15 @@ function StepRegister({
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in-fast">
+    <div className="flex flex-col gap-6 animate-fade-up-fast">
       <div>
         <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface leading-tight"
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           {airroiDetail ? '숙소 정보를' : '숙소 정보를'}
           <br />{airroiDetail ? '확인해주세요' : '입력해주세요'}
         </h2>
-        <p className="text-sm text-on-surface-subtle mt-2" style={{ fontFamily: 'var(--font-body)' }}>
-          {airroiDetail
-            ? '에어비앤비에서 가져온 정보를 확인하고 수정할 수 있어요.'
-            : '숙소 정보를 입력하면 등록이 완료됩니다.'}
-        </p>
       </div>
 
       {/* Thumbnail */}
@@ -498,62 +725,118 @@ function StepRegister({
       )}
 
 
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
-        <input type="hidden" name="propertyType" value="apartment" />
-        {airbnbListingId && (
-          <input type="hidden" name="airbnbListingId" value={airbnbListingId} />
-        )}
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+        <div ref={addrContainerRef}>
+          <div className="rounded-xl border border-[#B0B0B0]">
+            {/* 숙소 이름 */}
+            <FloatingTextarea
+              id="register-name"
+              label="숙소 이름"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onFocus={() => setFocused('name')}
+              onBlur={() => setFocused(null)}
+              placeholder="예: 합정 감성 아파트"
+              borderRadius="12px 12px 0 0"
+              error={errors.name?.[0]}
+            />
 
-        <SectionCard>
-          <div className="flex flex-col gap-4">
-            <Field id="name" label="숙소 이름" required error={errors.name?.[0]}>
-              <Input
-                id="name"
-                name="name"
-                required
-                defaultValue={defaultName}
-                placeholder="예: 합정 감성 아파트"
-                className="h-10 text-sm"
-              />
-            </Field>
-
-            <Field id="address-search-register" label="주소 검색" required>
-              <AddressSearch
-                onSelect={(zc, addr) => {
-                  setZonecode(zc)
-                  setAddress(addr)
-                }}
-                placeholder="도로명 주소 또는 지번을 입력하세요"
-              />
-            </Field>
-
-            {/* hidden inputs so form submit always includes address values */}
-            <input type="hidden" name="address" value={address} />
-
-            {address ? (
-              <Field id="address-display" label="주소" required error={errors.address?.[0]}>
-                <Input
-                  value={address}
-                  readOnly
-                  className="h-10 text-sm bg-surface"
+            {/* 주소 검색 / 선택된 주소 */}
+            <div className="border-t border-[#B0B0B0]" />
+            {!address ? (
+              <CompoundField
+                label="주소 검색"
+                focused={focused === 'address'}
+                borderRadius={`0 0 12px 12px`}
+              >
+                <input
+                  type="search"
+                  enterKeyHint="search"
+                  value={addrQuery}
+                  onChange={(e) => handleAddrQueryChange(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur() } }}
+                  onFocus={() => { setFocused('address'); if (addrResults.length > 0) setShowAddrResults(true) }}
+                  onBlur={() => setFocused(null)}
+                  placeholder="도로명 주소 또는 지번을 입력하세요"
+                  className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none [&::-webkit-search-cancel-button]:hidden"
+                  autoComplete="off"
                 />
-              </Field>
-            ) : errors.address?.[0] ? (
-              <p className="text-xs text-brand">주소를 검색해서 선택해주세요.</p>
-            ) : null}
+                {errors.address?.[0] && (
+                  <p className="text-[12px] text-[#C13515] mt-1">{errors.address[0]}</p>
+                )}
+              </CompoundField>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAddress('')}
+                className="relative w-full px-4 pt-[26px] pb-[10px] text-left bg-[#F7F7F7] hover:bg-[#EFEFEF] transition-colors"
+              >
+                <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
+                  주소
+                </span>
+                <p className="text-[16px] text-[#222222]">{address}</p>
+                <span className="absolute top-[8px] right-4 text-[11px] text-[#717171]">변경</span>
+              </button>
+            )}
 
-            <Field id="addressDetail" label="상세 주소">
-              <Input
-                id="addressDetail"
-                name="addressDetail"
-                value={addressDetail}
-                onChange={(e) => setAddressDetail(e.target.value)}
-                placeholder="예: 3층 301호"
-                className="h-10 text-sm"
-              />
-            </Field>
+            {/* 상세 주소 — slide down */}
+            <div
+              style={{
+                maxHeight: address ? 80 : 0,
+                opacity: address ? 1 : 0,
+                transition: 'max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
+                overflow: 'hidden',
+              }}
+            >
+              <div className="border-t border-[#B0B0B0]" />
+              <div className="relative px-4 pt-[26px] pb-[10px]">
+                <label
+                  htmlFor="register-addressDetail"
+                  className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]"
+                >
+                  상세 주소
+                </label>
+                <input
+                  id="register-addressDetail"
+                  placeholder="예: 3층 301호"
+                  value={addressDetail}
+                  onChange={(e) => setAddressDetail(e.target.value)}
+                  className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+                />
+              </div>
+            </div>
           </div>
-        </SectionCard>
+
+          {/* 검색 결과 목록 */}
+          {showAddrResults && addrResults.length > 0 && (
+            <div className="rounded-xl border border-[#EBEBEB] overflow-hidden shadow-sm mt-2">
+              {addrResults.map((r, i) => (
+                <div key={i}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); handleAddrSelect(r) }}
+                    className="w-full text-left py-3 px-4 hover:bg-[#F7F7F7] transition-colors"
+                  >
+                    <p className="text-[15px] text-[#222222]">
+                      {r.roadAddress}
+                      {r.buildingName && <span className="text-[#717171] ml-1.5">({r.buildingName})</span>}
+                    </p>
+                    {r.jibunAddress && (
+                      <p className="text-[13px] text-[#717171] mt-0.5">{r.jibunAddress}</p>
+                    )}
+                  </button>
+                  {i < addrResults.length - 1 && <div className="h-px bg-[#EBEBEB] mx-4" />}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showAddrResults && !addrSearching && addrResults.length === 0 && addrQuery.trim().length >= 2 && (
+            <div className="rounded-xl border border-[#EBEBEB] py-4 text-center text-[14px] text-[#717171] mt-2">
+              검색 결과가 없습니다
+            </div>
+          )}
+        </div>
 
         {message && (
           <div className="flex items-center gap-2 text-sm text-brand bg-brand/8 border border-brand/20 px-4 py-3 rounded-xl">
@@ -562,23 +845,17 @@ function StepRegister({
           </div>
         )}
 
-        <div className="flex gap-3 pt-1">
-          <SecondaryButton onClick={onBack} disabled={isPending}>
-            이전으로
-          </SecondaryButton>
+        <div className="flex">
           <PrimaryButton type="submit" disabled={isPending}>
-              {isPending ? (
-                <>
-                  <Loader2Icon className="size-4 animate-spin" />
-                  등록 중...
-                </>
-              ) : (
-                <>
-                  <CheckIcon className="size-4" strokeWidth={2.5} />
-                  숙소 등록하기
-                </>
-              )}
-            </PrimaryButton>
+            {isPending ? (
+              <>
+                <Loader2Icon className="size-4 animate-spin" />
+                등록 중...
+              </>
+            ) : (
+              '숙소 등록하기'
+            )}
+          </PrimaryButton>
         </div>
       </form>
     </div>

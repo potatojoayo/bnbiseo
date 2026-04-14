@@ -23,7 +23,7 @@ export default function NewFixturePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle style={{ fontFamily: 'var(--font-display)' }}>시설물 등록</CardTitle>
+          <CardTitle >시설물 등록</CardTitle>
         </CardHeader>
         <CardContent>
           <FixtureForm

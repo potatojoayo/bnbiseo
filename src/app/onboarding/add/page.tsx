@@ -1,7 +1,7 @@
 'use client'
 
-import { OnboardingWizard } from '../onboarding-wizard'
+import { PropertyForm } from '../property-form'
 
 export default function AddPropertyPage() {
-  return <OnboardingWizard backHref="/onboarding/complete" />
+  return <PropertyForm backHref="/onboarding/complete" />
 }

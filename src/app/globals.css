@@ -131,7 +131,7 @@ body {
 }
 
 @theme inline {
-  --font-heading: var(--font-display);
+  --font-heading: var(--font-body);
   --font-text: var(--font-body);
   /* BnBiseo brand color utilities */
   --color-brand: var(--brand);
@@ -259,6 +259,7 @@ body {
   /* Prevent iOS Safari auto-zoom on input focus (requires >= 16px) */
   input, textarea, select {
     font-size: 16px;
+    caret-color: #5C5C5C;
   }
 }
 

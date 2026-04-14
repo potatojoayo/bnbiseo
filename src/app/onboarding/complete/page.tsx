@@ -5,22 +5,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
-import { CheckIcon, MapPinIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
-
-function formatDate(date: string): string {
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(date))
-}
+import { MapPinIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
 
 type Property = {
   id: string
   name: string
   address: string
   addressDetail: string | null
-  createdAt: string
 }
 
 export default function CompletePage() {
@@ -58,95 +49,34 @@ export default function CompletePage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 animate-fade-in-fast">
-      <div className="flex flex-col gap-5">
-        <div className="flex items-center gap-3">
-          <div
-            className="size-16 rounded-2xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: 'rgba(34,197,94,0.12)' }}
-          >
-            <div
-              className="size-9 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(34,197,94,0.2)' }}
-            >
-              <CheckIcon
-                className="size-5"
-                style={{ color: '#16a34a' }}
-                strokeWidth={2.5}
-              />
-            </div>
-          </div>
-          <div
-            className="h-px flex-1"
-            style={{ background: 'linear-gradient(to right, rgba(34,197,94,0.25), transparent)' }}
-          />
-        </div>
-
-        <div>
-          <p
-            className="text-xs font-semibold uppercase tracking-widest mb-2"
-            style={{ color: '#16a34a', fontFamily: 'var(--font-body)' }}
-          >
-            등록 완료
-          </p>
-          <h2
-            className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface leading-tight"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            숙소 등록이
-            <br />완료되었어요!
-          </h2>
-          <p
-            className="text-sm text-on-surface-subtle mt-2.5"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            이제 AI 공간 관리를 시작할 수 있어요.
-          </p>
-        </div>
+    <div className="flex flex-col gap-8 animate-fade-up-fast">
+      <div>
+        <h2
+          className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface leading-tight"
+          style={{ fontFamily: 'var(--font-body)' }}
+        >
+          숙소 등록이
+          <br />완료되었어요!
+        </h2>
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-widest text-on-surface-muted">
-            등록된 숙소
-          </p>
-          <span
-            className="text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full bg-surface-dim text-on-surface-muted"
+        {properties.map((property) => (
+          <Link
+            key={property.id}
+            href={`/onboarding/edit/${property.id}`}
+            className="rounded-xl border border-[#EBEBEB] bg-white px-4 py-4 hover:bg-[#F7F7F7] transition-colors"
           >
-            {properties.length}개
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-2.5">
-          {properties.map((property, index) => (
-            <div
-              key={property.id}
-              className="flex items-start gap-4 rounded-2xl border border-outline bg-white p-4"
-            >
-              <div
-                className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold bg-surface-dim text-on-surface-muted"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                {index + 1}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-on-surface leading-snug">
-                  {property.name}
-                </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <MapPinIcon className="size-3 shrink-0 text-on-surface-muted" strokeWidth={1.75} />
-                  <p className="text-xs text-on-surface-subtle truncate">
-                    {property.address}
-                    {property.addressDetail ? ` ${property.addressDetail}` : ''}
-                  </p>
-                </div>
-                <p className="text-xs mt-1.5 text-on-surface-muted">
-                  {formatDate(property.createdAt)} 등록
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+            <p className="text-[15px] font-semibold text-[#222222]">
+              {property.name}
+            </p>
+            <p className="mt-1 text-[13px] text-[#717171]">
+              <MapPinIcon className="size-3 inline-block align-[-1px] mr-1" strokeWidth={1.75} />
+              {property.address}
+              {property.addressDetail ? ` ${property.addressDetail}` : ''}
+            </p>
+          </Link>
+        ))}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -154,14 +84,14 @@ export default function CompletePage() {
           type="button"
           onClick={handleComplete}
           disabled={completing}
-          className="w-full flex items-center justify-center gap-2.5 h-12 rounded-xl text-sm font-semibold text-white bg-brand transition-all duration-200 hover:scale-[1.03] group disabled:opacity-60"
+          className="w-full flex items-center justify-center gap-2.5 h-12 rounded-lg text-sm font-semibold text-white bg-[#222222] hover:bg-[#333333] transition-all duration-200 group disabled:opacity-50"
         >
           {completing ? '처리 중...' : '시작하기'}
           <ArrowRightIcon className="size-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={2} />
         </button>
         <Link
           href="/onboarding/add"
-          className="flex items-center justify-center gap-2.5 h-11 rounded-xl text-sm font-medium text-on-surface-subtle border border-outline bg-white transition-all hover:border-outline-dim hover:text-on-surface active:scale-[0.99]"
+          className="flex items-center justify-center gap-2.5 h-12 rounded-lg text-sm font-medium text-on-surface border border-outline bg-white transition-all hover:border-[#B0B0B0] active:scale-[0.99]"
         >
           <PlusIcon className="size-4" strokeWidth={2} />
           숙소 추가하기

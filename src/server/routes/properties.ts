@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import { properties, fixtures, repairRequests } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
@@ -29,7 +29,7 @@ propertiesRoutes.get('/', async (c) => {
   const result = await db
     .select()
     .from(properties)
-    .where(eq(properties.hostId, userId))
+    .where(and(eq(properties.hostId, userId), isNull(properties.deletedAt)))
 
   return c.json(result)
 })
@@ -42,7 +42,7 @@ propertiesRoutes.get('/:id', async (c) => {
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.hostId, userId)))
+    .where(and(eq(properties.id, id), eq(properties.hostId, userId), isNull(properties.deletedAt)))
     .limit(1)
 
   if (!property) {
@@ -99,8 +99,26 @@ propertiesRoutes.patch('/:id', async (c) => {
   return c.json(updated)
 })
 
-// Delete property
+// Soft delete property
 propertiesRoutes.delete('/:id', async (c) => {
+  const userId = c.get('userId')
+  const id = c.req.param('id')
+
+  const [deleted] = await db
+    .update(properties)
+    .set({ deletedAt: new Date() })
+    .where(and(eq(properties.id, id), eq(properties.hostId, userId), isNull(properties.deletedAt)))
+    .returning({ id: properties.id })
+
+  if (!deleted) {
+    return c.json({ error: '숙소를 찾을 수 없거나 권한이 없습니다.' }, 404)
+  }
+
+  return c.json({ success: true })
+})
+
+// Hard delete property
+propertiesRoutes.delete('/:id/permanent', async (c) => {
   const userId = c.get('userId')
   const id = c.req.param('id')
 
@@ -123,7 +141,7 @@ propertiesRoutes.get('/summary/dashboard', async (c) => {
   const userProperties = await db
     .select()
     .from(properties)
-    .where(eq(properties.hostId, userId))
+    .where(and(eq(properties.hostId, userId), isNull(properties.deletedAt)))
 
   if (!userProperties.length) {
     return c.json({ properties: [], fixtureCount: 0, repairCount: 0, recentRepairs: [] })

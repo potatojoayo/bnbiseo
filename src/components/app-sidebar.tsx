@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { Logo } from "@/components/logo"
 import {
   LayoutDashboardIcon,
   Building2Icon,
@@ -69,14 +70,7 @@ export function AppSidebar({ user, userProperties, ...props }: AppSidebarProps) 
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <Link href="/dashboard">
-                <span
-                  className="text-lg font-bold"
-                  style={{ color: 'var(--brand)', fontFamily: 'var(--font-display, var(--font-sans))' }}
-                >
-                  비엔비서
-                </span>
-              </Link>
+              <Link href="/dashboard"><Logo size="sm" /></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

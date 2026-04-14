@@ -89,7 +89,7 @@ export default function FixtureDetailPage() {
 
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-2xl font-bold" >
             {fixture.name}
           </h1>
           <Badge variant="secondary">
