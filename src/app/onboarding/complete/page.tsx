@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
 import { MapPinIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 type Property = {
   id: string
@@ -80,15 +81,16 @@ export default function CompletePage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <button
+        <LoadingButton
           type="button"
           onClick={handleComplete}
-          disabled={completing}
-          className="w-full flex items-center justify-center gap-2.5 h-12 rounded-lg text-sm font-semibold text-white bg-[#222222] hover:bg-[#333333] transition-all duration-200 group disabled:opacity-50"
+          loading={completing}
+          loadingText="처리 중..."
+          className="group"
         >
-          {completing ? '처리 중...' : '시작하기'}
+          시작하기
           <ArrowRightIcon className="size-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={2} />
-        </button>
+        </LoadingButton>
         <Link
           href="/onboarding/add"
           className="flex items-center justify-center gap-2.5 h-12 rounded-lg text-sm font-medium text-on-surface border border-outline bg-white transition-all hover:border-[#B0B0B0] active:scale-[0.99]"

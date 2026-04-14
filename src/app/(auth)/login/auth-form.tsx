@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api-client'
 import { api } from '@/lib/api-client'
 import { CompoundInput, CompoundField, FloatingInput } from '@/components/ui/floating-input'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 type Step = 'email' | 'login' | 'signup'
 
@@ -373,21 +374,14 @@ export function AuthForm() {
         )}
 
         {/* Submit button */}
-        <button
+        <LoadingButton
           type="submit"
-          disabled={pending}
-          className="w-full h-12 rounded-lg text-[15px] font-semibold text-white mt-5 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-          style={{ background: '#222222', ...font }}
+          loading={pending}
+          loadingText={step === 'email' ? '확인 중...' : step === 'login' ? '로그인 중...' : '가입 중...'}
+          className="mt-5"
         >
-          {pending ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" />
-              {step === 'email' ? '확인 중...' : step === 'login' ? '로그인 중...' : '가입 중...'}
-            </span>
-          ) : (
-            step === 'email' ? '계속' : step === 'login' ? '로그인' : '가입하기'
-          )}
-        </button>
+          {step === 'email' ? '계속' : step === 'login' ? '로그인' : '가입하기'}
+        </LoadingButton>
 
         {/* Back link */}
         {isExpanded && (

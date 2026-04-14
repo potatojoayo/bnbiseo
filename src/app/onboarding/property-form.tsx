@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Loader2Icon, ArrowLeftIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ArrowLeftIcon, Loader2Icon } from 'lucide-react'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { api, ApiError } from '@/lib/api-client'
 import { extractListingId } from '@/lib/airbnb-scraper'
 import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
@@ -458,24 +458,14 @@ export function PropertyForm({ backHref, mode = 'create', initialData }: Propert
           </div>
         )}
 
-        <button
+        <LoadingButton
           type="submit"
-          disabled={isPending || airbnbFetching || deleting}
-          className={cn(
-            'w-full flex items-center justify-center gap-2.5 h-12 rounded-lg text-sm font-semibold text-white transition-all',
-            'bg-[#222222] hover:bg-[#333333] active:scale-[0.99]',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-          )}
+          loading={isPending}
+          loadingText={mode === 'edit' ? '수정 중...' : '등록 중...'}
+          disabled={airbnbFetching || deleting}
         >
-          {isPending ? (
-            <>
-              <Loader2Icon className="size-4 animate-spin" />
-              {mode === 'edit' ? '수정 중...' : '등록 중...'}
-            </>
-          ) : (
-            mode === 'edit' ? '수정하기' : '숙소 등록하기'
-          )}
-        </button>
+          {mode === 'edit' ? '수정하기' : '숙소 등록하기'}
+        </LoadingButton>
 
         {mode === 'edit' && (
           <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -499,14 +489,14 @@ export function PropertyForm({ backHref, mode = 'create', initialData }: Propert
                   삭제된 숙소는 복구할 수 없습니다.
                 </p>
                 <div className="flex flex-col gap-3">
-                  <button
+                  <LoadingButton
                     type="button"
                     onClick={handleDelete}
-                    disabled={deleting}
-                    className="w-full h-12 rounded-lg text-[15px] font-semibold text-white bg-[#222222] hover:bg-[#333333] transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                    loading={deleting}
+                    loadingText="삭제 중..."
                   >
-                    {deleting ? (<><Loader2Icon className="size-4 animate-spin" /> 삭제 중...</>) : '삭제하기'}
-                  </button>
+                    삭제하기
+                  </LoadingButton>
                   <DrawerClose asChild>
                     <button
                       type="button"
