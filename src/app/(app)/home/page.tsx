@@ -2,12 +2,15 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/lib/auth-provider'
+import Image from 'next/image'
+import { Logo } from '@/components/logo'
+import { BellIcon } from 'lucide-react'
 
 export default function HomePage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login')
@@ -24,16 +27,55 @@ export default function HomePage() {
 
   if (!user) return null
 
+  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || ''
+  const today = new Intl.DateTimeFormat('ko-KR', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  }).format(new Date())
+
   return (
-    <div className="flex items-center justify-center min-h-[calc(100dvh-80px)] px-6">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-[#222222] mb-2">
-          홈
-        </h1>
-        <p className="text-[15px] text-[#717171]">
-          {user.email}님, 환영합니다.
-        </p>
+    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 pt-6 pb-2">
+        <Logo className="text-[20px]" />
+        <button className="text-[#222222]">
+          <BellIcon size={20} strokeWidth={1.5} />
+        </button>
       </div>
+
+      {/* Greeting */}
+      <div className="px-6 pt-4 pb-2">
+        <h1 className="text-[22px] font-semibold text-[#222222]">
+          안녕하세요, {displayName}님
+        </h1>
+        <p className="text-[14px] text-[#717171] mt-1">{today}</p>
+      </div>
+
+      {/* Empty State */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-8">
+        <Image
+          src="/images/cleaning-white.png"
+          alt="청소 서비스"
+          width={240}
+          height={120}
+          priority
+          className="mb-5 object-contain"
+        />
+        <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
+          아직 청소 내역이 없어요
+        </h2>
+        <p className="text-[14px] text-[#717171] leading-relaxed">
+          10,000원 할인을 받고 첫 청소를 요청해보세요!
+        </p>
+        <Link
+          href="/cleaning"
+          className="px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center mt-6 active:scale-[0.98] transition-all"
+        >
+          청소 요청하기
+        </Link>
+      </div>
+
     </div>
   )
 }
