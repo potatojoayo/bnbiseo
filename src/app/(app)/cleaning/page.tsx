@@ -15,7 +15,6 @@ import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
   Drawer,
-  DrawerTrigger,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
@@ -38,6 +37,7 @@ export default function CleaningPage() {
 
   const [dateDrawerOpen, setDateDrawerOpen] = useState(false)
   const [timeDrawerOpen, setTimeDrawerOpen] = useState(false)
+  const [pricingDrawerOpen, setPricingDrawerOpen] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -260,15 +260,15 @@ export default function CleaningPage() {
         })()}
 
         {/* Pricing info */}
-        {selectedProperty?.pyeong && <Drawer>
-          <DrawerTrigger asChild>
-            <button
-              type="button"
-              className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors -mt-3"
-            >
-              청소 금액은 어떻게 계산되나요?
-            </button>
-          </DrawerTrigger>
+        {selectedProperty?.pyeong && <>
+          <button
+            type="button"
+            onClick={() => setPricingDrawerOpen(true)}
+            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors -mt-3"
+          >
+            청소 금액은 어떻게 계산되나요?
+          </button>
+          <Drawer open={pricingDrawerOpen} onOpenChange={setPricingDrawerOpen}>
           <DrawerContent>
             <div className="w-full px-5 pb-8 overflow-y-auto">
               <DrawerHeader className="px-0">
@@ -317,7 +317,8 @@ export default function CleaningPage() {
               </div>
             </div>
           </DrawerContent>
-        </Drawer>}
+        </Drawer>
+        </>}
 
         {/* Submit */}
         <LoadingButton
