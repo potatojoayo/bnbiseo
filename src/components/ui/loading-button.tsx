@@ -6,11 +6,12 @@ import { cn } from '@/lib/utils'
 interface LoadingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
   loadingText?: string
-  variant?: 'primary' | 'outline' | 'destructive'
+  variant?: 'primary' | 'brand' | 'outline' | 'destructive'
 }
 
 const variants = {
   primary: 'bg-[#222222] hover:bg-[#333333] text-white',
+  brand: 'bg-brand hover:opacity-90 text-white',
   outline: 'bg-white border border-[#B0B0B0] text-[#222222] hover:bg-[#F7F7F7]',
   destructive: 'bg-[#222222] hover:bg-[#333333] text-white',
 }

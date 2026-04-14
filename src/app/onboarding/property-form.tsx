@@ -31,9 +31,10 @@ type PropertyFormProps = {
   backHref?: string
   mode?: 'create' | 'edit'
   initialData?: PropertyData
+  redirectTo?: string
 }
 
-export function PropertyForm({ backHref, mode = 'create', initialData }: PropertyFormProps) {
+export function PropertyForm({ backHref, mode = 'create', initialData, redirectTo }: PropertyFormProps) {
   const router = useRouter()
   const [isPending, setIsPending] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -147,7 +148,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData }: Propert
       } else {
         await api.post('/properties', body)
       }
-      router.push('/onboarding/complete', { scroll: false })
+      router.push(redirectTo ?? '/onboarding/complete', { scroll: false })
     } catch (err) {
       if (err instanceof ApiError && err.data.errors) {
         setErrors(err.data.errors as Record<string, string[]>)
