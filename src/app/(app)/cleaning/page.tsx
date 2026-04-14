@@ -270,7 +270,7 @@ export default function CleaningPage() {
             </button>
           </DrawerTrigger>
           <DrawerContent>
-            <div className="mx-auto w-full max-w-[440px] px-6 pb-8 overflow-y-auto">
+            <div className="w-full px-5 pb-8 overflow-y-auto">
               <DrawerHeader className="px-0">
                 <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
                   청소 금액 안내
