@@ -1,6 +1,88 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { MIN_BOOKING_LEAD_HOURS } from '@/lib/cleaning-pricing'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+// ─── Date/Time Utilities (KST) ───────────────────────────────────────────────
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+
+/** 한국 시간 기준 현재 Date */
+export function nowKST(): Date {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+}
+
+/** 오늘 날짜 YYYY-MM-DD (KST) */
+export function getToday(): string {
+  const d = nowKST()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** 내일 날짜 YYYY-MM-DD (KST) */
+export function getTomorrow(): string {
+  const d = nowKST()
+  d.setDate(d.getDate() + 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** "4월 15일 (화)" */
+export function formatDateLabel(isoDate: string): string {
+  const [, m, d] = isoDate.split('-').map(Number)
+  const weekday = WEEKDAYS[new Date(isoDate).getDay()]
+  return `${m}월 ${d}일 (${weekday})`
+}
+
+/** "오전 11:00" / "오후 2:30" */
+export function formatTimeKorean(time: string): string {
+  const [hStr, mStr] = time.split(':')
+  const h = parseInt(hStr, 10)
+  const period = h < 12 ? '오전' : '오후'
+  const displayH = h % 12 === 0 ? 12 : h % 12
+  return `${period} ${displayH}:${mStr}`
+}
+
+// ─── Time Slots ──────────────────────────────────────────────────────────────
+
+/** All 30-min slots from 09:00 to 22:00 */
+export const ALL_TIME_SLOTS: string[] = (() => {
+  const slots: string[] = []
+  for (let h = 9; h <= 22; h++) {
+    slots.push(`${String(h).padStart(2, '0')}:00`)
+    if (h < 22) slots.push(`${String(h).padStart(2, '0')}:30`)
+  }
+  return slots
+})()
+
+/** Minimum bookable time as "HH:MM" string, or undefined if date is not today */
+export function getMinTime(selectedDate: string): string | undefined {
+  if (selectedDate !== getToday()) return undefined
+  const now = nowKST()
+  now.setHours(now.getHours() + MIN_BOOKING_LEAD_HOURS)
+  const m = now.getMinutes()
+  if (m === 0) {
+    // exact hour
+  } else if (m <= 30) {
+    now.setMinutes(30)
+    now.setSeconds(0)
+  } else {
+    now.setHours(now.getHours() + 1)
+    now.setMinutes(0)
+    now.setSeconds(0)
+  }
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
+
+export function getAvailableTimeSlots(selectedDate: string): string[] {
+  const minTime = getMinTime(selectedDate)
+  if (!minTime) return ALL_TIME_SLOTS
+  return ALL_TIME_SLOTS.filter((t) => t >= minTime)
+}
+
+export function getDefaultTime(selectedDate: string): string {
+  const minTime = getMinTime(selectedDate)
+  if (!minTime) return '11:00'
+  return minTime > '11:00' ? minTime : '11:00'
 }

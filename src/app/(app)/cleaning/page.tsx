@@ -3,46 +3,21 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircleIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { calculateCleaningPrice, MIN_BOOKING_LEAD_HOURS } from '@/lib/cleaning-pricing'
+import { CheckCircleIcon, CheckIcon } from 'lucide-react'
+import { CalendarPicker } from '@/components/calendar-picker'
+import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
+import { calculateCleaningPrice } from '@/lib/cleaning-pricing'
 import { useProperties, useInvalidateProperties } from '@/lib/hooks/use-properties'
 import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
 
-function getTomorrow(): string {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  return d.toISOString().slice(0, 10)
-}
-
-function getToday(): string {
-  return new Date().toISOString().slice(0, 10)
-}
-
-/** 최소 3시간 후, 30분 단위로 올림 */
-function getMinTime(selectedDate: string): string | undefined {
-  if (selectedDate !== getToday()) return undefined
-  const now = new Date()
-  now.setHours(now.getHours() + MIN_BOOKING_LEAD_HOURS)
-  // 30분 단위 올림: 분이 0이면 그대로, 1~30이면 30, 31~59이면 다음 정시
-  const m = now.getMinutes()
-  if (m === 0) {
-    // 이미 정각
-  } else if (m <= 30) {
-    now.setMinutes(30)
-  } else {
-    now.setHours(now.getHours() + 1)
-    now.setMinutes(0)
-  }
-  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-}
-
-function getDefaultTime(selectedDate: string): string {
-  const minTime = getMinTime(selectedDate)
-  if (!minTime) return '11:00'
-  return minTime > '11:00' ? minTime : '11:00'
-}
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function CleaningPage() {
   const searchParams = useSearchParams()
@@ -51,18 +26,18 @@ export default function CleaningPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>(searchParams.get('propertyId') ?? '')
   const [date, setDate] = useState(getTomorrow())
   const [time, setTime] = useState('11:00')
-  const minTime = getMinTime(date)
   const [memo, setMemo] = useState('')
-  const [dateFocused, setDateFocused] = useState(false)
-  const [timeFocused, setTimeFocused] = useState(false)
+
+  const [dateDrawerOpen, setDateDrawerOpen] = useState(false)
+  const [timeDrawerOpen, setTimeDrawerOpen] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
   const isUrgent = date === getToday()
   const selectedProperty = properties.find((p) => p.id === selectedPropertyId)
+  const timeSlots = getAvailableTimeSlots(date)
 
-  // Invalidate cache if returning from property creation
   const invalidateProperties = useInvalidateProperties()
   useEffect(() => {
     if (searchParams.get('propertyId')) {
@@ -70,16 +45,31 @@ export default function CleaningPage() {
     }
   }, [searchParams, invalidateProperties])
 
-  // Auto-select if single property
   useEffect(() => {
     if (!propertiesLoading && properties.length === 1 && !selectedPropertyId) {
       setSelectedPropertyId(properties[0].id)
     }
   }, [properties, propertiesLoading, selectedPropertyId])
 
+  // When date changes, validate time
+  function handleDateSelect(newDate: string) {
+    setDate(newDate)
+    const slots = getAvailableTimeSlots(newDate)
+    if (!slots.includes(time)) {
+      setTime(getDefaultTime(newDate))
+    }
+    setTimeout(() => setDateDrawerOpen(false), 300)
+  }
+
+  function handleTimeSelect(newTime: string) {
+    setTime(newTime)
+    setTimeout(() => setTimeDrawerOpen(false), 300)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedPropertyId) return
+    const minTime = getMinTime(date)
     if (minTime && time < minTime) {
       setTime(minTime)
       return
@@ -118,7 +108,7 @@ export default function CleaningPage() {
       </h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* Property Selection — hidden when single property */}
+        {/* Property Selection */}
         {properties.length >= 1 && (
           <div>
             <p className="text-[13px] font-medium text-[#717171] mb-2 px-1">
@@ -170,51 +160,37 @@ export default function CleaningPage() {
         {/* Date & Time */}
         <div>
           <CompoundInput>
-            <CompoundField
-              label="희망 날짜"
-              focused={dateFocused}
-              borderRadius="12px 12px 0 0"
+            {/* Date field — tappable */}
+            <button
+              type="button"
+              className="w-full text-left"
+              onClick={() => setDateDrawerOpen(true)}
             >
-              <input
-                type="date"
-                value={date}
-                min={getToday()}
-                onChange={(e) => {
-                  const newDate = e.target.value
-                  setDate(newDate)
-                  const newMin = getMinTime(newDate)
-                  if (newMin && time < newMin) setTime(newMin)
-                  if (!newMin && time !== '11:00') setTime('11:00')
-                }}
-                onFocus={() => setDateFocused(true)}
-                onBlur={() => setDateFocused(false)}
-                required
-                className="w-full bg-transparent text-[16px] text-[#222222] outline-none"
-                style={{ fontFamily: 'var(--font-body)', colorScheme: 'light' }}
-              />
-            </CompoundField>
-            <CompoundField
-              label="희망 시간"
-              focused={timeFocused}
-              borderRadius="0 0 12px 12px"
+              <CompoundField
+                label="희망 날짜"
+                borderRadius="12px 12px 0 0"
+              >
+                <span className="block w-full text-[16px] text-[#222222]" style={{ fontFamily: 'var(--font-body)' }}>
+                  {formatDateLabel(date)}
+                </span>
+              </CompoundField>
+            </button>
+
+            {/* Time field — tappable */}
+            <button
+              type="button"
+              className="w-full text-left"
+              onClick={() => setTimeDrawerOpen(true)}
             >
-              <input
-                type="time"
-                step={1800}
-                min={minTime}
-                value={time}
-                onChange={(e) => {
-                  const val = e.target.value
-                  if (minTime && val < minTime) return
-                  setTime(val)
-                }}
-                onFocus={() => setTimeFocused(true)}
-                onBlur={() => setTimeFocused(false)}
-                required
-                className="w-full bg-transparent text-[16px] text-[#222222] outline-none"
-                style={{ fontFamily: 'var(--font-body)', colorScheme: 'light' }}
-              />
-            </CompoundField>
+              <CompoundField
+                label="희망 시간"
+                borderRadius="0 0 12px 12px"
+              >
+                <span className="block w-full text-[16px] text-[#222222]" style={{ fontFamily: 'var(--font-body)' }}>
+                  {formatTimeKorean(time)}
+                </span>
+              </CompoundField>
+            </button>
           </CompoundInput>
 
           {isUrgent && (
@@ -270,6 +246,64 @@ export default function CleaningPage() {
           청소 요청하기
         </LoadingButton>
       </form>
+
+      {/* Date Picker Drawer — Calendar */}
+      <Drawer open={dateDrawerOpen} onOpenChange={setDateDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader className="text-left px-4 pt-4 pb-2">
+            <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+              날짜 선택
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-6">
+            <CalendarPicker
+              selected={date}
+              onSelect={handleDateSelect}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Time Picker Drawer */}
+      <Drawer open={timeDrawerOpen} onOpenChange={setTimeDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader className="text-left px-4 pt-4 pb-2">
+            <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+              시간 선택
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto flex-1 pb-safe">
+            {ALL_TIME_SLOTS.map((t, i) => {
+              const isSelected = t === time
+              const isDisabled = !timeSlots.includes(t)
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => !isDisabled && handleTimeSelect(t)}
+                  className={cn(
+                    'w-full flex items-center justify-between py-3 px-4 text-[15px] transition-colors',
+                    i > 0 && 'border-t border-[#EBEBEB]',
+                    isDisabled
+                      ? 'text-[#D0D0D0] cursor-default'
+                      : isSelected
+                        ? 'font-semibold text-[#222222]'
+                        : 'text-[#222222] hover:bg-[#F7F7F7] active:bg-[#F0F0F0]'
+                  )}
+                >
+                  <span>{formatTimeKorean(t)}</span>
+                  {isSelected && !isDisabled && (
+                    <span className="w-[20px] h-[20px] rounded-full bg-[#222222] flex items-center justify-center shrink-0">
+                      <CheckIcon size={12} strokeWidth={3} className="text-white" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }
