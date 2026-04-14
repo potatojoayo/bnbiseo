@@ -83,6 +83,8 @@ interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement>
   bg?: string
   /** Error message to render below the input */
   error?: string
+  /** Validate on change — return error string or empty for valid */
+  validate?: (value: string) => string
   /** Ref forwarded to the underlying <input> */
   inputRef?: React.Ref<HTMLInputElement>
 }
@@ -95,13 +97,16 @@ interface FloatingTextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTe
   borderRadius?: string
   bg?: string
   error?: string
+  /** Validate on change — return error string or empty for valid */
+  validate?: (value: string) => string
 }
 
 export function FloatingTextarea({
   label,
   borderRadius,
   bg,
-  error,
+  error: externalError,
+  validate,
   onFocus,
   onBlur,
   onChange,
@@ -109,6 +114,9 @@ export function FloatingTextarea({
   ...props
 }: FloatingTextareaProps) {
   const [focused, setFocused] = React.useState(false)
+  const [internalError, setInternalError] = React.useState('')
+  const [touched, setTouched] = React.useState(false)
+  const error = externalError || (touched ? internalError : '')
 
   function resize(el: HTMLTextAreaElement) {
     el.style.height = 'auto'
@@ -126,11 +134,12 @@ export function FloatingTextarea({
         rows={1}
         ref={(el) => { if (el) resize(el) }}
         onFocus={(e) => { setFocused(true); onFocus?.(e) }}
-        onBlur={(e) => { setFocused(false); onBlur?.(e) }}
+        onBlur={(e) => { setFocused(false); setTouched(true); onBlur?.(e) }}
         onChange={(e) => {
           const val = e.target.value.replace(/\n/g, '')
           e.target.value = val
           resize(e.target)
+          if (validate && touched) setInternalError(validate(val))
           onChange?.(e)
         }}
         onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault() }}
@@ -153,24 +162,19 @@ export function FloatingInput({
   label,
   borderRadius,
   bg,
-  error,
+  error: externalError,
+  validate,
   inputRef,
   onFocus,
   onBlur,
+  onChange,
   className,
   ...props
 }: FloatingInputProps) {
   const [focused, setFocused] = React.useState(false)
-
-  function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
-    setFocused(true)
-    onFocus?.(e)
-  }
-
-  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
-    setFocused(false)
-    onBlur?.(e)
-  }
+  const [internalError, setInternalError] = React.useState('')
+  const [touched, setTouched] = React.useState(false)
+  const error = externalError || (touched ? internalError : '')
 
   return (
     <CompoundField
@@ -181,8 +185,12 @@ export function FloatingInput({
     >
       <input
         ref={inputRef}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
+        onFocus={(e) => { setFocused(true); onFocus?.(e) }}
+        onBlur={(e) => { setFocused(false); setTouched(true); onBlur?.(e) }}
+        onChange={(e) => {
+          if (validate && touched) setInternalError(validate(e.target.value))
+          onChange?.(e)
+        }}
         className={cn(inputCls, className)}
         style={FONT}
         {...props}

@@ -115,6 +115,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData }: Propert
     setAddrQuery('')
     setAddrResults([])
     setShowAddrResults(false)
+    if (errors.address) setErrors((prev) => { const { address: _, ...rest } = prev; return rest })
     setTimeout(() => {
       document.getElementById('onboarding-addressDetail')?.focus()
     }, 380)
@@ -201,7 +202,10 @@ export function PropertyForm({ backHref, mode = 'create', initialData }: Propert
               id="onboarding-name"
               label="숙소 이름"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (errors.name) setErrors((prev) => { const { name: _, ...rest } = prev; return rest })
+              }}
               onFocus={() => setFocused('name')}
               onBlur={() => setFocused(null)}
               placeholder="예: 합정 감성 아파트"

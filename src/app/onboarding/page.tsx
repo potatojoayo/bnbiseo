@@ -26,7 +26,7 @@ export default function OnboardingPage() {
 
         if (properties.length > 0) {
           if (profile?.onboardingCompleted) {
-            router.replace('/dashboard')
+            router.replace('/home')
           } else {
             router.replace('/onboarding/complete')
           }

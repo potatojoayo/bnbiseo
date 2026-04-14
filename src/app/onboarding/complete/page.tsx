@@ -38,7 +38,7 @@ export default function CompletePage() {
   async function handleComplete() {
     setCompleting(true)
     await api.post('/profiles/complete-onboarding')
-    router.push('/dashboard')
+    router.push('/home')
   }
 
   if (!ready) {

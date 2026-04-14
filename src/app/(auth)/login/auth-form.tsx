@@ -145,7 +145,12 @@ export function AuthForm() {
       return
     }
 
-    router.push('/onboarding')
+    try {
+      const profile = await api.get<{ onboardingCompleted: boolean }>('/profiles/me')
+      router.push(profile.onboardingCompleted ? '/home' : '/onboarding')
+    } catch {
+      router.push('/onboarding')
+    }
   }
 
   async function handleSignup() {

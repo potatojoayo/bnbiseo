@@ -6,7 +6,7 @@ import { supabase } from '@/lib/api-client'
 import { api } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
-type Destination = '/login' | '/onboarding' | '/dashboard'
+type Destination = '/login' | '/onboarding' | '/home'
 
 export function CtaButton({
   className,
@@ -30,7 +30,7 @@ export function CtaButton({
 
       try {
         const profile = await api.get<{ onboardingCompleted: boolean }>('/profiles/me')
-        setDestination(profile.onboardingCompleted ? '/dashboard' : '/onboarding')
+        setDestination(profile.onboardingCompleted ? '/home' : '/onboarding')
       } catch {
         // No profile — need to sign up properly
         setDestination('/login')
