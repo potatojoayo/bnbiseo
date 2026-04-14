@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { ArrowLeftIcon, Loader2Icon } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { api, ApiError } from '@/lib/api-client'
+import { useInvalidateProperties } from '@/lib/hooks/use-properties'
 import { extractListingId } from '@/lib/airbnb-scraper'
 import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
 import { FloatingTextarea, CompoundInput, CompoundField } from '@/components/ui/floating-input'
@@ -35,10 +36,12 @@ type PropertyFormProps = {
   mode?: 'create' | 'edit'
   initialData?: PropertyData
   redirectTo?: string
+  title?: string
 }
 
-export function PropertyForm({ backHref, mode = 'create', initialData, redirectTo }: PropertyFormProps) {
+export function PropertyForm({ backHref, mode = 'create', initialData, redirectTo, title }: PropertyFormProps) {
   const router = useRouter()
+  const invalidateProperties = useInvalidateProperties()
   const [isPending, setIsPending] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -169,6 +172,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         const created = await api.post<{ id: string }>('/properties', body)
         createdId = created.id
       }
+      await invalidateProperties()
       const dest = redirectTo ?? '/onboarding/complete'
       router.push(createdId ? `${dest}?propertyId=${createdId}` : dest, { scroll: false })
     } catch (err) {
@@ -197,7 +201,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-up-fast">
+    <div className="flex flex-col gap-6">
       {backHref && (
         <Link
           href={backHref}
@@ -212,8 +216,14 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
           className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface leading-tight"
           style={{ fontFamily: 'var(--font-body)' }}
         >
-          {mode === 'edit' ? '숙소 정보를' : backHref ? '숙소 정보를' : '첫 숙소를'}
-          <br />{mode === 'edit' ? '수정해주세요' : backHref ? '입력해주세요' : '등록해주세요'}
+          {title
+            ? title
+            : mode === 'edit'
+              ? <>숙소 정보를<br />수정해주세요</>
+              : backHref
+                ? <>숙소 정보를<br />입력해주세요</>
+                : <>첫 숙소를<br />등록해주세요</>
+          }
         </h2>
       </div>
 

@@ -5,9 +5,10 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircleIcon, CheckIcon } from 'lucide-react'
 import { CalendarPicker } from '@/components/calendar-picker'
+import { PropertyCard } from '@/components/property-card'
 import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
 import { calculateCleaningPrice } from '@/lib/cleaning-pricing'
-import { useProperties, useInvalidateProperties } from '@/lib/hooks/use-properties'
+import { useProperties } from '@/lib/hooks/use-properties'
 import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
@@ -37,13 +38,6 @@ export default function CleaningPage() {
   const isUrgent = date === getToday()
   const selectedProperty = properties.find((p) => p.id === selectedPropertyId)
   const timeSlots = getAvailableTimeSlots(date)
-
-  const invalidateProperties = useInvalidateProperties()
-  useEffect(() => {
-    if (searchParams.get('propertyId')) {
-      invalidateProperties()
-    }
-  }, [searchParams, invalidateProperties])
 
   useEffect(() => {
     if (!propertiesLoading && properties.length === 1 && !selectedPropertyId) {
@@ -100,6 +94,14 @@ export default function CleaningPage() {
     )
   }
 
+  if (propertiesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
+        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
       {/* Header */}
@@ -123,25 +125,17 @@ export default function CleaningPage() {
                     type="button"
                     onClick={() => setSelectedPropertyId(p.id)}
                     className={cn(
-                      'w-full text-left flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all active:scale-[0.99]',
+                      'w-full text-left flex items-center gap-3 rounded-xl border transition-all active:scale-[0.99]',
                       selected ? 'border-[#222222]' : 'border-[#EBEBEB] hover:border-[#B0B0B0]'
                     )}
                   >
                     <div className={cn(
-                      'w-[18px] h-[18px] rounded-full border-[1.5px] shrink-0 flex items-center justify-center transition-all',
+                      'w-[18px] h-[18px] rounded-full border-[1.5px] shrink-0 flex items-center justify-center transition-all ml-4',
                       selected ? 'border-[#222222]' : 'border-[#CCCCCC]'
                     )}>
                       {selected && <div className="w-[10px] h-[10px] rounded-full bg-[#222222]" />}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-semibold text-[#222222] leading-snug">
-                        {p.name}
-                      </p>
-                      <p className="text-[13px] text-[#717171] mt-0.5 leading-snug">
-                        {p.address}
-                        {p.addressDetail ? ` ${p.addressDetail}` : ''}
-                      </p>
-                    </div>
+                    <PropertyCard property={p} className="flex-1 min-w-0 pl-0" />
                   </button>
                 )
               })}

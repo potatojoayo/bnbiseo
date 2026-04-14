@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
 import { useInvalidateProfile } from '@/lib/hooks/use-profile'
-import { MapPinIcon, PlusIcon, ArrowRightIcon } from 'lucide-react'
+import { PlusIcon, ArrowRightIcon } from 'lucide-react'
+import { PropertyCard } from '@/components/property-card'
 import { LoadingButton } from '@/components/ui/loading-button'
 
 type Property = {
@@ -69,16 +70,9 @@ export default function CompletePage() {
           <Link
             key={property.id}
             href={`/onboarding/edit/${property.id}`}
-            className="rounded-xl border border-[#EBEBEB] bg-white px-4 py-4 hover:bg-[#F7F7F7] transition-colors"
+            className="rounded-xl border border-[#EBEBEB] bg-white hover:bg-[#F7F7F7] transition-colors"
           >
-            <p className="text-[15px] font-semibold text-[#222222]">
-              {property.name}
-            </p>
-            <p className="mt-1 text-[13px] text-[#717171]">
-              <MapPinIcon className="size-3 inline-block align-[-1px] mr-1" strokeWidth={1.75} />
-              {property.address}
-              {property.addressDetail ? ` ${property.addressDetail}` : ''}
-            </p>
+            <PropertyCard property={property} />
           </Link>
         ))}
       </div>
