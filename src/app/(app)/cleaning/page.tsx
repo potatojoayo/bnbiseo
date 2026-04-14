@@ -6,16 +6,9 @@ import Link from 'next/link'
 import { CheckCircleIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/auth-provider'
-import { api } from '@/lib/api-client'
+import { useProperties } from '@/lib/hooks/use-properties'
 import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
-
-type Property = {
-  id: string
-  name: string
-  address: string
-  addressDetail: string | null
-}
 
 function getTomorrow(): string {
   const d = new Date()
@@ -31,8 +24,7 @@ export default function CleaningPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  const [properties, setProperties] = useState<Property[]>([])
-  const [propertiesLoading, setPropertiesLoading] = useState(true)
+  const { data: properties = [], isLoading: propertiesLoading } = useProperties()
 
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('')
   const [date, setDate] = useState(getTomorrow())
@@ -52,18 +44,12 @@ export default function CleaningPage() {
     }
   }, [user, loading, router])
 
+  // Auto-select if single property
   useEffect(() => {
-    if (!user) return
-    api.get<Property[]>('/properties')
-      .then((data) => {
-        setProperties(data)
-        if (data.length === 1) {
-          setSelectedPropertyId(data[0].id)
-        }
-      })
-      .catch(() => {})
-      .finally(() => setPropertiesLoading(false))
-  }, [user])
+    if (!propertiesLoading && properties.length === 1 && !selectedPropertyId) {
+      setSelectedPropertyId(properties[0].id)
+    }
+  }, [properties, propertiesLoading, selectedPropertyId])
 
   if (loading) {
     return (

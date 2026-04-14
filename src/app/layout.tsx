@@ -4,6 +4,7 @@ import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth-provider";
+import { QueryProvider } from "@/lib/query-client";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -51,9 +52,11 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", sbAggro.variable, paperlogy.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-full flex flex-col">
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </QueryProvider>
         </body>
     </html>
   );

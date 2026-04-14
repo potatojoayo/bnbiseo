@@ -24,4 +24,5 @@ app.route('/fixtures', fixturesRoutes)
 app.route('/profiles', profilesRoutes)
 app.route('/airroi', airroiRoutes)
 
+export type AppType = typeof app
 export default app
