@@ -7,12 +7,15 @@ import { CheckCircleIcon, CheckIcon } from 'lucide-react'
 import { CalendarPicker } from '@/components/calendar-picker'
 import { PropertyCard } from '@/components/property-card'
 import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
-import { calculateCleaningPrice } from '@/lib/cleaning-pricing'
+import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
 import { useProperties } from '@/lib/hooks/use-properties'
+import { useCleaningRequests, useInvalidateCleaning } from '@/lib/hooks/use-cleaning'
+import { api } from '@/lib/api-client'
 import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
   Drawer,
+  DrawerTrigger,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
@@ -23,6 +26,10 @@ import {
 export default function CleaningPage() {
   const searchParams = useSearchParams()
   const { data: properties = [], isLoading: propertiesLoading } = useProperties()
+  const { data: cleaningHistory = [] } = useCleaningRequests()
+  const invalidateCleaning = useInvalidateCleaning()
+
+  const isFirstCleaning = cleaningHistory.length === 0
 
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>(searchParams.get('propertyId') ?? '')
   const [date, setDate] = useState(getTomorrow())
@@ -69,9 +76,19 @@ export default function CleaningPage() {
       return
     }
     setSubmitting(true)
-    await new Promise((res) => setTimeout(res, 1500))
-    setSubmitting(false)
-    setSuccess(true)
+    try {
+      await api.post('/cleaning', {
+        propertyId: selectedPropertyId,
+        scheduledDate: date,
+        scheduledTime: time,
+        memo: memo || undefined,
+        isUrgent,
+      })
+      await invalidateCleaning()
+      setSuccess(true)
+    } catch {
+      setSubmitting(false)
+    }
   }
 
   if (success) {
@@ -125,17 +142,11 @@ export default function CleaningPage() {
                     type="button"
                     onClick={() => setSelectedPropertyId(p.id)}
                     className={cn(
-                      'w-full text-left flex items-center gap-3 rounded-xl border transition-all active:scale-[0.99]',
+                      'w-full text-left rounded-xl border transition-all active:scale-[0.99]',
                       selected ? 'border-[#222222]' : 'border-[#EBEBEB] hover:border-[#B0B0B0]'
                     )}
                   >
-                    <div className={cn(
-                      'w-[18px] h-[18px] rounded-full border-[1.5px] shrink-0 flex items-center justify-center transition-all ml-4',
-                      selected ? 'border-[#222222]' : 'border-[#CCCCCC]'
-                    )}>
-                      {selected && <div className="w-[10px] h-[10px] rounded-full bg-[#222222]" />}
-                    </div>
-                    <PropertyCard property={p} className="flex-1 min-w-0 pl-0" />
+                    <PropertyCard property={p} selected={selected} />
                   </button>
                 )
               })}
@@ -206,28 +217,107 @@ export default function CleaningPage() {
         </CompoundInput>
 
         {/* Price estimate */}
-        {selectedProperty?.pyeong && (
-          <div className="rounded-xl border border-[#EBEBEB] px-4 py-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[14px] text-[#717171]">
-                {isUrgent ? '긴급 청소 예상 금액' : '예상 청소 금액'}
-              </span>
-              <span className="text-[20px] font-semibold text-[#222222]">
-                {calculateCleaningPrice({
-                  pyeong: selectedProperty.pyeong,
-                  bedrooms: selectedProperty.bedrooms,
-                  bathrooms: selectedProperty.bathrooms,
-                  isUrgent,
-                }).total.toLocaleString()}원
-              </span>
+        {selectedProperty?.pyeong && (() => {
+          const price = calculateCleaningPrice({
+            pyeong: selectedProperty.pyeong,
+            bedrooms: selectedProperty.bedrooms,
+            bathrooms: selectedProperty.bathrooms,
+            isUrgent,
+          })
+          const discountedTotal = isFirstCleaning
+            ? Math.max(price.total - FIRST_CLEANING_DISCOUNT, 0)
+            : price.total
+
+          return (
+            <div className="rounded-xl border border-[#EBEBEB] px-4 py-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[14px] text-[#717171]">
+                  {isUrgent ? '긴급 청소 예상 금액' : '예상 청소 금액'}
+                </span>
+                <div className="text-right">
+                  {isFirstCleaning && (
+                    <span className="text-[14px] text-[#B0B0B0] line-through mr-2">
+                      {price.total.toLocaleString()}원
+                    </span>
+                  )}
+                  <span className="text-[20px] font-semibold text-[#222222]">
+                    {discountedTotal.toLocaleString()}원
+                  </span>
+                </div>
+              </div>
+              {isFirstCleaning && (
+                <p className="text-[12px] text-brand mt-1.5 text-right">
+                  첫 청소 {FIRST_CLEANING_DISCOUNT.toLocaleString()}원 할인 적용
+                </p>
+              )}
+              {isUrgent && (
+                <p className="text-[12px] text-[#717171] mt-1">
+                  긴급 할증 50% 포함
+                </p>
+              )}
             </div>
-            {isUrgent && (
-              <p className="text-[12px] text-[#717171] mt-1.5">
-                긴급 할증 50% 포함
-              </p>
-            )}
-          </div>
-        )}
+          )
+        })()}
+
+        {/* Pricing info */}
+        {selectedProperty?.pyeong && <Drawer>
+          <DrawerTrigger asChild>
+            <button
+              type="button"
+              className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors -mt-3"
+            >
+              청소 금액은 어떻게 계산되나요?
+            </button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="mx-auto w-full max-w-[440px] px-6 pb-8 overflow-y-auto">
+              <DrawerHeader className="px-0">
+                <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+                  청소 금액 안내
+                </DrawerTitle>
+              </DrawerHeader>
+
+              <div className="flex flex-col gap-5 mt-2">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">기본 요금</p>
+                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                    숙소 면적(평수)에 따라 기본 청소 비용이 산정돼요.
+                    <span className="block text-[13px] text-[#717171] mt-1">10평 이하 2,500원/평 · 11~20평 2,200원/평 · 21평+ 2,000원/평</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">추가 요금</p>
+                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                    방과 욕실 수에 따라 추가 비용이 발생해요.
+                    <span className="block text-[13px] text-[#717171] mt-1">방 1개당 8,000원 · 욕실 1개당 10,000원</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">포함 서비스</p>
+                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                    호텔식 침구 세팅과 15항목 시설 점검 리포트가 기본 포함돼요.
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">긴급 청소</p>
+                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                    당일 요청 시 긴급 청소로 진행되며, 50% 할증이 적용돼요.
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">최소 금액</p>
+                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                    기본 청소 요금은 최소 35,000원부터 시작해요.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>}
 
         {/* Submit */}
         <LoadingButton

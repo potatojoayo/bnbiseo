@@ -45,6 +45,19 @@ export const repairPriorityEnum = pgEnum('repair_priority', [
   'urgent',
 ])
 
+export const cleaningStatusEnum = pgEnum('cleaning_status', [
+  'pending',      // 요청 접수
+  'confirmed',    // 매니저 배정 완료
+  'in_progress',  // 청소 진행 중
+  'completed',    // 청소 완료
+  'cancelled',    // 취소
+])
+
+export const cleaningTypeEnum = pgEnum('cleaning_type', [
+  'standard',     // 표준 청소
+  'urgent',       // 긴급 청소 (당일)
+])
+
 export const repairStatusEnum = pgEnum('repair_status', [
   'submitted',
   'reviewing',
@@ -108,6 +121,27 @@ export const properties = pgTable('properties', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
+})
+
+export const cleaningRequests = pgTable('cleaning_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  propertyId: uuid('property_id')
+    .notNull()
+    .references(() => properties.id, { onDelete: 'cascade' }),
+  hostId: uuid('host_id')
+    .notNull()
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  cleaningType: cleaningTypeEnum('cleaning_type').default('standard').notNull(),
+  status: cleaningStatusEnum('status').default('pending').notNull(),
+  scheduledDate: text('scheduled_date').notNull(), // YYYY-MM-DD
+  scheduledTime: text('scheduled_time').notNull(), // HH:MM
+  memo: text('memo'),
+  price: integer('price').notNull(), // 스냅샷 금액 (원)
+  discount: integer('discount').default(0).notNull(), // 할인 금액
+  finalPrice: integer('final_price').notNull(), // 최종 결제 금액
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
 })
 
 export const propertyPhotos = pgTable('property_photos', {
@@ -265,6 +299,7 @@ export const repairParts = pgTable('repair_parts', {
 
 export const profilesRelations = relations(profiles, ({ many }) => ({
   properties: many(properties),
+  cleaningRequests: many(cleaningRequests),
   chatSessions: many(chatSessions),
 }))
 
@@ -272,9 +307,21 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   host: one(profiles, { fields: [properties.hostId], references: [profiles.id] }),
   photos: many(propertyPhotos),
   fixtures: many(fixtures),
+  cleaningRequests: many(cleaningRequests),
   repairRequests: many(repairRequests),
   guestSessions: many(guestSessions),
   chatSessions: many(chatSessions),
+}))
+
+export const cleaningRequestsRelations = relations(cleaningRequests, ({ one }) => ({
+  property: one(properties, {
+    fields: [cleaningRequests.propertyId],
+    references: [properties.id],
+  }),
+  host: one(profiles, {
+    fields: [cleaningRequests.hostId],
+    references: [profiles.id],
+  }),
 }))
 
 export const propertyPhotosRelations = relations(propertyPhotos, ({ one }) => ({

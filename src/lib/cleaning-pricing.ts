@@ -1,6 +1,9 @@
 /** 최소 예약 리드타임 (시간) */
 export const MIN_BOOKING_LEAD_HOURS = 3
 
+/** 첫 청소 할인 금액 */
+export const FIRST_CLEANING_DISCOUNT = 10000
+
 export const CLEANING_PRICING = {
   areaTiers: [
     { min: 1, max: 10, pricePerPyeong: 2500 },

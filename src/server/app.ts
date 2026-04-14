@@ -5,6 +5,7 @@ import { propertiesRoutes } from './routes/properties'
 import { fixturesRoutes } from './routes/fixtures'
 import { profilesRoutes } from './routes/profiles'
 import { airroiRoutes } from './routes/airroi'
+import { cleaningRoutes } from './routes/cleaning'
 
 const app = new Hono().basePath('/api')
 
@@ -23,6 +24,7 @@ app.route('/properties', propertiesRoutes)
 app.route('/fixtures', fixturesRoutes)
 app.route('/profiles', profilesRoutes)
 app.route('/airroi', airroiRoutes)
+app.route('/cleaning', cleaningRoutes)
 
 export type AppType = typeof app
 export default app
