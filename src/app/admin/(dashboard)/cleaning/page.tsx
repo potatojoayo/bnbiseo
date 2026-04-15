@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
+import { useAdminCleaning, useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import {
   Drawer,
@@ -11,30 +12,6 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { LoadingButton } from '@/components/ui/loading-button'
-
-type CleaningRequest = {
-  id: string
-  propertyName: string | null
-  propertyAddress: string | null
-  hostName: string | null
-  hostEmail: string | null
-  managerId: string | null
-  managerName: string | null
-  cleaningType: string
-  status: string
-  scheduledDate: string
-  scheduledTime: string
-  memo: string | null
-  finalPrice: number
-  createdAt: string
-}
-
-type Manager = {
-  id: string
-  name: string
-  phone: string
-  isActive: boolean
-}
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending_payment: { label: '결제 대기', color: 'bg-[#FFF8E1] text-[#F57F17]' },
@@ -55,56 +32,45 @@ const TABS = [
 ]
 
 export default function AdminCleaningPage() {
-  const [requests, setRequests] = useState<CleaningRequest[]>([])
-  const [managers, setManagers] = useState<Manager[]>([])
-  const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('')
+  const { data: requests = [], isLoading } = useAdminCleaning(tab || undefined)
+  const { data: allManagers = [] } = useAdminManagers()
+  const invalidate = useInvalidateAdmin()
+
+  const activeManagers = allManagers.filter((m) => m.isActive)
 
   // Assign drawer
   const [assignOpen, setAssignOpen] = useState(false)
-  const [assignTarget, setAssignTarget] = useState<CleaningRequest | null>(null)
+  const [assignTargetId, setAssignTargetId] = useState('')
   const [assigning, setAssigning] = useState(false)
 
   // Status drawer
   const [statusOpen, setStatusOpen] = useState(false)
-  const [statusTarget, setStatusTarget] = useState<CleaningRequest | null>(null)
+  const [statusTargetId, setStatusTargetId] = useState('')
   const [updating, setUpdating] = useState(false)
 
-  async function fetchData() {
-    setLoading(true)
-    const [r, m] = await Promise.all([
-      api.get<CleaningRequest[]>(`/admin/cleaning${tab ? `?status=${tab}` : ''}`),
-      api.get<Manager[]>('/admin/managers'),
-    ])
-    setRequests(r)
-    setManagers(m.filter((m) => m.isActive))
-    setLoading(false)
-  }
-
-  useEffect(() => { fetchData() }, [tab])
-
   async function handleAssign(managerId: string) {
-    if (!assignTarget) return
     setAssigning(true)
-    await api.post(`/admin/cleaning/${assignTarget.id}/assign`, { managerId })
+    await api.post(`/admin/cleaning/${assignTargetId}/assign`, { managerId })
     setAssigning(false)
     setAssignOpen(false)
-    fetchData()
+    invalidate.cleaning()
+    invalidate.stats()
   }
 
   async function handleStatusChange(status: string) {
-    if (!statusTarget) return
     setUpdating(true)
-    await api.post(`/admin/cleaning/${statusTarget.id}/status`, { status })
+    await api.post(`/admin/cleaning/${statusTargetId}/status`, { status })
     setUpdating(false)
     setStatusOpen(false)
-    fetchData()
+    invalidate.cleaning()
+    invalidate.stats()
   }
 
   return (
     <>
       <SiteHeader title="청소 관리" />
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-6 max-w-[960px] mx-auto w-full">
         {/* Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto">
           {TABS.map((t) => (
@@ -122,7 +88,7 @@ export default function AdminCleaningPage() {
           ))}
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
           </div>
@@ -134,7 +100,6 @@ export default function AdminCleaningPage() {
               const statusInfo = STATUS_LABELS[r.status]
               return (
                 <div key={r.id} className="rounded-xl border border-[#EBEBEB] px-4 py-4">
-                  {/* Header */}
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[15px] font-semibold text-[#222222]">
                       {r.propertyName || '숙소'}
@@ -145,8 +110,6 @@ export default function AdminCleaningPage() {
                       </span>
                     )}
                   </div>
-
-                  {/* Details */}
                   <div className="flex flex-col gap-1 text-[13px] text-[#717171] mb-3">
                     <p>{formatDateLabel(r.scheduledDate)} {formatTimeKorean(r.scheduledTime)} {r.cleaningType === 'urgent' && '(긴급)'}</p>
                     <p>호스트: {r.hostName || r.hostEmail || '-'}</p>
@@ -154,12 +117,10 @@ export default function AdminCleaningPage() {
                     <p>금액: {r.finalPrice.toLocaleString()}원</p>
                     {r.memo && <p>메모: {r.memo}</p>}
                   </div>
-
-                  {/* Actions */}
                   <div className="flex gap-2">
                     {r.status === 'pending' && (
                       <button
-                        onClick={() => { setAssignTarget(r); setAssignOpen(true) }}
+                        onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }}
                         className="px-3 py-1.5 rounded-lg bg-[#222222] text-white text-[12px] font-medium"
                       >
                         매니저 배정
@@ -167,7 +128,7 @@ export default function AdminCleaningPage() {
                     )}
                     {['pending', 'confirmed', 'in_progress'].includes(r.status) && (
                       <button
-                        onClick={() => { setStatusTarget(r); setStatusOpen(true) }}
+                        onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }}
                         className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#717171]"
                       >
                         상태 변경
@@ -186,15 +147,13 @@ export default function AdminCleaningPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                매니저 배정
-              </DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">매니저 배정</DrawerTitle>
             </DrawerHeader>
-            {managers.length === 0 ? (
+            {activeManagers.length === 0 ? (
               <p className="text-[14px] text-[#717171]">등록된 매니저가 없어요</p>
             ) : (
               <div className="flex flex-col gap-2">
-                {managers.map((m) => (
+                {activeManagers.map((m) => (
                   <LoadingButton
                     key={m.id}
                     type="button"
@@ -216,9 +175,7 @@ export default function AdminCleaningPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                상태 변경
-              </DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">상태 변경</DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-2">
               {['confirmed', 'in_progress', 'completed', 'cancelled'].map((s) => {

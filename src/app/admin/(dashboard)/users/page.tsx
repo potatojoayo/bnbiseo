@@ -1,18 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
-import { api } from '@/lib/api-client'
-
-type User = {
-  id: string
-  email: string | null
-  fullName: string | null
-  phone: string | null
-  role: string
-  onboardingCompleted: boolean
-  createdAt: string
-}
+import { useAdminUsers } from '@/lib/hooks/use-admin'
 
 const ROLE_LABELS: Record<string, string> = {
   user: '일반',
@@ -21,23 +10,15 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.get<User[]>('/admin/users').then((data) => {
-      setUsers(data)
-      setLoading(false)
-    })
-  }, [])
+  const { data: users = [], isLoading } = useAdminUsers()
 
   return (
     <>
       <SiteHeader title="회원 관리" />
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-6 max-w-[960px] mx-auto w-full">
         <p className="text-[14px] text-[#717171] mb-6">총 {users.length}명</p>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
           </div>

@@ -38,7 +38,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
           {items.map((item) => {
             const isActive =
               pathname === item.url ||
-              (item.url !== "/dashboard" && pathname.startsWith(item.url))
+              (pathname.startsWith(item.url + '/') && item.url !== '/dashboard' && item.url !== '/admin')
 
             if (item.items && item.items.length > 0) {
               return (

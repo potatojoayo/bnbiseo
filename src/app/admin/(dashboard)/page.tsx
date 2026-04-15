@@ -1,29 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
-import { api } from '@/lib/api-client'
-
-type Stats = {
-  todayCleaning: { pending: number; confirmed: number; inProgress: number; completed: number }
-  totalProperties: number
-  totalUsers: number
-  totalManagers: number
-}
+import { useAdminStats } from '@/lib/hooks/use-admin'
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null)
-
-  useEffect(() => {
-    api.get<Stats>('/admin/stats').then(setStats).catch(() => {})
-  }, [])
+  const { data: stats } = useAdminStats()
 
   return (
     <>
       <SiteHeader title="대시보드" />
-      <div className="flex flex-1 flex-col gap-6 p-6">
-        {/* Today's cleaning summary */}
+      <div className="flex flex-1 flex-col gap-6 p-6 max-w-[960px] mx-auto w-full">
         <div>
           <h2 className="text-[14px] font-medium text-[#717171] mb-3">오늘의 청소</h2>
           <div className="grid grid-cols-4 gap-3 max-md:grid-cols-2">
@@ -41,7 +28,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Quick stats */}
         <div>
           <h2 className="text-[14px] font-medium text-[#717171] mb-3">전체 현황</h2>
           <div className="grid grid-cols-3 gap-3 max-md:grid-cols-1">

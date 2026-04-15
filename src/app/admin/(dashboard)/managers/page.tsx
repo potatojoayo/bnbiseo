@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
+import { useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { PlusIcon } from 'lucide-react'
 import { FloatingInput, CompoundInput } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -19,14 +20,12 @@ type Manager = {
   phone: string
   memo: string | null
   isActive: boolean
-  createdAt: string
 }
 
 export default function AdminManagersPage() {
-  const [managers, setManagers] = useState<Manager[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: managers = [], isLoading } = useAdminManagers()
+  const invalidate = useInvalidateAdmin()
 
-  // Create/Edit drawer
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Manager | null>(null)
   const [name, setName] = useState('')
@@ -34,19 +33,9 @@ export default function AdminManagersPage() {
   const [memo, setMemo] = useState('')
   const [saving, setSaving] = useState(false)
 
-  // Delete drawer
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Manager | null>(null)
   const [deleting, setDeleting] = useState(false)
-
-  async function fetchManagers() {
-    setLoading(true)
-    const data = await api.get<Manager[]>('/admin/managers')
-    setManagers(data)
-    setLoading(false)
-  }
-
-  useEffect(() => { fetchManagers() }, [])
 
   function openCreate() {
     setEditTarget(null)
@@ -73,12 +62,14 @@ export default function AdminManagersPage() {
     }
     setSaving(false)
     setFormOpen(false)
-    fetchManagers()
+    invalidate.managers()
+    invalidate.stats()
   }
 
   async function handleToggle(m: Manager) {
     await api.post(`/admin/managers/${m.id}/toggle`)
-    fetchManagers()
+    invalidate.managers()
+    invalidate.stats()
   }
 
   async function handleDelete() {
@@ -87,18 +78,16 @@ export default function AdminManagersPage() {
     await api.delete(`/admin/managers/${deleteTarget.id}`)
     setDeleting(false)
     setDeleteOpen(false)
-    fetchManagers()
+    invalidate.managers()
+    invalidate.stats()
   }
 
   return (
     <>
       <SiteHeader title="매니저 관리" />
-      <div className="flex flex-1 flex-col p-6">
-        {/* Header */}
+      <div className="flex flex-1 flex-col p-6 max-w-[960px] mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
-          <p className="text-[14px] text-[#717171]">
-            총 {managers.length}명
-          </p>
+          <p className="text-[14px] text-[#717171]">총 {managers.length}명</p>
           <button
             onClick={openCreate}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#222222] text-white text-[13px] font-medium"
@@ -108,7 +97,7 @@ export default function AdminManagersPage() {
           </button>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
           </div>
@@ -130,27 +119,10 @@ export default function AdminManagersPage() {
                 </div>
                 <p className="text-[13px] text-[#717171]">{m.phone}</p>
                 {m.memo && <p className="text-[12px] text-[#B0B0B0] mt-1">{m.memo}</p>}
-
-                {/* Actions */}
                 <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={() => openEdit(m)}
-                    className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#717171]"
-                  >
-                    수정
-                  </button>
-                  <button
-                    onClick={() => handleToggle(m)}
-                    className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#717171]"
-                  >
-                    {m.isActive ? '비활성화' : '활성화'}
-                  </button>
-                  <button
-                    onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }}
-                    className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#B0B0B0]"
-                  >
-                    삭제
-                  </button>
+                  <button onClick={() => openEdit(m)} className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#717171]">수정</button>
+                  <button onClick={() => handleToggle(m)} className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#717171]">{m.isActive ? '비활성화' : '활성화'}</button>
+                  <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#B0B0B0]">삭제</button>
                 </div>
               </div>
             ))}
@@ -169,35 +141,13 @@ export default function AdminManagersPage() {
             </DrawerHeader>
             <div className="flex flex-col gap-4">
               <CompoundInput>
-                <FloatingInput
-                  label="이름"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  borderRadius="12px 12px 0 0"
-                />
-                <FloatingInput
-                  label="전화번호"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  borderRadius="0 0 12px 12px"
-                />
+                <FloatingInput label="이름" value={name} onChange={(e) => setName(e.target.value)} borderRadius="12px 12px 0 0" />
+                <FloatingInput label="전화번호" value={phone} onChange={(e) => setPhone(e.target.value)} borderRadius="0 0 12px 12px" />
               </CompoundInput>
               <CompoundInput>
-                <FloatingInput
-                  label="메모 (선택)"
-                  value={memo}
-                  onChange={(e) => setMemo(e.target.value)}
-                  borderRadius="12px"
-                />
+                <FloatingInput label="메모 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} borderRadius="12px" />
               </CompoundInput>
-              <LoadingButton
-                type="button"
-                variant="primary"
-                loading={saving}
-                loadingText="저장 중..."
-                disabled={!name || !phone}
-                onClick={handleSave}
-              >
+              <LoadingButton type="button" variant="primary" loading={saving} loadingText="저장 중..." disabled={!name || !phone} onClick={handleSave}>
                 {editTarget ? '수정하기' : '추가하기'}
               </LoadingButton>
             </div>
@@ -210,30 +160,12 @@ export default function AdminManagersPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                매니저를 삭제할까요?
-              </DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">매니저를 삭제할까요?</DrawerTitle>
             </DrawerHeader>
-            <p className="text-[14px] text-[#717171] mb-6">
-              {deleteTarget?.name}님을 삭제하면 되돌릴 수 없어요.
-            </p>
+            <p className="text-[14px] text-[#717171] mb-6">{deleteTarget?.name}님을 삭제하면 되돌릴 수 없어요.</p>
             <div className="flex flex-col gap-2">
-              <LoadingButton
-                type="button"
-                variant="destructive"
-                loading={deleting}
-                loadingText="삭제 중..."
-                onClick={handleDelete}
-              >
-                삭제하기
-              </LoadingButton>
-              <button
-                type="button"
-                onClick={() => setDeleteOpen(false)}
-                className="h-12 rounded-lg text-[15px] font-semibold text-[#717171] active:bg-[#F7F7F7] transition-colors"
-              >
-                닫기
-              </button>
+              <LoadingButton type="button" variant="destructive" loading={deleting} loadingText="삭제 중..." onClick={handleDelete}>삭제하기</LoadingButton>
+              <button type="button" onClick={() => setDeleteOpen(false)} className="h-12 rounded-lg text-[15px] font-semibold text-[#717171] active:bg-[#F7F7F7] transition-colors">닫기</button>
             </div>
           </div>
         </DrawerContent>

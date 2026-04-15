@@ -1,40 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
-import { api } from '@/lib/api-client'
+import { useAdminProperties } from '@/lib/hooks/use-admin'
 import { MapPinIcon } from 'lucide-react'
 
-type Property = {
-  id: string
-  name: string
-  address: string
-  pyeong: number | null
-  bedrooms: number
-  bathrooms: number
-  hostName: string | null
-  hostEmail: string | null
-  createdAt: string
-}
-
 export default function AdminPropertiesPage() {
-  const [properties, setProperties] = useState<Property[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.get<Property[]>('/admin/properties').then((data) => {
-      setProperties(data)
-      setLoading(false)
-    })
-  }, [])
+  const { data: properties = [], isLoading } = useAdminProperties()
 
   return (
     <>
       <SiteHeader title="숙소 관리" />
-      <div className="flex flex-1 flex-col p-6">
+      <div className="flex flex-1 flex-col p-6 max-w-[960px] mx-auto w-full">
         <p className="text-[14px] text-[#717171] mb-6">총 {properties.length}개</p>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
           </div>
