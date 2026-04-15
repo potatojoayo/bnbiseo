@@ -3,8 +3,31 @@ import { api } from '@/lib/api-client'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
+type PendingItem = {
+  id: string
+  scheduledDate: string
+  scheduledTime: string
+  cleaningType: string
+  finalPrice: number
+  propertyName: string | null
+  hostName: string | null
+}
+
+type ScheduleItem = {
+  id: string
+  scheduledTime: string
+  status: string
+  cleaningType: string
+  propertyName: string | null
+  managerName: string | null
+}
+
 type Stats = {
   todayCleaning: { pending: number; confirmed: number; inProgress: number; completed: number }
+  todayRevenue: number
+  monthRevenue: number
+  pendingAssignment: PendingItem[]
+  todaySchedule: ScheduleItem[]
   totalProperties: number
   totalUsers: number
   totalManagers: number

@@ -48,12 +48,75 @@ adminRoutes.get('/stats', async (c) => {
     if (row.status === 'completed') todayCleaning.completed = row.count
   }
 
+  // Today's revenue
+  const [todayRevenueRow] = await db
+    .select({ total: sql<number>`coalesce(sum(${cleaningRequests.finalPrice}), 0)` })
+    .from(cleaningRequests)
+    .where(and(
+      eq(cleaningRequests.scheduledDate, today),
+      ne(cleaningRequests.status, 'pending_payment'),
+      ne(cleaningRequests.status, 'cancelled'),
+    ))
+
+  // This month's revenue
+  const monthStart = today.slice(0, 7) + '-01'
+  const [monthRevenueRow] = await db
+    .select({ total: sql<number>`coalesce(sum(${cleaningRequests.finalPrice}), 0)` })
+    .from(cleaningRequests)
+    .where(and(
+      sql`${cleaningRequests.scheduledDate} >= ${monthStart}`,
+      ne(cleaningRequests.status, 'pending_payment'),
+      ne(cleaningRequests.status, 'cancelled'),
+    ))
+
+  // Pending assignment (up to 5)
+  const pendingAssignment = await db
+    .select({
+      id: cleaningRequests.id,
+      scheduledDate: cleaningRequests.scheduledDate,
+      scheduledTime: cleaningRequests.scheduledTime,
+      cleaningType: cleaningRequests.cleaningType,
+      finalPrice: cleaningRequests.finalPrice,
+      propertyName: properties.name,
+      hostName: profiles.fullName,
+    })
+    .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .leftJoin(profiles, eq(cleaningRequests.hostId, profiles.id))
+    .where(eq(cleaningRequests.status, 'pending'))
+    .orderBy(cleaningRequests.scheduledDate, cleaningRequests.scheduledTime)
+    .limit(5)
+
+  // Today's schedule
+  const todaySchedule = await db
+    .select({
+      id: cleaningRequests.id,
+      scheduledTime: cleaningRequests.scheduledTime,
+      status: cleaningRequests.status,
+      cleaningType: cleaningRequests.cleaningType,
+      propertyName: properties.name,
+      managerName: managers.name,
+    })
+    .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
+    .where(and(
+      eq(cleaningRequests.scheduledDate, today),
+      ne(cleaningRequests.status, 'pending_payment'),
+      ne(cleaningRequests.status, 'cancelled'),
+    ))
+    .orderBy(cleaningRequests.scheduledTime)
+
   const [propCount] = await db.select({ count: count() }).from(properties).where(isNull(properties.deletedAt))
   const [userCount] = await db.select({ count: count() }).from(profiles).where(and(isNull(profiles.deletedAt), eq(profiles.role, 'user')))
   const [managerCount] = await db.select({ count: count() }).from(managers).where(eq(managers.isActive, true))
 
   return c.json({
     todayCleaning,
+    todayRevenue: todayRevenueRow.total,
+    monthRevenue: monthRevenueRow.total,
+    pendingAssignment,
+    todaySchedule,
     totalProperties: propCount.count,
     totalUsers: userCount.count,
     totalManagers: managerCount.count,
