@@ -424,18 +424,31 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* Footer */}
-      <footer className="px-12 py-7 border-t border-outline-dim flex justify-between items-center text-on-surface-subtle text-xs max-md:px-6 max-md:flex-col max-md:gap-3">
-        <span>© 2026 비앤비서 (BnBiseo)</span>
-        <div className="flex gap-5 max-md:hidden">
-          <a href="#" className="text-on-surface-subtle no-underline text-xs">
-            이용약관
-          </a>
-          <a href="#" className="text-on-surface-subtle no-underline text-xs">
-            개인정보처리방침
-          </a>
-          <a href="#" className="text-on-surface-subtle no-underline text-xs">
-            문의하기
-          </a>
+      <footer className="px-12 py-10 border-t border-outline-dim text-[13px] text-[#717171] max-md:px-6">
+        <div className="max-w-[960px] mx-auto flex flex-col gap-4">
+          {/* Business info */}
+          <div className="flex flex-col gap-1 text-[12px] text-[#999999]">
+            <p>실버백 고릴라즈 | 대표 최정호</p>
+            <p>사업자등록번호 762-11-02534</p>
+            <p>서울특별시 영등포구 신풍로 28, 2층 청년쿡 푸드테크 센터</p>
+            <p>전화 010-2960-4676 | 이메일 potatojoayo@gmail.com</p>
+          </div>
+
+          {/* Links */}
+          <div className="flex gap-4">
+            <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#999999] hover:text-[#717171] transition-colors">
+              이용약관
+            </a>
+            <div className="w-px h-3 bg-[#D0D0D0] self-center" />
+            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#999999] hover:text-[#717171] transition-colors">
+              개인정보처리방침
+            </a>
+          </div>
+
+          {/* Copyright */}
+          <p className="text-[11px] text-[#B0B0B0]">
+            © 2026 실버백 고릴라즈. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>

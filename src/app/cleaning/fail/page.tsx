@@ -1,9 +1,10 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function CleaningFailPage() {
+function FailContent() {
   const searchParams = useSearchParams()
 
   const code = searchParams.get('code') || ''
@@ -28,5 +29,17 @@ export default function CleaningFailPage() {
         {isCancelled ? '돌아가기' : '다시 시도하기'}
       </Link>
     </div>
+  )
+}
+
+export default function CleaningFailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[100dvh]">
+        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+      </div>
+    }>
+      <FailContent />
+    </Suspense>
   )
 }

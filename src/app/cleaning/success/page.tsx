@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CalendarIcon, ClockIcon, MapPinIcon, CreditCardIcon, HomeIcon, MessageSquareTextIcon } from 'lucide-react'
@@ -36,6 +36,18 @@ const steps = [
 ]
 
 export default function CleaningSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[100dvh]">
+        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
+  )
+}
+
+function SuccessContent() {
   const searchParams = useSearchParams()
   const invalidateCleaning = useInvalidateCleaning()
 
