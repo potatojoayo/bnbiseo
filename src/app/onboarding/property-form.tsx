@@ -13,11 +13,9 @@ import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
 import { FloatingTextarea, CompoundInput, CompoundField } from '@/components/ui/floating-input'
 import {
   Drawer,
-  DrawerTrigger,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerClose,
 } from '@/components/ui/drawer'
 
 type PropertyData = {
@@ -37,14 +35,16 @@ type PropertyFormProps = {
   initialData?: PropertyData
   redirectTo?: string
   title?: string
+  animated?: boolean
 }
 
-export function PropertyForm({ backHref, mode = 'create', initialData, redirectTo, title }: PropertyFormProps) {
+export function PropertyForm({ backHref, mode = 'create', initialData, redirectTo, title, animated = true }: PropertyFormProps) {
   const router = useRouter()
   const invalidateProperties = useInvalidateProperties()
   const [isPending, setIsPending] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [message, setMessage] = useState<string | undefined>()
   const [focused, setFocused] = useState<string | null>(null)
@@ -224,7 +224,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`flex flex-col gap-6 ${animated ? 'animate-fade-up-fast' : ''}`}>
       {backHref && (
         <Link
           href={backHref}
@@ -282,7 +282,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                   enterKeyHint="search"
                   value={addrQuery}
                   onChange={(e) => handleAddrQueryChange(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur() } }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
                   onFocus={() => { setFocused('address'); if (addrResults.length > 0) setShowAddrResults(true) }}
                   onBlur={() => setFocused(null)}
                   placeholder="도로명 주소 또는 지번을 입력하세요"
@@ -535,15 +535,15 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
 
         {/* Help — only show when no preview */}
         {!airbnbPreview && !airbnbFetching && (
-        <Drawer>
-          <DrawerTrigger asChild>
-            <button
-              type="button"
-              className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors -mt-4"
-            >
-              링크는 어디서 복사하나요?
-            </button>
-          </DrawerTrigger>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors -mt-4"
+          >
+            링크는 어디서 복사하나요?
+          </button>
+        )}
+        <Drawer open={helpOpen} onOpenChange={setHelpOpen}>
           <DrawerContent>
             <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
               <DrawerHeader className="px-0">
@@ -572,18 +572,16 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                   <p className="text-[14px] text-[#222222] break-all">https://www.airbnb.com/rooms/12345678</p>
                 </div>
               </div>
-              <DrawerClose asChild>
-                <button
-                  type="button"
-                  className="w-full h-12 rounded-lg text-[15px] font-semibold text-white mt-6 bg-[#222222] transition-all active:scale-[0.98]"
-                >
-                  확인
-                </button>
-              </DrawerClose>
+              <button
+                type="button"
+                onClick={() => setHelpOpen(false)}
+                className="w-full h-12 rounded-lg text-[15px] font-semibold text-white mt-6 bg-[#222222] transition-all active:scale-[0.98]"
+              >
+                확인
+              </button>
             </div>
           </DrawerContent>
         </Drawer>
-        )}
 
         {message && (
           <div className="flex items-center gap-2 text-sm text-brand bg-brand/8 border border-brand/20 px-4 py-3 rounded-xl">
@@ -602,47 +600,47 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         </LoadingButton>
 
         {mode === 'edit' && (
-          <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
-            <DrawerTrigger asChild>
-              <button
-                type="button"
-                disabled={deleting || isPending}
-                className="w-full text-center text-[13px] text-[#717171] hover:text-[#C13515] transition-colors disabled:opacity-50"
-              >
-                숙소 삭제
-              </button>
-            </DrawerTrigger>
-            <DrawerContent>
-              <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
-                <DrawerHeader className="px-0">
-                  <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                    정말 삭제할까요?
-                  </DrawerTitle>
-                </DrawerHeader>
-                <p className="text-[14px] text-[#717171] mb-6">
-                  삭제하면 되돌릴 수 없어요.
-                </p>
-                <div className="flex flex-col gap-3">
-                  <LoadingButton
-                    type="button"
-                    onClick={handleDelete}
-                    loading={deleting}
-                    loadingText="삭제 중..."
-                  >
-                    삭제하기
-                  </LoadingButton>
-                  <DrawerClose asChild>
+          <>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              disabled={deleting || isPending}
+              className="w-full text-center text-[13px] text-[#717171] hover:text-[#C13515] transition-colors disabled:opacity-50"
+            >
+              숙소 삭제
+            </button>
+            <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <DrawerContent>
+                <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
+                  <DrawerHeader className="px-0">
+                    <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+                      정말 삭제할까요?
+                    </DrawerTitle>
+                  </DrawerHeader>
+                  <p className="text-[14px] text-[#717171] mb-6">
+                    삭제하면 되돌릴 수 없어요.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <LoadingButton
+                      type="button"
+                      onClick={handleDelete}
+                      loading={deleting}
+                      loadingText="삭제 중..."
+                    >
+                      삭제하기
+                    </LoadingButton>
                     <button
                       type="button"
+                      onClick={() => setDeleteOpen(false)}
                       className="w-full text-center text-[13px] text-[#717171] hover:text-[#222222] transition-colors underline underline-offset-2"
                     >
                       취소
                     </button>
-                  </DrawerClose>
+                  </div>
                 </div>
-              </div>
-            </DrawerContent>
-          </Drawer>
+              </DrawerContent>
+            </Drawer>
+          </>
         )}
       </form>
     </div>

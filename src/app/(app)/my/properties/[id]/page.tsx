@@ -49,6 +49,7 @@ export default function MyPropertyEditPage() {
           mode="edit"
           initialData={property}
           redirectTo="/my/properties"
+          animated={false}
         />
       </div>
     </div>

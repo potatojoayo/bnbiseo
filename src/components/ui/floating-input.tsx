@@ -142,7 +142,7 @@ export function FloatingTextarea({
           if (validate && touched) setInternalError(validate(val))
           onChange?.(e)
         }}
-        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault() }}
+        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLElement).blur() }}
         className={cn(inputCls, 'resize-none overflow-hidden block leading-[1.25]', className)}
         style={FONT}
         {...props}

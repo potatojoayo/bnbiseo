@@ -22,6 +22,9 @@ export function AuthForm() {
 
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
+  const [agreedTerms, setAgreedTerms] = useState(false)
+  const [agreedPrivacy, setAgreedPrivacy] = useState(false)
+  const allAgreed = agreedTerms && agreedPrivacy
   const extraRef = useRef<HTMLDivElement>(null)
   const [extraHeight, setExtraHeight] = useState(0)
   const [visibleStep, setVisibleStep] = useState<Step>('email')
@@ -371,21 +374,82 @@ export function AuthForm() {
           </div>
         </div>
 
-        {/* Terms — signup only */}
+        {/* Terms agreement — signup only */}
         {step === 'signup' && (
-          <p className="text-[12px] text-[#717171] leading-relaxed mt-4 mb-5 animate-fade-only" style={font}>
-            가입하면{' '}
-            <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[#222222] underline underline-offset-2 font-medium">이용약관</a>{' '}
-            및{' '}
-            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[#222222] underline underline-offset-2 font-medium">개인정보처리방침</a>에
-            동의하게 됩니다.
-          </p>
+          <div className="flex flex-col gap-3 mt-4 mb-5 animate-fade-only" style={font}>
+            {/* All agree */}
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !allAgreed
+                  setAgreedTerms(next)
+                  setAgreedPrivacy(next)
+                }}
+                className={`w-[18px] h-[18px] rounded border-[1.5px] shrink-0 flex items-center justify-center transition-all ${
+                  allAgreed ? 'bg-[#222222] border-[#222222]' : 'border-[#CCCCCC]'
+                }`}
+              >
+                {allAgreed && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+              <span className="text-[13px] text-[#222222] font-medium">전체 동의</span>
+            </label>
+
+            <div className="w-full h-px bg-[#EBEBEB]" />
+
+            {/* Terms */}
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setAgreedTerms(!agreedTerms)}
+                className={`w-[18px] h-[18px] rounded border-[1.5px] shrink-0 flex items-center justify-center transition-all ${
+                  agreedTerms ? 'bg-[#222222] border-[#222222]' : 'border-[#CCCCCC]'
+                }`}
+              >
+                {agreedTerms && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+              <span className="text-[12px] text-[#717171] flex-1">
+                서비스 <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[#222222] underline underline-offset-2 font-medium">이용약관</a>에 동의합니다
+                <span className="text-brand ml-0.5">(필수)</span>
+              </span>
+            </label>
+
+            {/* Privacy */}
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setAgreedPrivacy(!agreedPrivacy)}
+                className={`w-[18px] h-[18px] rounded border-[1.5px] shrink-0 flex items-center justify-center transition-all ${
+                  agreedPrivacy ? 'bg-[#222222] border-[#222222]' : 'border-[#CCCCCC]'
+                }`}
+              >
+                {agreedPrivacy && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+              <span className="text-[12px] text-[#717171] flex-1">
+                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[#222222] underline underline-offset-2 font-medium">개인정보 수집·이용</a>에 동의합니다
+                <span className="text-brand ml-0.5">(필수)</span>
+              </span>
+            </label>
+          </div>
         )}
 
         {/* Submit button */}
         <LoadingButton
           type="submit"
           loading={pending}
+          disabled={step === 'signup' && !allAgreed}
           loadingText={step === 'email' ? '확인 중...' : step === 'login' ? '로그인 중...' : '가입 중...'}
           className="mt-5"
         >

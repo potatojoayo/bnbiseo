@@ -14,7 +14,7 @@ export default function NewPropertyPage() {
         >
           <ChevronLeftIcon size={32} />
         </Link>
-        <PropertyForm title="숙소 추가" redirectTo="/cleaning" />
+        <PropertyForm title="숙소 추가" redirectTo="/cleaning" animated={false} />
       </div>
     </div>
   )
