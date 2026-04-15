@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarIcon, ClockIcon, MapPinIcon, CreditCardIcon, HomeIcon } from 'lucide-react'
+import { CalendarIcon, ClockIcon, MapPinIcon, CreditCardIcon, HomeIcon, MessageSquareTextIcon } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { useInvalidateCleaning } from '@/lib/hooks/use-cleaning'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
@@ -166,7 +166,7 @@ export default function CleaningSuccessPage() {
           </div>
           {cleaning.memo && (
             <div className="flex items-start gap-2.5">
-              <MapPinIcon size={16} className="text-[#717171] shrink-0 mt-0.5" strokeWidth={1.5} />
+              <MessageSquareTextIcon size={16} className="text-[#717171] shrink-0 mt-0.5" strokeWidth={1.5} />
               <span className="text-[14px] text-[#717171]">{cleaning.memo}</span>
             </div>
           )}
