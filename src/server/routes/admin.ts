@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { eq, and, desc, isNull, sql, count } from 'drizzle-orm'
+import { eq, and, ne, desc, isNull, sql, count } from 'drizzle-orm'
 import { db } from '@/db'
 import { profiles, properties, cleaningRequests, managers } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
@@ -91,7 +91,10 @@ adminRoutes.get('/cleaning', async (c) => {
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
     .leftJoin(profiles, eq(cleaningRequests.hostId, profiles.id))
     .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
-    .where(status ? eq(cleaningRequests.status, status as any) : undefined)
+    .where(and(
+      ne(cleaningRequests.status, 'pending_payment'),
+      status ? eq(cleaningRequests.status, status as any) : undefined,
+    ))
     .orderBy(desc(cleaningRequests.createdAt))
 
   return c.json(result)

@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { AdminSidebar } from '@/components/admin-sidebar'
+import { AdminBottomNav } from '@/components/admin-bottom-nav'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 type Profile = { role: string }
@@ -16,6 +18,7 @@ export default function AdminDashboardLayout({
 }) {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const isMobile = useIsMobile()
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -49,6 +52,19 @@ export default function AdminDashboardLayout({
     )
   }
 
+  // Mobile: bottom nav layout
+  if (isMobile) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-white">
+        <main className="flex-1 pb-[72px]">
+          {children}
+        </main>
+        <AdminBottomNav />
+      </div>
+    )
+  }
+
+  // Desktop: sidebar layout
   return (
     <SidebarProvider
       style={

@@ -85,8 +85,8 @@ export default function AdminManagersPage() {
   return (
     <>
       <SiteHeader title="매니저 관리" />
-      <div className="flex flex-1 flex-col p-6 max-w-[960px] mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
+        <div className="flex items-center justify-between h-9">
           <p className="text-[14px] text-[#717171]">총 {managers.length}명</p>
           <button
             onClick={openCreate}

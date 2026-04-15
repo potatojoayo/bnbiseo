@@ -70,9 +70,9 @@ export default function AdminCleaningPage() {
   return (
     <>
       <SiteHeader title="청소 관리" />
-      <div className="flex flex-1 flex-col p-6 max-w-[960px] mx-auto w-full">
+      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto">
           {TABS.map((t) => (
             <button
               key={t.key}
