@@ -27,25 +27,25 @@ propertiesRoutes.use('*', authMiddleware)
 
 // List all properties for the user
 propertiesRoutes.get('/', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
 
   const result = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.hostId, userId), isNull(properties.deletedAt)))
+    .where(and(eq(properties.hostId, profileId), isNull(properties.deletedAt)))
 
   return c.json(result)
 })
 
 // Get single property with fixtures
 propertiesRoutes.get('/:id', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, id), eq(properties.hostId, userId), isNull(properties.deletedAt)))
+    .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
     .limit(1)
 
   if (!property) {
@@ -62,7 +62,7 @@ propertiesRoutes.get('/:id', async (c) => {
 
 // Create property
 propertiesRoutes.post('/', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const body = await c.req.json()
   const validated = PropertySchema.safeParse(body)
 
@@ -72,7 +72,7 @@ propertiesRoutes.post('/', async (c) => {
 
   const [created] = await db
     .insert(properties)
-    .values({ hostId: userId, ...validated.data })
+    .values({ hostId: profileId, ...validated.data })
     .returning()
 
   return c.json(created, 201)
@@ -80,7 +80,7 @@ propertiesRoutes.post('/', async (c) => {
 
 // Update property
 propertiesRoutes.patch('/:id', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
   const body = await c.req.json()
   const validated = PropertySchema.safeParse(body)
@@ -92,7 +92,7 @@ propertiesRoutes.patch('/:id', async (c) => {
   const [updated] = await db
     .update(properties)
     .set({ ...validated.data, updatedAt: new Date() })
-    .where(and(eq(properties.id, id), eq(properties.hostId, userId)))
+    .where(and(eq(properties.id, id), eq(properties.hostId, profileId)))
     .returning()
 
   if (!updated) {
@@ -104,13 +104,13 @@ propertiesRoutes.patch('/:id', async (c) => {
 
 // Soft delete property
 propertiesRoutes.delete('/:id', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [deleted] = await db
     .update(properties)
     .set({ deletedAt: new Date() })
-    .where(and(eq(properties.id, id), eq(properties.hostId, userId), isNull(properties.deletedAt)))
+    .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
     .returning({ id: properties.id })
 
   if (!deleted) {
@@ -122,12 +122,12 @@ propertiesRoutes.delete('/:id', async (c) => {
 
 // Hard delete property
 propertiesRoutes.delete('/:id/permanent', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [deleted] = await db
     .delete(properties)
-    .where(and(eq(properties.id, id), eq(properties.hostId, userId)))
+    .where(and(eq(properties.id, id), eq(properties.hostId, profileId)))
     .returning({ id: properties.id })
 
   if (!deleted) {
@@ -139,12 +139,12 @@ propertiesRoutes.delete('/:id/permanent', async (c) => {
 
 // Dashboard summary
 propertiesRoutes.get('/summary/dashboard', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
 
   const userProperties = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.hostId, userId), isNull(properties.deletedAt)))
+    .where(and(eq(properties.hostId, profileId), isNull(properties.deletedAt)))
 
   if (!userProperties.length) {
     return c.json({ properties: [], fixtureCount: 0, repairCount: 0, recentRepairs: [] })

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/auth-provider'
+import { useProfile } from '@/lib/hooks/use-profile'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { Logo } from '@/components/logo'
 import { BellIcon, CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
@@ -19,23 +20,25 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: '매니저 배정 중', color: 'bg-[#FFF1F3] text-brand' },
   confirmed: { label: '매니저 배정 완료', color: 'bg-[#E8F5E9] text-[#2E7D32]' },
   in_progress: { label: '청소 진행 중', color: 'bg-[#E3F2FD] text-[#1565C0]' },
+  completed: { label: '청소 완료', color: 'bg-[#F7F7F7] text-[#222222]' },
 }
 
 export default function HomePage() {
   const { user } = useAuth()
-  const { data: cleaningRequests = [] } = useCleaningRequests()
+  const { data: profile } = useProfile()
+  const { data: cleaningRequests = [], isLoading: cleaningLoading } = useCleaningRequests()
   const [processOpen, setProcessOpen] = useState(false)
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
+  const displayName = profile?.fullName || user?.user_metadata?.full_name || ''
   const today = new Intl.DateTimeFormat('ko-KR', {
     month: 'long',
     day: 'numeric',
     weekday: 'long',
   }).format(new Date())
 
-  // 다가오는 청소: pending, confirmed, in_progress
+  // pending_payment, cancelled 제외
   const upcoming = cleaningRequests.filter(
-    (r) => r.status === 'pending' || r.status === 'confirmed' || r.status === 'in_progress'
+    (r) => r.status !== 'pending_payment' && r.status !== 'cancelled'
   )
 
   const steps = [
@@ -44,6 +47,14 @@ export default function HomePage() {
     { num: 3, title: '호텔식 청소 + 시설 점검', desc: '호텔식 침구 세팅과 15항목 시설 점검을 진행해요.' },
     { num: 4, title: '점검 리포트 수신', desc: '청소 완료 후 사진과 함께 시설 점검 리포트를 받아요.' },
   ]
+
+  if (cleaningLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
+        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col">
@@ -66,13 +77,14 @@ export default function HomePage() {
       {upcoming.length > 0 ? (
         /* ─── Upcoming Cleanings ─── */
         <div className="px-6 pt-6 flex flex-col gap-3">
-          <p className="text-[13px] font-medium text-[#717171] px-1">다가오는 청소</p>
+          <p className="text-[13px] font-medium text-[#717171] px-1">청소 내역</p>
           {upcoming.map((r) => {
             const statusInfo = STATUS_LABELS[r.status]
             return (
-              <div
+              <Link
                 key={r.id}
-                className="rounded-xl border border-[#EBEBEB] px-4 py-4 flex flex-col gap-2.5"
+                href={`/cleaning/${r.id}`}
+                className="rounded-xl border border-[#EBEBEB] px-4 py-4 flex flex-col gap-2.5 active:scale-[0.99] transition-all"
               >
                 {/* Status badge + property name */}
                 <div className="flex items-center justify-between">
@@ -105,17 +117,10 @@ export default function HomePage() {
                     {r.propertyAddress}
                   </p>
                 )}
-              </div>
+              </Link>
             )
           })}
 
-          {/* CTA */}
-          <Link
-            href="/cleaning"
-            className="mt-2 px-5 h-10 rounded-lg bg-[#222222] text-white text-[14px] font-semibold inline-flex items-center justify-center self-start active:scale-[0.98] transition-all"
-          >
-            청소 요청하기
-          </Link>
         </div>
       ) : (
         /* ─── Empty State ─── */

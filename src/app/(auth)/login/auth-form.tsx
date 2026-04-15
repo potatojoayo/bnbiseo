@@ -375,9 +375,9 @@ export function AuthForm() {
         {step === 'signup' && (
           <p className="text-[12px] text-[#717171] leading-relaxed mt-4 mb-5 animate-fade-only" style={font}>
             가입하면{' '}
-            <a href="/terms" className="text-[#222222] underline underline-offset-2 font-medium">이용약관</a>{' '}
+            <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[#222222] underline underline-offset-2 font-medium">이용약관</a>{' '}
             및{' '}
-            <a href="/privacy" className="text-[#222222] underline underline-offset-2 font-medium">개인정보처리방침</a>에
+            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[#222222] underline underline-offset-2 font-medium">개인정보처리방침</a>에
             동의하게 됩니다.
           </p>
         )}

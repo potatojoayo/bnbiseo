@@ -76,10 +76,24 @@ authRoutes.post('/signup', authMiddleware, async (c) => {
     email: z.string().email().optional(),
   }).parse(body)
 
-  await db
-    .insert(profiles)
-    .values({ id: userId, fullName, email })
-    .onConflictDoNothing()
+  // Check if profile already exists for this auth user (e.g. re-signup after delete)
+  const [existing] = await db
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(eq(profiles.userId, userId))
+    .limit(1)
+
+  if (existing) {
+    // Reactivate soft-deleted profile
+    await db
+      .update(profiles)
+      .set({ fullName, email, deletedAt: null, updatedAt: new Date() })
+      .where(eq(profiles.id, existing.id))
+  } else {
+    await db
+      .insert(profiles)
+      .values({ userId, fullName, email })
+  }
 
   return c.json({ ok: true })
 })

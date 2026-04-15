@@ -89,7 +89,8 @@ export const chatRoleEnum = pgEnum('chat_role', ['user', 'assistant', 'system'])
 // ─── Tables ──────────────────────────────────────────────────────────────────
 
 export const profiles = pgTable('profiles', {
-  id: uuid('id').primaryKey(), // references auth.users
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(), // references auth.users
   email: text('email'),
   fullName: text('full_name'),
   phone: text('phone'),

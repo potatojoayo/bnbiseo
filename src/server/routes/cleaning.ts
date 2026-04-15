@@ -26,7 +26,7 @@ cleaningRoutes.use('*', authMiddleware)
 
 // List cleaning requests for the user
 cleaningRoutes.get('/', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
 
   const result = await db
     .select({
@@ -49,7 +49,7 @@ cleaningRoutes.get('/', async (c) => {
     })
     .from(cleaningRequests)
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
-    .where(eq(cleaningRequests.hostId, userId))
+    .where(eq(cleaningRequests.hostId, profileId))
     .orderBy(desc(cleaningRequests.createdAt))
 
   return c.json(result)
@@ -57,13 +57,36 @@ cleaningRoutes.get('/', async (c) => {
 
 // Get single cleaning request
 cleaningRoutes.get('/:id', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [request] = await db
-    .select()
+    .select({
+      id: cleaningRequests.id,
+      propertyId: cleaningRequests.propertyId,
+      hostId: cleaningRequests.hostId,
+      cleaningType: cleaningRequests.cleaningType,
+      status: cleaningRequests.status,
+      scheduledDate: cleaningRequests.scheduledDate,
+      scheduledTime: cleaningRequests.scheduledTime,
+      memo: cleaningRequests.memo,
+      price: cleaningRequests.price,
+      discount: cleaningRequests.discount,
+      finalPrice: cleaningRequests.finalPrice,
+      orderId: cleaningRequests.orderId,
+      paymentKey: cleaningRequests.paymentKey,
+      createdAt: cleaningRequests.createdAt,
+      cancelledAt: cleaningRequests.cancelledAt,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+      propertyPyeong: properties.pyeong,
+      propertyBedrooms: properties.bedrooms,
+      propertyBathrooms: properties.bathrooms,
+    })
     .from(cleaningRequests)
-    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.hostId, userId)))
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.hostId, profileId)))
     .limit(1)
 
   if (!request) {
@@ -75,7 +98,7 @@ cleaningRoutes.get('/:id', async (c) => {
 
 // Create cleaning request (pending_payment)
 cleaningRoutes.post('/', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const body = await c.req.json()
   const validated = CleaningRequestSchema.safeParse(body)
 
@@ -89,7 +112,7 @@ cleaningRoutes.post('/', async (c) => {
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, propertyId), eq(properties.hostId, userId)))
+    .where(and(eq(properties.id, propertyId), eq(properties.hostId, profileId)))
     .limit(1)
 
   if (!property) {
@@ -112,7 +135,7 @@ cleaningRoutes.post('/', async (c) => {
   const existingRequests = await db
     .select({ id: cleaningRequests.id })
     .from(cleaningRequests)
-    .where(eq(cleaningRequests.hostId, userId))
+    .where(eq(cleaningRequests.hostId, profileId))
     .limit(1)
 
   const isFirstCleaning = existingRequests.length === 0
@@ -127,7 +150,7 @@ cleaningRoutes.post('/', async (c) => {
     .insert(cleaningRequests)
     .values({
       propertyId,
-      hostId: userId,
+      hostId: profileId,
       cleaningType: isUrgent ? 'urgent' : 'standard',
       status: 'pending_payment',
       scheduledDate,
@@ -145,7 +168,7 @@ cleaningRoutes.post('/', async (c) => {
 
 // Confirm payment (called from success page)
 cleaningRoutes.post('/confirm', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const body = await c.req.json()
   const validated = ConfirmPaymentSchema.safeParse(body)
 
@@ -161,7 +184,7 @@ cleaningRoutes.post('/confirm', async (c) => {
     .from(cleaningRequests)
     .where(and(
       eq(cleaningRequests.orderId, orderId),
-      eq(cleaningRequests.hostId, userId),
+      eq(cleaningRequests.hostId, profileId),
     ))
     .limit(1)
 
@@ -238,21 +261,57 @@ cleaningRoutes.post('/confirm', async (c) => {
 
 // Cancel cleaning request
 cleaningRoutes.post('/:id/cancel', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [request] = await db
     .select()
     .from(cleaningRequests)
-    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.hostId, userId)))
+    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.hostId, profileId)))
     .limit(1)
 
   if (!request) {
     return c.json({ error: '요청을 찾을 수 없어요' }, 404)
   }
 
-  if (request.status !== 'pending' && request.status !== 'pending_payment') {
+  const cancellable = ['pending_payment', 'pending', 'confirmed']
+  if (!cancellable.includes(request.status)) {
     return c.json({ error: '취소할 수 없는 요청이에요' }, 400)
+  }
+
+  // confirmed 상태: 청소 예정일 24시간 전까지만 취소 가능
+  if (request.status === 'confirmed') {
+    const scheduledAt = new Date(`${request.scheduledDate}T${request.scheduledTime}:00+09:00`)
+    const hoursUntil = (scheduledAt.getTime() - Date.now()) / (1000 * 60 * 60)
+    if (hoursUntil < 24) {
+      return c.json({ error: '청소 예정일 24시간 이내에는 취소가 불가해요' }, 400)
+    }
+  }
+
+  // 결제 완료된 건(pending, confirmed)은 토스 결제 취소 (환불)
+  if (request.paymentKey && (request.status === 'pending' || request.status === 'confirmed')) {
+    const secretKey = process.env.TOSS_SECRET_KEY
+    if (!secretKey) {
+      return c.json({ error: '결제 설정 오류' }, 500)
+    }
+
+    const authHeader = `Basic ${Buffer.from(secretKey + ':').toString('base64')}`
+    const tossRes = await fetch(`https://api.tosspayments.com/v1/payments/${request.paymentKey}/cancel`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ cancelReason: '고객 요청에 의한 취소' }),
+    })
+
+    if (!tossRes.ok) {
+      const tossError = await tossRes.json()
+      return c.json({
+        error: tossError.message || '결제 취소에 실패했어요',
+        code: tossError.code,
+      }, 400)
+    }
   }
 
   const [updated] = await db

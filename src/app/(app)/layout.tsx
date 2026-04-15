@@ -1,17 +1,20 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-provider'
 import { useProfile } from '@/lib/hooks/use-profile'
 import { BottomNav } from '@/components/bottom-nav'
+
+const NAV_PAGES = ['/home', '/cleaning', '/my']
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth()
   const { data: profile, isLoading: profileLoading } = useProfile()
   const router = useRouter()
-
+  const pathname = usePathname()
   const loading = authLoading || (!!user && profileLoading)
+  const showNav = NAV_PAGES.includes(pathname)
 
   useEffect(() => {
     if (loading) return
@@ -36,10 +39,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col mx-auto max-w-[480px] bg-white relative">
-      <main className="flex-1 pb-[80px]">
+      <main className={showNav ? 'flex-1 pb-[80px]' : 'flex-1'}>
         {children}
       </main>
-      <BottomNav />
+      {showNav && <BottomNav />}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth-provider";
 import { QueryProvider } from "@/lib/query-client";
+import { KeyboardScrollFix } from "@/components/keyboard-scroll-fix";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -54,6 +55,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
           <QueryProvider>
             <AuthProvider>
+              <KeyboardScrollFix />
               {children}
             </AuthProvider>
           </QueryProvider>

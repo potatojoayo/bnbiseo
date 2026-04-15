@@ -83,6 +83,24 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Edit mode: fetch airbnb preview on mount
+  useEffect(() => {
+    if (mode !== 'edit' || !initialData?.airbnbListingId) return
+    const listingId = extractListingId(initialData.airbnbListingId)
+    if (!listingId) return
+    setAirbnbFetching(true)
+    api.get<AirbnbListingInfo>(`/airroi/listing/${listingId}`)
+      .then((data) => {
+        if (data.name || data.imageUrl) {
+          setAirbnbPreview(data)
+          lastFetchedId.current = listingId
+        }
+      })
+      .catch(() => {})
+      .finally(() => setAirbnbFetching(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function handleAddrQueryChange(val: string) {
     setAddrQuery(val)
     if (addrDebounceRef.current) clearTimeout(addrDebounceRef.current)
@@ -192,8 +210,13 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
     setDeleting(true)
     try {
       await api.delete(`/properties/${initialData.id}/permanent`)
-      const remaining = await api.get<{ id: string }[]>('/properties').catch(() => [])
-      router.push(remaining.length > 0 ? '/onboarding/complete' : '/onboarding', { scroll: false })
+      await invalidateProperties()
+      if (redirectTo) {
+        router.push(redirectTo, { scroll: false })
+      } else {
+        const remaining = await api.get<{ id: string }[]>('/properties').catch(() => [])
+        router.push(remaining.length > 0 ? '/onboarding/complete' : '/onboarding', { scroll: false })
+      }
     } catch {
       setMessage('삭제 중 문제가 생겼어요. 다시 시도해주세요')
       setDeleting(false)

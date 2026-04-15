@@ -19,23 +19,28 @@ export default function OnboardingPage() {
 
     async function check() {
       try {
-        const [profile, properties] = await Promise.all([
-          api.get<Profile>('/profiles/me').catch(() => null),
-          api.get<Property[]>('/properties').catch(() => []),
-        ])
+        const profile = await api.get<Profile>('/profiles/me').catch(() => null)
+
+        if (!profile) {
+          router.replace('/login')
+          return
+        }
+
+        if (profile.onboardingCompleted) {
+          router.replace('/home')
+          return
+        }
+
+        const properties = await api.get<Property[]>('/properties').catch(() => [])
 
         if (properties.length > 0) {
-          if (profile?.onboardingCompleted) {
-            router.replace('/home')
-          } else {
-            router.replace('/onboarding/complete')
-          }
+          router.replace('/onboarding/complete')
           return
         }
 
         setReady(true)
       } catch {
-        setReady(true)
+        router.replace('/login')
       }
     }
 

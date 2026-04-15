@@ -142,8 +142,27 @@ export default function CleaningPage() {
     )
   }
 
+  if (properties.length === 0) {
+    return (
+      <div className="animate-fade-up-fast flex flex-col items-center justify-center min-h-[calc(100dvh-80px)] px-6 text-center">
+        <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
+          등록된 숙소가 없어요
+        </h2>
+        <p className="text-[14px] text-[#717171] leading-relaxed">
+          청소를 요청하려면 먼저 숙소를 등록해주세요
+        </p>
+        <Link
+          href="/properties/new"
+          className="mt-6 px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+        >
+          숙소 등록하기
+        </Link>
+      </div>
+    )
+  }
+
   return (
-    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
+    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-0">
       {/* Header */}
       <h1 className="text-[22px] font-semibold text-[#222222] mb-6">
         청소 요청
@@ -337,9 +356,11 @@ export default function CleaningPage() {
           loadingText="결제 진행 중..."
           disabled={!selectedPropertyId && !propertiesLoading}
         >
-          {estimatedPrice > 0
-            ? `${estimatedPrice.toLocaleString()}원 결제하기`
-            : '결제하기'}
+          {!selectedPropertyId
+            ? '숙소를 선택해주세요'
+            : estimatedPrice > 0
+              ? `${estimatedPrice.toLocaleString()}원 결제하기`
+              : '결제하기'}
         </LoadingButton>
       </form>
 

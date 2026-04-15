@@ -1,9 +1,13 @@
 import { createMiddleware } from 'hono/factory'
 import { createClient } from '@supabase/supabase-js'
+import { eq, and, isNull } from 'drizzle-orm'
+import { db } from '@/db'
+import { profiles } from '@/db/schema'
 
 export type AuthEnv = {
   Variables: {
-    userId: string
+    userId: string     // Supabase auth user id
+    profileId: string  // profiles.id
   }
 }
 
@@ -29,5 +33,17 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
   }
 
   c.set('userId', user.id)
+
+  // Lookup profile — some routes (e.g. signup) may not have one yet
+  const [profile] = await db
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(and(eq(profiles.userId, user.id), isNull(profiles.deletedAt)))
+    .limit(1)
+
+  if (profile) {
+    c.set('profileId', profile.id)
+  }
+
   await next()
 })

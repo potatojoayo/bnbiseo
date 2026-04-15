@@ -21,11 +21,11 @@ const FixtureSchema = z.object({
   photoPaths: z.array(z.string()).optional(),
 })
 
-async function verifyPropertyOwnership(propertyId: string, userId: string) {
+async function verifyPropertyOwnership(propertyId: string, profileId: string) {
   const result = await db
     .select({ id: properties.id })
     .from(properties)
-    .where(and(eq(properties.id, propertyId), eq(properties.hostId, userId)))
+    .where(and(eq(properties.id, propertyId), eq(properties.hostId, profileId)))
     .limit(1)
   return result.length > 0
 }
@@ -36,7 +36,7 @@ fixturesRoutes.use('*', authMiddleware)
 
 // Get single fixture with photos
 fixturesRoutes.get('/:id', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [fixture] = await db
@@ -49,7 +49,7 @@ fixturesRoutes.get('/:id', async (c) => {
     return c.json({ error: '시설물을 찾을 수 없습니다.' }, 404)
   }
 
-  const owned = await verifyPropertyOwnership(fixture.propertyId, userId)
+  const owned = await verifyPropertyOwnership(fixture.propertyId, profileId)
   if (!owned) {
     return c.json({ error: '권한이 없습니다.' }, 403)
   }
@@ -64,7 +64,7 @@ fixturesRoutes.get('/:id', async (c) => {
 
 // Create fixture
 fixturesRoutes.post('/', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const body = await c.req.json()
   const validated = FixtureSchema.safeParse(body)
 
@@ -74,7 +74,7 @@ fixturesRoutes.post('/', async (c) => {
 
   const { propertyId, photoPaths, installedAt, ...rest } = validated.data
 
-  const owned = await verifyPropertyOwnership(propertyId, userId)
+  const owned = await verifyPropertyOwnership(propertyId, profileId)
   if (!owned) {
     return c.json({ error: '권한이 없습니다.' }, 403)
   }
@@ -103,7 +103,7 @@ fixturesRoutes.post('/', async (c) => {
 
 // Update fixture
 fixturesRoutes.patch('/:id', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
   const body = await c.req.json()
 
@@ -117,7 +117,7 @@ fixturesRoutes.patch('/:id', async (c) => {
     return c.json({ error: '시설물을 찾을 수 없습니다.' }, 404)
   }
 
-  const owned = await verifyPropertyOwnership(existing.propertyId, userId)
+  const owned = await verifyPropertyOwnership(existing.propertyId, profileId)
   if (!owned) {
     return c.json({ error: '권한이 없습니다.' }, 403)
   }
@@ -159,7 +159,7 @@ fixturesRoutes.patch('/:id', async (c) => {
 
 // Delete fixture
 fixturesRoutes.delete('/:id', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [existing] = await db
@@ -172,7 +172,7 @@ fixturesRoutes.delete('/:id', async (c) => {
     return c.json({ error: '시설물을 찾을 수 없습니다.' }, 404)
   }
 
-  const owned = await verifyPropertyOwnership(existing.propertyId, userId)
+  const owned = await verifyPropertyOwnership(existing.propertyId, profileId)
   if (!owned) {
     return c.json({ error: '권한이 없습니다.' }, 403)
   }
@@ -184,7 +184,7 @@ fixturesRoutes.delete('/:id', async (c) => {
 
 // Delete fixture photo
 fixturesRoutes.delete('/photos/:photoId', async (c) => {
-  const userId = c.get('userId')
+  const profileId = c.get('profileId')
   const photoId = c.req.param('photoId')
 
   const [photo] = await db
@@ -207,7 +207,7 @@ fixturesRoutes.delete('/photos/:photoId', async (c) => {
     return c.json({ error: '시설물을 찾을 수 없습니다.' }, 404)
   }
 
-  const owned = await verifyPropertyOwnership(fixture.propertyId, userId)
+  const owned = await verifyPropertyOwnership(fixture.propertyId, profileId)
   if (!owned) {
     return c.json({ error: '권한이 없습니다.' }, 403)
   }

@@ -21,6 +21,14 @@ type CleaningRequest = {
   propertyAddress: string | null
 }
 
+type CleaningRequestDetail = CleaningRequest & {
+  cancelledAt: string | null
+  propertyAddressDetail: string | null
+  propertyPyeong: number | null
+  propertyBedrooms: number | null
+  propertyBathrooms: number | null
+}
+
 export function useCleaningRequests() {
   const { user } = useAuth()
 
@@ -36,7 +44,7 @@ export function useCleaningRequest(id: string) {
 
   return useQuery({
     queryKey: ['cleaning-requests', id],
-    queryFn: () => api.get<CleaningRequest>(`/cleaning/${id}`),
+    queryFn: () => api.get<CleaningRequestDetail>(`/cleaning/${id}`),
     enabled: !!user && !!id,
   })
 }
