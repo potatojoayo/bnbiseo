@@ -7,14 +7,18 @@ type CleaningRequest = {
   propertyId: string
   hostId: string
   cleaningType: 'standard' | 'urgent'
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'pending_payment' | 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
   scheduledDate: string
   scheduledTime: string
   memo: string | null
   price: number
   discount: number
   finalPrice: number
+  orderId: string | null
+  paymentKey: string | null
   createdAt: string
+  propertyName: string | null
+  propertyAddress: string | null
 }
 
 export function useCleaningRequests() {

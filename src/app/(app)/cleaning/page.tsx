@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircleIcon, CheckIcon } from 'lucide-react'
+import { CheckIcon } from 'lucide-react'
+import { loadTossPayments } from '@tosspayments/tosspayments-sdk'
 import { CalendarPicker } from '@/components/calendar-picker'
 import { PropertyCard } from '@/components/property-card'
 import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
 import { useProperties } from '@/lib/hooks/use-properties'
-import { useCleaningRequests, useInvalidateCleaning } from '@/lib/hooks/use-cleaning'
+import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
+import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
 import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -20,13 +22,15 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 
+const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function CleaningPage() {
   const searchParams = useSearchParams()
+  const { user } = useAuth()
   const { data: properties = [], isLoading: propertiesLoading } = useProperties()
   const { data: cleaningHistory = [] } = useCleaningRequests()
-  const invalidateCleaning = useInvalidateCleaning()
 
   const isFirstCleaning = cleaningHistory.length === 0
 
@@ -40,11 +44,22 @@ export default function CleaningPage() {
   const [pricingDrawerOpen, setPricingDrawerOpen] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
 
   const isUrgent = date === getToday()
   const selectedProperty = properties.find((p) => p.id === selectedPropertyId)
   const timeSlots = getAvailableTimeSlots(date)
+
+  const priceInfo = selectedProperty?.pyeong
+    ? calculateCleaningPrice({
+        pyeong: selectedProperty.pyeong,
+        bedrooms: selectedProperty.bedrooms,
+        bathrooms: selectedProperty.bathrooms,
+        isUrgent,
+      })
+    : null
+  const estimatedPrice = priceInfo
+    ? (isFirstCleaning ? Math.max(priceInfo.total - FIRST_CLEANING_DISCOUNT, 0) : priceInfo.total)
+    : 0
 
   useEffect(() => {
     if (!propertiesLoading && properties.length === 1 && !selectedPropertyId) {
@@ -67,9 +82,10 @@ export default function CleaningPage() {
     setTimeout(() => setTimeDrawerOpen(false), 300)
   }
 
+  // Create cleaning request → open Toss payment popup
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedPropertyId) return
+    if (!selectedPropertyId || !user) return
     const minTime = getMinTime(date)
     if (minTime && time < minTime) {
       setTime(minTime)
@@ -77,38 +93,45 @@ export default function CleaningPage() {
     }
     setSubmitting(true)
     try {
-      await api.post('/cleaning', {
+      // 1. 서버에 주문 생성 (pending_payment)
+      const created = await api.post<{
+        id: string
+        orderId: string
+        finalPrice: number
+      }>('/cleaning', {
         propertyId: selectedPropertyId,
         scheduledDate: date,
         scheduledTime: time,
         memo: memo || undefined,
         isUrgent,
       })
-      await invalidateCleaning()
-      setSuccess(true)
+
+      // 2. 토스 결제창 띄우기
+      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY)
+      const payment = tossPayments.payment({ customerKey: user.id })
+
+      const propertyName = selectedProperty?.name || '숙소'
+      await payment.requestPayment({
+        method: 'CARD',
+        amount: { currency: 'KRW', value: created.finalPrice },
+        orderId: created.orderId,
+        orderName: `비앤비서 청소 · ${propertyName}`,
+        successUrl: `${window.location.origin}/cleaning/success`,
+        failUrl: `${window.location.origin}/cleaning/fail`,
+        customerEmail: user.email || undefined,
+        customerName: user.user_metadata?.full_name || undefined,
+        card: {
+          useEscrow: false,
+          flowMode: 'DEFAULT',
+          useCardPoint: false,
+          useAppCardOnly: false,
+        },
+      })
     } catch {
+      // 결제창 닫기 or 에러 — submitting 해제
+    } finally {
       setSubmitting(false)
     }
-  }
-
-  if (success) {
-    return (
-      <div className="animate-fade-up-fast flex flex-col items-center justify-center min-h-[calc(100dvh-80px)] px-6 text-center">
-        <CheckCircleIcon size={56} className="text-brand mb-5" strokeWidth={1.5} />
-        <h2 className="text-[20px] font-semibold text-[#222222] mb-2">
-          청소 요청이 완료되었어요
-        </h2>
-        <p className="text-[14px] text-[#717171] leading-relaxed">
-          매니저 배정 후 알림을 보내드릴게요
-        </p>
-        <Link
-          href="/home"
-          className="mt-8 px-6 h-12 rounded-lg bg-[#222222] text-white text-[15px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
-        >
-          홈으로
-        </Link>
-      </div>
-    )
   }
 
   if (propertiesLoading) {
@@ -130,11 +153,8 @@ export default function CleaningPage() {
         {/* Property Selection */}
         {properties.length >= 1 && (
           <div>
-            <p className="text-[13px] font-medium text-[#717171] mb-2 px-1">
-              숙소 선택
-            </p>
-            <div className="flex flex-col gap-2">
-              {properties.map((p) => {
+            <div className="rounded-xl border border-[#B0B0B0] overflow-hidden">
+              {properties.map((p, i) => {
                 const selected = selectedPropertyId === p.id
                 return (
                   <button
@@ -142,8 +162,9 @@ export default function CleaningPage() {
                     type="button"
                     onClick={() => setSelectedPropertyId(p.id)}
                     className={cn(
-                      'w-full text-left rounded-xl border transition-all active:scale-[0.99]',
-                      selected ? 'border-[#222222]' : 'border-[#EBEBEB] hover:border-[#B0B0B0]'
+                      'w-full text-left transition-all active:scale-[0.99]',
+                      i > 0 && 'border-t border-[#EBEBEB]',
+                      selected ? 'bg-[#F7F7F7]' : 'bg-white'
                     )}
                   >
                     <PropertyCard property={p} selected={selected} />
@@ -217,50 +238,38 @@ export default function CleaningPage() {
         </CompoundInput>
 
         {/* Price estimate */}
-        {selectedProperty?.pyeong && (() => {
-          const price = calculateCleaningPrice({
-            pyeong: selectedProperty.pyeong,
-            bedrooms: selectedProperty.bedrooms,
-            bathrooms: selectedProperty.bathrooms,
-            isUrgent,
-          })
-          const discountedTotal = isFirstCleaning
-            ? Math.max(price.total - FIRST_CLEANING_DISCOUNT, 0)
-            : price.total
-
-          return (
-            <div className="rounded-xl border border-[#B0B0B0] px-4 py-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[14px] text-[#717171]">
-                  {isUrgent ? '긴급 청소 예상 금액' : '예상 청소 금액'}
-                </span>
-                <div className="text-right">
-                  {isFirstCleaning && (
-                    <span className="text-[14px] text-[#B0B0B0] line-through mr-2">
-                      {price.total.toLocaleString()}원
-                    </span>
-                  )}
-                  <span className="text-[20px] font-semibold text-[#222222]">
-                    {discountedTotal.toLocaleString()}원
+        {priceInfo && (
+          <div className="rounded-xl border border-[#B0B0B0] px-4 py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[14px] text-[#717171]">
+                {isUrgent ? '긴급 청소 금액' : '청소 금액'}
+              </span>
+              <div className="text-right">
+                {isFirstCleaning && (
+                  <span className="text-[14px] text-[#B0B0B0] line-through mr-2">
+                    {priceInfo.total.toLocaleString()}원
                   </span>
-                </div>
+                )}
+                <span className="text-[20px] font-semibold text-[#222222]">
+                  {estimatedPrice.toLocaleString()}원
+                </span>
               </div>
-              {isFirstCleaning && (
-                <p className="text-[12px] text-brand mt-1.5 text-right">
-                  첫 청소 {FIRST_CLEANING_DISCOUNT.toLocaleString()}원 할인 적용
-                </p>
-              )}
-              {isUrgent && (
-                <p className="text-[12px] text-[#717171] mt-1">
-                  긴급 할증 50% 포함
-                </p>
-              )}
             </div>
-          )
-        })()}
+            {isFirstCleaning && (
+              <p className="text-[12px] text-brand mt-1.5 text-right">
+                첫 청소 {FIRST_CLEANING_DISCOUNT.toLocaleString()}원 할인 적용
+              </p>
+            )}
+            {isUrgent && (
+              <p className="text-[12px] text-[#717171] mt-1">
+                긴급 할증 50% 포함
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Pricing info */}
-        {selectedProperty?.pyeong && <>
+        {priceInfo && <>
           <button
             type="button"
             onClick={() => setPricingDrawerOpen(true)}
@@ -325,10 +334,12 @@ export default function CleaningPage() {
           type="submit"
           variant="primary"
           loading={submitting}
-          loadingText="요청 중..."
+          loadingText="결제 진행 중..."
           disabled={!selectedPropertyId && !propertiesLoading}
         >
-          청소 요청하기
+          {estimatedPrice > 0
+            ? `${estimatedPrice.toLocaleString()}원 결제하기`
+            : '결제하기'}
         </LoadingButton>
       </form>
 

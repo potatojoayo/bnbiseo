@@ -46,7 +46,8 @@ export const repairPriorityEnum = pgEnum('repair_priority', [
 ])
 
 export const cleaningStatusEnum = pgEnum('cleaning_status', [
-  'pending',      // 요청 접수
+  'pending_payment', // 결제 대기
+  'pending',      // 요청 접수 (결제 완료)
   'confirmed',    // 매니저 배정 완료
   'in_progress',  // 청소 진행 중
   'completed',    // 청소 완료
@@ -139,6 +140,8 @@ export const cleaningRequests = pgTable('cleaning_requests', {
   price: integer('price').notNull(), // 스냅샷 금액 (원)
   discount: integer('discount').default(0).notNull(), // 할인 금액
   finalPrice: integer('final_price').notNull(), // 최종 결제 금액
+  orderId: text('order_id'), // 토스페이먼츠 주문번호
+  paymentKey: text('payment_key'), // 토스페이먼츠 결제키
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),

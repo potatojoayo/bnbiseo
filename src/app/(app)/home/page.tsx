@@ -4,8 +4,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/auth-provider'
+import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { Logo } from '@/components/logo'
-import { BellIcon } from 'lucide-react'
+import { BellIcon, CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
+import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import {
   Drawer,
   DrawerContent,
@@ -13,8 +15,15 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  pending: { label: '매니저 배정 중', color: 'bg-[#FFF1F3] text-brand' },
+  confirmed: { label: '매니저 배정 완료', color: 'bg-[#E8F5E9] text-[#2E7D32]' },
+  in_progress: { label: '청소 진행 중', color: 'bg-[#E3F2FD] text-[#1565C0]' },
+}
+
 export default function HomePage() {
   const { user } = useAuth()
+  const { data: cleaningRequests = [] } = useCleaningRequests()
   const [processOpen, setProcessOpen] = useState(false)
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
@@ -23,6 +32,11 @@ export default function HomePage() {
     day: 'numeric',
     weekday: 'long',
   }).format(new Date())
+
+  // 다가오는 청소: pending, confirmed, in_progress
+  const upcoming = cleaningRequests.filter(
+    (r) => r.status === 'pending' || r.status === 'confirmed' || r.status === 'in_progress'
+  )
 
   const steps = [
     { num: 1, title: '청소 요청 및 결제', desc: '숙소와 희망 일시를 선택하고 청소를 요청해요.' },
@@ -49,36 +63,92 @@ export default function HomePage() {
         <p className="text-[14px] text-[#717171] mt-1">{today}</p>
       </div>
 
-      {/* Empty State */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-8">
-        <Image
-          src="/images/cleaning-white.png"
-          alt="청소 서비스"
-          width={240}
-          height={120}
-          priority
-          className="mb-5 object-contain"
-        />
-        <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
-          처음 오셨나요?
-        </h2>
-        <p className="text-[14px] text-[#717171] leading-relaxed">
-          10,000원 할인을 받고 첫 청소를 요청해보세요!
-        </p>
-        <Link
-          href="/cleaning"
-          className="px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center mt-6 active:scale-[0.98] transition-all"
-        >
-          청소 요청하기
-        </Link>
-        <button
-          type="button"
-          onClick={() => setProcessOpen(true)}
-          className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors mt-4"
-        >
-          청소는 어떻게 진행되나요?
-        </button>
-      </div>
+      {upcoming.length > 0 ? (
+        /* ─── Upcoming Cleanings ─── */
+        <div className="px-6 pt-6 flex flex-col gap-3">
+          <p className="text-[13px] font-medium text-[#717171] px-1">다가오는 청소</p>
+          {upcoming.map((r) => {
+            const statusInfo = STATUS_LABELS[r.status]
+            return (
+              <div
+                key={r.id}
+                className="rounded-xl border border-[#EBEBEB] px-4 py-4 flex flex-col gap-2.5"
+              >
+                {/* Status badge + property name */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[15px] font-semibold text-[#222222]">
+                    {r.propertyName || '숙소'}
+                  </span>
+                  {statusInfo && (
+                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${statusInfo.color}`}>
+                      {statusInfo.label}
+                    </span>
+                  )}
+                </div>
+
+                {/* Date & Time */}
+                <div className="flex items-center gap-4 text-[13px] text-[#717171]">
+                  <span className="flex items-center gap-1">
+                    <CalendarIcon size={13} strokeWidth={1.5} />
+                    {formatDateLabel(r.scheduledDate)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ClockIcon size={13} strokeWidth={1.5} />
+                    {formatTimeKorean(r.scheduledTime)}
+                  </span>
+                </div>
+
+                {/* Address */}
+                {r.propertyAddress && (
+                  <p className="text-[12px] text-[#B0B0B0] flex items-center gap-1">
+                    <MapPinIcon size={12} strokeWidth={1.5} />
+                    {r.propertyAddress}
+                  </p>
+                )}
+              </div>
+            )
+          })}
+
+          {/* CTA */}
+          <Link
+            href="/cleaning"
+            className="mt-2 px-5 h-10 rounded-lg bg-[#222222] text-white text-[14px] font-semibold inline-flex items-center justify-center self-start active:scale-[0.98] transition-all"
+          >
+            청소 요청하기
+          </Link>
+        </div>
+      ) : (
+        /* ─── Empty State ─── */
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-8">
+          <Image
+            src="/images/cleaning-white.png"
+            alt="청소 서비스"
+            width={240}
+            height={120}
+            priority
+            className="mb-5 object-contain"
+          />
+          <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
+            처음 오셨나요?
+          </h2>
+          <p className="text-[14px] text-[#717171] leading-relaxed">
+            10,000원 할인을 받고 첫 청소를 요청해보세요!
+          </p>
+          <Link
+            href="/cleaning"
+            className="px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center mt-6 active:scale-[0.98] transition-all"
+          >
+            청소 요청하기
+          </Link>
+          <button
+            type="button"
+            onClick={() => setProcessOpen(true)}
+            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors mt-4"
+          >
+            청소는 어떻게 진행되나요?
+          </button>
+        </div>
+      )}
 
       {/* Process Drawer */}
       <Drawer open={processOpen} onOpenChange={setProcessOpen}>
