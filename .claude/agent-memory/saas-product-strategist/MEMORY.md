@@ -1,0 +1,3 @@
+- [BnBiseo Project Overview](project_overview.md) — 비엔비서 비즈니스 모델, 가격 티어, ICP, MVP 로드맵, 핵심 KPI 종합 정리
+- [Repair Staffing Strategy](repair_staffing_strategy.md) — 수리기사 확장: 직접 채용(계약직) 우선, 100채+ 하이브리드 전환, 순수 외주 비추천
+- [Free Plan 제거 결정](free_plan_removal.md) — Free plan 폐지, "첫 달 무료+환불 보장" 모델로 대체 (2026-04-04 결정)

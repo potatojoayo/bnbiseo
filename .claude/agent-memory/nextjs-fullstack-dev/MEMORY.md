@@ -1,0 +1,2 @@
+- [BnBiseo Infrastructure Setup](project_infrastructure.md) — Drizzle schema (11 tables), Supabase clients, proxy.ts auth guard, TopLoader, db scripts
+- [Dashboard CRUD Implementation](project_dashboard_crud.md) — shadcn/ui components, property+fixture CRUD, photo upload, dashboard layout

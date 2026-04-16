@@ -1,0 +1,3 @@
+- [랜딩페이지 구조](project_landing_structure.md) — 랜딩페이지 섹션 구성, 컴포넌트, 데이터 흐름 정리
+- [Playwright 테스트 패턴](feedback_playwright_patterns.md) — 이 프로젝트에서 발견한 Playwright 주의사항 및 패턴
+- [발견된 UI 버그](project_bugs.md) — QA 검수 중 발견된 버그 및 UX 이슈 목록
