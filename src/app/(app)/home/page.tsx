@@ -51,10 +51,15 @@ export default function HomePage() {
         <div className="flex flex-col gap-3">
           <p className="px-1 text-left text-[13px] font-medium text-[#717171]">등록 대기 숙소</p>
           {pendingProperties.map((property) => (
-            <PropertyCard
+            <Link
               key={property.id}
-              property={{ ...property, status: 'pending_activation' }}
-            />
+              href={`/my/properties/${property.id}?from=home`}
+              className="block transition-transform active:scale-[0.99]"
+            >
+              <PropertyCard
+                property={{ ...property, status: 'pending_activation' }}
+              />
+            </Link>
           ))}
         </div>
         <div className="flex justify-center mt-4">

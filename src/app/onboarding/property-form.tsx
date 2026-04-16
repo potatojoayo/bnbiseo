@@ -8,8 +8,7 @@ import { ArrowLeftIcon, Loader2Icon } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { api, ApiError } from '@/lib/api-client'
 import { useInvalidateProperties } from '@/lib/hooks/use-properties'
-import { extractListingId } from '@/lib/airbnb-scraper'
-import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
+import { useAirbnbListing } from '@/lib/hooks/use-airbnb-listing'
 import { FloatingTextarea, CompoundField } from '@/components/ui/floating-input'
 import {
   Drawer,
@@ -40,8 +39,6 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
   const router = useRouter()
   const invalidateProperties = useInvalidateProperties()
   const [isPending, setIsPending] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [message, setMessage] = useState<string | undefined>()
@@ -53,13 +50,9 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
   const [address, setAddress] = useState(initialData?.address ?? '')
   const [addressDetail, setAddressDetail] = useState(initialData?.addressDetail ?? '')
   const [airbnbUrl, setAirbnbUrl] = useState(initialData?.airbnbListingId ?? '')
+  const [debouncedAirbnbInput, setDebouncedAirbnbInput] = useState(initialData?.airbnbListingId ?? '')
 
-  // Airbnb preview
-  const [airbnbPreview, setAirbnbPreview] = useState<AirbnbListingInfo | null>(null)
-  const [airbnbFetching, setAirbnbFetching] = useState(false)
-  const [airbnbError, setAirbnbError] = useState<string | null>(null)
   const airbnbDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const lastFetchedId = useRef<string | null>(null)
 
   // Address search
   const [addrQuery, setAddrQuery] = useState('')
@@ -79,23 +72,36 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Edit mode: fetch airbnb preview on mount
   useEffect(() => {
-    if (mode !== 'edit' || !initialData?.airbnbListingId) return
-    const listingId = extractListingId(initialData.airbnbListingId)
-    if (!listingId) return
-    setAirbnbFetching(true)
-    api.get<AirbnbListingInfo>(`/airroi/listing/${listingId}`)
-      .then((data) => {
-        if (data.name || data.imageUrl) {
-          setAirbnbPreview(data)
-          lastFetchedId.current = listingId
-        }
-      })
-      .catch(() => {})
-      .finally(() => setAirbnbFetching(false))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (mode === 'edit') {
+      setDebouncedAirbnbInput('')
+      return
+    }
+
+    if (airbnbDebounceRef.current) clearTimeout(airbnbDebounceRef.current)
+    airbnbDebounceRef.current = setTimeout(() => {
+      setDebouncedAirbnbInput(airbnbUrl)
+    }, 800)
+
+    return () => {
+      if (airbnbDebounceRef.current) clearTimeout(airbnbDebounceRef.current)
+    }
+  }, [airbnbUrl, mode])
+
+  const {
+    data: airbnbPreview,
+    isLoading: airbnbFetching,
+    isError: airbnbPreviewError,
+  } = useAirbnbListing(debouncedAirbnbInput, {
+    enabled: mode !== 'edit',
+  })
+
+  const airbnbError = mode !== 'edit'
+    && debouncedAirbnbInput.trim()
+    && !airbnbFetching
+    && airbnbPreviewError
+    ? '숙소 정보를 가져올 수 없습니다. 링크를 확인해주세요.'
+    : null
 
   function handleAddrQueryChange(val: string) {
     setAddrQuery(val)
@@ -193,24 +199,6 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         setMessage(mode === 'edit' ? '수정 중 문제가 생겼어요. 다시 시도해주세요' : '등록 중 문제가 생겼어요. 다시 시도해주세요')
       }
       setIsPending(false)
-    }
-  }
-
-  async function handleDelete() {
-    if (!initialData?.id) return
-    setDeleting(true)
-    try {
-      await api.delete(`/properties/${initialData.id}/permanent`)
-      await invalidateProperties()
-      if (redirectTo) {
-        router.push(redirectTo, { scroll: false })
-      } else {
-        const remaining = await api.get<{ id: string }[]>('/properties').catch(() => [])
-        router.push(remaining.length > 0 ? '/onboarding/complete' : '/onboarding', { scroll: false })
-      }
-    } catch {
-      setMessage('삭제 중 문제가 생겼어요. 다시 시도해주세요')
-      setDeleting(false)
     }
   }
 
@@ -381,38 +369,6 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                 val = val.split('?')[0]
               }
               setAirbnbUrl(val)
-              setAirbnbError(null)
-
-              // Auto-fetch preview
-              if (airbnbDebounceRef.current) clearTimeout(airbnbDebounceRef.current)
-              const listingId = extractListingId(val)
-              if (!listingId) {
-                if (!val.trim()) {
-                  setAirbnbPreview(null)
-                  lastFetchedId.current = null
-                }
-                return
-              }
-              if (listingId === lastFetchedId.current) return
-              airbnbDebounceRef.current = setTimeout(async () => {
-                setAirbnbFetching(true)
-                setAirbnbError(null)
-                try {
-                  const data = await api.get<AirbnbListingInfo>(`/airroi/listing/${listingId}`)
-                  if (!data.name && !data.imageUrl) {
-                    setAirbnbPreview(null)
-                    setAirbnbError('숙소 정보를 가져오지 못했어요. 링크를 다시 확인해주세요')
-                  } else {
-                    setAirbnbPreview(data)
-                    lastFetchedId.current = listingId
-                  }
-                } catch {
-                  setAirbnbPreview(null)
-                  setAirbnbError('숙소 정보를 가져올 수 없습니다. 링크를 확인해주세요.')
-                } finally {
-                  setAirbnbFetching(false)
-                }
-              }, 800)
             }}
             placeholder="https://airbnb.com/rooms/12345678"
             borderRadius="12px"
@@ -420,7 +376,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         </div>
 
         {/* Fetching indicator */}
-        {airbnbFetching && (
+        {mode !== 'edit' && airbnbFetching && (
           <div className="flex items-center gap-2 text-[13px] text-[#717171] -mt-4">
             <Loader2Icon className="size-3.5 animate-spin" />
             숙소 정보를 가져오는 중...
@@ -428,14 +384,14 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         )}
 
         {/* Fetch error */}
-        {airbnbError && !airbnbFetching && (
+        {mode !== 'edit' && airbnbError && !airbnbFetching && (
           <div className="text-[13px] text-[#C13515] -mt-4">
             {airbnbError}
           </div>
         )}
 
         {/* Preview card */}
-        {airbnbPreview && !airbnbFetching && !airbnbError && (
+        {mode !== 'edit' && airbnbPreview && !airbnbFetching && !airbnbError && (
           <div className="rounded-xl border border-[#EBEBEB] overflow-hidden -mt-4 animate-fade-up-fast">
             {airbnbPreview.imageUrl && (
               <div className="relative w-full h-40">
@@ -529,54 +485,10 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
           type="submit"
           loading={isPending}
           loadingText={mode === 'edit' ? '수정 중...' : '신청 중...'}
-          disabled={airbnbFetching || deleting}
+          disabled={airbnbFetching}
         >
-          {mode === 'edit' ? '수정하기' : '숙소 등록 신청하기'}
+          {mode === 'edit' ? '저장하기' : '숙소 등록 신청하기'}
         </LoadingButton>
-
-        {mode === 'edit' && (
-          <>
-            <button
-              type="button"
-              onClick={() => setDeleteOpen(true)}
-              disabled={deleting || isPending}
-              className="w-full text-center text-[13px] text-[#717171] hover:text-[#C13515] transition-colors disabled:opacity-50"
-            >
-              숙소 삭제
-            </button>
-            <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
-              <DrawerContent>
-                <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
-                  <DrawerHeader className="px-0">
-                    <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                      정말 삭제할까요?
-                    </DrawerTitle>
-                  </DrawerHeader>
-                  <p className="text-[14px] text-[#717171] mb-6">
-                    삭제하면 되돌릴 수 없어요.
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    <LoadingButton
-                      type="button"
-                      onClick={handleDelete}
-                      loading={deleting}
-                      loadingText="삭제 중..."
-                    >
-                      삭제하기
-                    </LoadingButton>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteOpen(false)}
-                      className="w-full text-center text-[13px] text-[#717171] hover:text-[#222222] transition-colors underline underline-offset-2"
-                    >
-                      취소
-                    </button>
-                  </div>
-                </div>
-              </DrawerContent>
-            </Drawer>
-          </>
-        )}
       </form>
     </div>
   )

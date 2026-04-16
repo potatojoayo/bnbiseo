@@ -1,0 +1,283 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ChevronLeftIcon, Loader2Icon, MapPinIcon } from 'lucide-react'
+import { api } from '@/lib/api-client'
+import { ProcessDrawer } from '@/components/process-drawer'
+import { useAirbnbListing } from '@/lib/hooks/use-airbnb-listing'
+import { useInvalidateProperties } from '@/lib/hooks/use-properties'
+import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
+import { LoadingButton } from '@/components/ui/loading-button'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
+
+type PropertyDetail = {
+  id: string
+  status: 'pending_activation' | 'active'
+  name: string
+  address: string
+  addressDetail: string | null
+  pyeong: number | null
+  bedrooms: number | null
+  bathrooms: number | null
+  airbnbListingId: string | null
+}
+
+type PropertyDetailViewProps = {
+  propertyId: string
+  backHref: string
+  editHref: string
+}
+
+export function PropertyDetailView({
+  propertyId,
+  backHref,
+  editHref,
+}: PropertyDetailViewProps) {
+  const router = useRouter()
+  const invalidateProperties = useInvalidateProperties()
+  const [property, setProperty] = useState<PropertyDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState<string | undefined>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [registrationDrawerOpen, setRegistrationDrawerOpen] = useState(false)
+
+  useEffect(() => {
+    api.get<PropertyDetail>(`/properties/${propertyId}`)
+      .then(setProperty)
+      .catch(() => setProperty(null))
+      .finally(() => setLoading(false))
+  }, [propertyId])
+
+  const {
+    data: airbnbPreview,
+    isLoading: airbnbFetching,
+  } = useAirbnbListing(property?.airbnbListingId)
+
+  async function handleDelete() {
+    setDeleting(true)
+    setMessage(undefined)
+
+    try {
+      await api.delete(`/properties/${propertyId}/permanent`)
+      await invalidateProperties()
+
+      if (backHref === '/my/properties') {
+        router.push('/my/properties', { scroll: false })
+        return
+      }
+
+      const remaining = await api.get<{ id: string }[]>('/properties').catch(() => [])
+      router.push(remaining.length > 0 ? '/onboarding/complete' : '/onboarding', { scroll: false })
+    } catch {
+      setMessage('삭제 중 문제가 생겼어요. 다시 시도해주세요')
+      setDeleting(false)
+      setDeleteOpen(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[100dvh]">
+        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+      </div>
+    )
+  }
+
+  if (!property) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
+        <p className="text-[14px] text-[#717171] mb-4">숙소를 찾을 수 없어요</p>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-[13px] text-[#717171] underline underline-offset-2"
+        >
+          돌아가기
+        </button>
+      </div>
+    )
+  }
+
+  const details = [
+    property.pyeong != null && `${property.pyeong}평`,
+    property.bedrooms != null && `방 ${property.bedrooms}`,
+    property.bathrooms != null && `욕실 ${property.bathrooms}`,
+  ].filter(Boolean)
+
+  return (
+    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
+      <Link
+        href={backHref}
+        className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-[#F7F7F7] transition-colors text-[#222222]"
+      >
+        <ChevronLeftIcon size={32} />
+      </Link>
+
+      <h1 className="text-[22px] font-semibold text-[#222222] mb-2">
+        {property.name}
+      </h1>
+      <div className="mb-6 flex items-center gap-2">
+        <span className="rounded-full border border-[#EBEBEB] bg-[#FAFAFA] px-2.5 py-1 text-[11px] font-medium text-[#717171]">
+          {property.status === 'pending_activation' ? '등록 대기' : '등록 완료'}
+        </span>
+      </div>
+
+      <div className="rounded-xl border border-[#EBEBEB] px-4 py-4 flex flex-col gap-3 mb-4">
+        <p className="text-[13px] leading-relaxed text-[#717171]">
+          <MapPinIcon size={14} className="inline-block align-[-2px] mr-1 text-[#B0B0B0]" strokeWidth={1.75} />
+          {property.address}
+          {property.addressDetail ? ` ${property.addressDetail}` : ''}
+        </p>
+        {details.length > 0 && (
+          <p className="text-[13px] text-[#717171]">
+            {details.join(' · ')}
+          </p>
+        )}
+      </div>
+
+      {property.status === 'pending_activation' && (
+        <div className="rounded-xl border border-[#EBEBEB] px-4 py-4 mb-4">
+          <p className="text-[15px] font-semibold text-[#222222]">
+            숙소 등록을 진행하고 있어요
+          </p>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#717171]">
+            48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRegistrationDrawerOpen(true)}
+            className="mt-3 text-[13px] text-[#717171] underline underline-offset-2 transition-colors hover:text-[#222222]"
+          >
+            숙소 등록은 어떻게 진행되나요?
+          </button>
+        </div>
+      )}
+
+      {property.airbnbListingId && airbnbFetching && (
+        <div className="mb-4 flex items-center gap-2 text-[13px] text-[#717171]">
+          <Loader2Icon className="size-3.5 animate-spin" />
+          숙소 정보를 가져오는 중...
+        </div>
+      )}
+
+      {property.airbnbListingId && airbnbPreview && !airbnbFetching && (
+        <a
+          href={property.airbnbListingId}
+          target="_blank"
+          rel="noreferrer"
+          className="mb-6 block overflow-hidden rounded-xl border border-[#EBEBEB] animate-fade-up-fast"
+        >
+          {airbnbPreview.imageUrl && (
+            <div className="relative h-40 w-full">
+              <Image
+                src={airbnbPreview.imageUrl}
+                alt={airbnbPreview.name}
+                fill
+                className="object-cover"
+                sizes="560px"
+                unoptimized
+              />
+            </div>
+          )}
+          <div className="px-4 py-3">
+            <p className="text-[15px] font-semibold leading-snug text-[#222222]">
+              {airbnbPreview.name}
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-[#717171]">
+              {airbnbPreview.location && <span>{airbnbPreview.location}</span>}
+              {airbnbPreview.rating && <span>★ {airbnbPreview.rating}</span>}
+              {airbnbPreview.bedrooms != null && <span>침실 {airbnbPreview.bedrooms}</span>}
+              {airbnbPreview.beds != null && <span>침대 {airbnbPreview.beds}</span>}
+              {airbnbPreview.bathrooms != null && <span>욕실 {airbnbPreview.bathrooms}</span>}
+            </div>
+          </div>
+        </a>
+      )}
+
+      {property.airbnbListingId && !airbnbPreview && !airbnbFetching && (
+        <div className="rounded-xl border border-[#EBEBEB] px-4 py-4 mb-6">
+          <p className="mb-2 text-[12px] font-medium text-[#B0B0B0]">에어비앤비 링크</p>
+          <a
+            href={property.airbnbListingId}
+            target="_blank"
+            rel="noreferrer"
+            className="break-all text-[13px] text-[#717171] underline underline-offset-2"
+          >
+            {property.airbnbListingId}
+          </a>
+        </div>
+      )}
+
+      {message && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm text-brand">
+          <span>!</span>
+          {message}
+        </div>
+      )}
+
+      <Link
+        href={editHref}
+        className="mt-2 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#222222] text-[15px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#333333]"
+      >
+        수정하기
+      </Link>
+      <button
+        type="button"
+        onClick={() => setDeleteOpen(true)}
+        disabled={deleting}
+        className="mt-4 w-full text-center text-[13px] text-[#717171] underline underline-offset-2 transition-colors hover:text-[#C13515] disabled:opacity-50"
+      >
+        숙소 삭제
+      </button>
+
+      <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DrawerContent>
+          <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+                정말 삭제할까요?
+              </DrawerTitle>
+            </DrawerHeader>
+            <p className="mb-6 text-[14px] text-[#717171]">
+              삭제하면 되돌릴 수 없어요.
+            </p>
+            <div className="flex flex-col gap-3">
+              <LoadingButton
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                loading={deleting}
+                loadingText="삭제 중..."
+              >
+                삭제하기
+              </LoadingButton>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(false)}
+                className="w-full text-center text-[13px] text-[#717171] underline underline-offset-2 transition-colors hover:text-[#222222]"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <ProcessDrawer
+        open={registrationDrawerOpen}
+        onOpenChange={setRegistrationDrawerOpen}
+        title="숙소 등록 진행 과정"
+        steps={PROPERTY_REGISTRATION_STEPS}
+      />
+    </div>
+  )
+}

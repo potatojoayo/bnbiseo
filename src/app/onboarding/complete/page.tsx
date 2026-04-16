@@ -72,7 +72,7 @@ export default function CompletePage() {
         {properties.map((property) => (
           <Link
             key={property.id}
-            href={`/onboarding/edit/${property.id}`}
+            href={`/onboarding/properties/${property.id}`}
             className="block"
           >
             <PropertyCard property={property} />
