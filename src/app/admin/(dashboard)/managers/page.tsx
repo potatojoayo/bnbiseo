@@ -122,10 +122,10 @@ export default function AdminManagersPage() {
       <SiteHeader title="매니저 관리" />
       <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
         <div className="flex items-center justify-between h-9">
-          <p className="text-[14px] text-[#717171]">총 {managers.length}명</p>
+          <p className="text-[14px] text-ink-muted">총 {managers.length}명</p>
           <button
             onClick={openCreate}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#222222] text-white text-[13px] font-medium"
+            className="flex items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-[13px] font-medium text-white"
           >
             <PlusIcon size={14} />
             매니저 추가
@@ -134,28 +134,28 @@ export default function AdminManagersPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
           </div>
         ) : managers.length === 0 ? (
-          <p className="text-center text-[14px] text-[#717171] py-20">등록된 매니저가 없어요</p>
+          <p className="py-20 text-center text-[14px] text-ink-muted">등록된 매니저가 없어요</p>
         ) : isMobile ? (
           /* ─── Mobile: Cards ─── */
           <div className="flex flex-col gap-3">
             {managers.map((m) => (
-              <div key={m.id} className="rounded-xl border border-[#EBEBEB] px-4 py-4">
+              <div key={m.id} className="rounded-xl border border-outline-dim px-4 py-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[15px] font-semibold text-[#222222]">{m.name}</span>
-                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${m.isActive ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F7F7F7] text-[#B0B0B0]'}`}>
+                  <span className="text-[15px] font-semibold text-ink">{m.name}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${m.isActive ? 'bg-success-soft text-success' : 'bg-surface-soft text-ink-faint'}`}>
                     {m.isActive ? '활성' : '비활성'}
                   </span>
                 </div>
-                {m.email && <p className="text-[13px] text-[#717171]">{m.email}</p>}
-                <p className="text-[13px] text-[#717171]">{m.phone}</p>
-                {m.memo && <p className="text-[12px] text-[#B0B0B0] mt-1">{m.memo}</p>}
+                {m.email && <p className="text-[13px] text-ink-muted">{m.email}</p>}
+                <p className="text-[13px] text-ink-muted">{m.phone}</p>
+                {m.memo && <p className="mt-1 text-[12px] text-ink-faint">{m.memo}</p>}
                 <div className="flex gap-2 mt-3">
-                  <button onClick={() => openEdit(m)} className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#717171]">수정</button>
-                  <button onClick={() => handleToggle(m)} className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#717171]">{m.isActive ? '비활성화' : '활성화'}</button>
-                  <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#B0B0B0]">삭제</button>
+                  <button onClick={() => openEdit(m)} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">수정</button>
+                  <button onClick={() => handleToggle(m)} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">{m.isActive ? '비활성화' : '활성화'}</button>
+                  <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-faint">삭제</button>
                 </div>
               </div>
             ))}
@@ -163,7 +163,7 @@ export default function AdminManagersPage() {
         ) : (
           /* ─── Desktop: Table ─── */
           <>
-          <div className="rounded-xl border border-[#EBEBEB] overflow-hidden">
+          <div className="overflow-hidden rounded-xl border border-outline-dim">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -179,19 +179,19 @@ export default function AdminManagersPage() {
                 {paged.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>{m.name}</TableCell>
-                    <TableCell className="text-[#717171]">{m.email || '-'}</TableCell>
+                    <TableCell className="text-ink-muted">{m.email || '-'}</TableCell>
                     <TableCell>{m.phone}</TableCell>
-                    <TableCell className="text-[#717171]">{m.memo || '-'}</TableCell>
+                    <TableCell className="text-ink-muted">{m.memo || '-'}</TableCell>
                     <TableCell>
-                      <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${m.isActive ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F7F7F7] text-[#B0B0B0]'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${m.isActive ? 'bg-success-soft text-success' : 'bg-surface-soft text-ink-faint'}`}>
                         {m.isActive ? '활성' : '비활성'}
                       </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1.5">
-                        <button onClick={() => openEdit(m)} className="px-2.5 py-1 rounded-md border border-[#EBEBEB] text-[11px] font-medium text-[#717171]">수정</button>
-                        <button onClick={() => handleToggle(m)} className="px-2.5 py-1 rounded-md border border-[#EBEBEB] text-[11px] font-medium text-[#717171]">{m.isActive ? '비활성화' : '활성화'}</button>
-                        <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="px-2.5 py-1 rounded-md border border-[#EBEBEB] text-[11px] font-medium text-[#B0B0B0]">삭제</button>
+                        <button onClick={() => openEdit(m)} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-muted">수정</button>
+                        <button onClick={() => handleToggle(m)} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-muted">{m.isActive ? '비활성화' : '활성화'}</button>
+                        <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-faint">삭제</button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -209,7 +209,7 @@ export default function AdminManagersPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">{editTarget ? '매니저 수정' : '매니저 추가'}</DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-ink">{editTarget ? '매니저 수정' : '매니저 추가'}</DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-4">
               {!editTarget ? (
@@ -230,7 +230,7 @@ export default function AdminManagersPage() {
                 <FloatingInput label="메모 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} borderRadius="12px" />
               </CompoundInput>
               {message && (
-                <p className="text-[13px] text-[#C13515]">
+                <p className="text-[13px] text-destructive">
                   {message}
                 </p>
               )}
@@ -247,12 +247,12 @@ export default function AdminManagersPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">매니저를 삭제할까요?</DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-ink">매니저를 삭제할까요?</DrawerTitle>
             </DrawerHeader>
-            <p className="text-[14px] text-[#717171] mb-6">{deleteTarget?.name}님을 삭제하면 되돌릴 수 없어요.</p>
+            <p className="mb-6 text-[14px] text-ink-muted">{deleteTarget?.name}님을 삭제하면 되돌릴 수 없어요.</p>
             <div className="flex flex-col gap-2">
               <LoadingButton type="button" variant="destructive" loading={deleting} loadingText="삭제 중..." onClick={handleDelete}>삭제하기</LoadingButton>
-              <button type="button" onClick={() => setDeleteOpen(false)} className="h-12 rounded-lg text-[15px] font-semibold text-[#717171] active:bg-[#F7F7F7] transition-colors">닫기</button>
+              <button type="button" onClick={() => setDeleteOpen(false)} className="h-12 rounded-lg text-[15px] font-semibold text-ink-muted transition-colors active:bg-surface-soft">닫기</button>
             </div>
           </div>
         </DrawerContent>

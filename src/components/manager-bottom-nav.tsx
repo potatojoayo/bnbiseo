@@ -45,7 +45,7 @@ export function ManagerBottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[480px] border-t border-[#EBEBEB] bg-white pb-[env(safe-area-inset-bottom)] sm:rounded-t-2xl sm:border-x">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[480px] border-t border-outline-dim bg-white pb-[env(safe-area-inset-bottom)] sm:rounded-t-2xl sm:border-x">
       <div className="flex h-[56px] items-center justify-around">
         {tabs.map(({ label, href, icon: Icon, exact }) => {
           const active = isActive(href, exact)
@@ -58,7 +58,7 @@ export function ManagerBottomNav() {
               onClick={() => handleTap(href)}
               className={cn(
                 'flex h-full flex-1 flex-col items-center justify-center gap-[3px]',
-                active ? 'text-brand' : 'text-[#999999]',
+                active ? 'text-brand' : 'text-ink-faint',
               )}
             >
               <Icon size={24} strokeWidth={1.5} />

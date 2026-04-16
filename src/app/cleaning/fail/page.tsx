@@ -14,17 +14,17 @@ function FailContent() {
 
   return (
     <div className="animate-fade-up-fast flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
-      <h2 className="text-[20px] font-semibold text-[#222222] mb-2">
+      <h2 className="mb-2 text-[20px] font-semibold text-ink">
         {isCancelled ? '결제가 취소되었어요' : '결제에 실패했어요'}
       </h2>
-      <p className="text-[14px] text-[#717171] leading-relaxed mb-8">
+      <p className="mb-8 text-[14px] leading-relaxed text-ink-muted">
         {isCancelled
           ? '청소 요청 페이지로 돌아가 다시 시도할 수 있어요'
           : message}
       </p>
       <Link
         href="/cleaning"
-        className="px-6 h-12 rounded-lg bg-[#222222] text-white text-[15px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+        className="inline-flex h-12 items-center justify-center rounded-lg bg-ink px-6 text-[15px] font-semibold text-white transition-all active:scale-[0.98]"
       >
         {isCancelled ? '돌아가기' : '다시 시도하기'}
       </Link>
@@ -36,7 +36,7 @@ export default function CleaningFailPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[100dvh]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     }>
       <FailContent />

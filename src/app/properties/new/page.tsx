@@ -10,7 +10,7 @@ export default function NewPropertyPage() {
       <div className="w-full max-w-[560px] animate-fade-up-fast">
         <Link
           href="/cleaning"
-          className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-[#F7F7F7] transition-colors text-[#222222]"
+          className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
         >
           <ChevronLeftIcon size={32} />
         </Link>

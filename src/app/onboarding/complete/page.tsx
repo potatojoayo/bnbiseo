@@ -63,7 +63,7 @@ export default function CompletePage() {
           숙소 등록 신청이
           <br />완료되었어요
         </h2>
-        <p className="mt-3 text-[14px] leading-relaxed text-[#717171]">
+        <p className="mt-3 text-[14px] leading-relaxed text-ink-muted">
           48시간 이내에 비앤비서가 직접 방문해 운영 정보를 확인하고 등록을 완료해드려요.
         </p>
       </div>
@@ -93,7 +93,7 @@ export default function CompletePage() {
         </LoadingButton>
         <Link
           href="/onboarding/add"
-          className="flex items-center justify-center gap-2.5 h-12 rounded-lg text-sm font-medium text-on-surface border border-outline bg-white transition-all hover:border-[#B0B0B0] active:scale-[0.99]"
+          className="flex h-12 items-center justify-center gap-2.5 rounded-lg border border-outline bg-white text-sm font-medium text-on-surface transition-all hover:border-input active:scale-[0.99]"
         >
           <PlusIcon className="size-4" strokeWidth={2} />
           숙소 추가하기

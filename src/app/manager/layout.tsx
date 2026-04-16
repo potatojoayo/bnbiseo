@@ -38,7 +38,7 @@ export default function ManagerLayout({ children }: { children: React.ReactNode 
   if (loading) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#EBEBEB] border-t-[#717171]" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }

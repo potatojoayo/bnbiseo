@@ -73,33 +73,33 @@ export function SignupForm() {
       {/* Error banner */}
       {message && (
         <div
-          className="flex items-center gap-3 px-4 py-3 mb-4 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[13px] text-[#B91C1C]"
+          className="mb-4 flex items-center gap-3 rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-[13px] text-danger"
           style={{ fontFamily: 'var(--font-body)' }}
           role="alert"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-            <circle cx="8" cy="8" r="7" stroke="#B91C1C" strokeWidth="1.5" />
-            <path d="M8 5v3.5" stroke="#B91C1C" strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="8" cy="11.5" r="0.75" fill="#B91C1C" />
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 5v3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
           </svg>
           {message}
         </div>
       )}
 
       {/* Compound input group — Airbnb style stacked inputs with shared borders */}
-      <div className="rounded-xl border border-[#B0B0B0] overflow-hidden divide-y divide-[#B0B0B0]">
+      <div className="rounded-xl border border-ink-faint overflow-hidden divide-y divide-ink-faint">
         {/* Name */}
         <div
           className="relative px-4 pt-[22px] pb-[10px]"
           style={{
-            boxShadow: focused === 'fullName' ? 'inset 0 0 0 1px #222222' : 'inset 0 0 0 0px #222222',
+            boxShadow: focused === 'fullName' ? 'inset 0 0 0 1px var(--on-surface)' : 'inset 0 0 0 0px var(--on-surface)',
             borderRadius: focused === 'fullName' ? '12px 12px 0 0' : '12px 12px 0 0',
             transition: 'box-shadow 0.2s ease',
           }}
         >
           <label
             htmlFor="fullName"
-            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]"
+            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             이름
@@ -112,11 +112,11 @@ export function SignupForm() {
             placeholder="홍길동"
             onFocus={() => setFocused('fullName')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
           {errors.fullName && (
-            <p className="text-[12px] text-[#C13515] mt-1" style={{ fontFamily: 'var(--font-body)' }}>{errors.fullName}</p>
+            <p className="text-[12px] text-destructive mt-1" style={{ fontFamily: 'var(--font-body)' }}>{errors.fullName}</p>
           )}
         </div>
 
@@ -124,13 +124,13 @@ export function SignupForm() {
         <div
           className="relative px-4 pt-[22px] pb-[10px]"
           style={{
-            boxShadow: focused === 'email' ? 'inset 0 0 0 1px #222222' : 'inset 0 0 0 0px #222222',
+            boxShadow: focused === 'email' ? 'inset 0 0 0 1px var(--on-surface)' : 'inset 0 0 0 0px var(--on-surface)',
             transition: 'box-shadow 0.2s ease',
           }}
         >
           <label
             htmlFor="email"
-            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]"
+            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             이메일
@@ -143,11 +143,11 @@ export function SignupForm() {
             placeholder="you@example.com"
             onFocus={() => setFocused('email')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
           {errors.email && (
-            <p className="text-[12px] text-[#C13515] mt-1" style={{ fontFamily: 'var(--font-body)' }}>{errors.email}</p>
+            <p className="text-[12px] text-destructive mt-1" style={{ fontFamily: 'var(--font-body)' }}>{errors.email}</p>
           )}
         </div>
 
@@ -155,14 +155,14 @@ export function SignupForm() {
         <div
           className="relative px-4 pt-[22px] pb-[10px]"
           style={{
-            boxShadow: focused === 'password' ? 'inset 0 0 0 1px #222222' : 'inset 0 0 0 0px #222222',
+            boxShadow: focused === 'password' ? 'inset 0 0 0 1px var(--on-surface)' : 'inset 0 0 0 0px var(--on-surface)',
             borderRadius: '0 0 12px 12px',
             transition: 'box-shadow 0.2s ease',
           }}
         >
           <label
             htmlFor="password"
-            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]"
+            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             비밀번호
@@ -175,24 +175,24 @@ export function SignupForm() {
             placeholder="영문·숫자 포함 8자 이상"
             onFocus={() => setFocused('password')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
           {errors.password && (
-            <p className="text-[12px] text-[#C13515] mt-1" style={{ fontFamily: 'var(--font-body)' }}>{errors.password}</p>
+            <p className="text-[12px] text-destructive mt-1" style={{ fontFamily: 'var(--font-body)' }}>{errors.password}</p>
           )}
         </div>
       </div>
 
       {/* Terms */}
       <p
-        className="text-[12px] text-[#717171] leading-relaxed mt-4 mb-5"
+        className="text-[12px] text-ink-muted leading-relaxed mt-4 mb-5"
         style={{ fontFamily: 'var(--font-body)' }}
       >
         가입하면{' '}
-        <a href="/terms" className="text-[#222222] underline underline-offset-2 font-medium">이용약관</a>{' '}
+        <a href="/terms" className="text-ink underline underline-offset-2 font-medium">이용약관</a>{' '}
         및{' '}
-        <a href="/privacy" className="text-[#222222] underline underline-offset-2 font-medium">개인정보처리방침</a>에
+        <a href="/privacy" className="text-ink underline underline-offset-2 font-medium">개인정보처리방침</a>에
         동의하게 됩니다.
       </p>
 

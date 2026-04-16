@@ -11,8 +11,8 @@ import { useTablePagination, AdminTablePagination } from '@/components/admin-tab
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const STATUS_STYLES = {
-  pending_activation: 'border border-[#EBEBEB] bg-[#FAFAFA] text-[#717171]',
-  active: 'bg-[#E8F5E9] text-[#2E7D32]',
+  pending_activation: 'border border-outline-dim bg-surface-subtle text-ink-muted',
+  active: 'bg-success-soft text-success',
 } as const
 
 const STATUS_LABELS = {
@@ -40,7 +40,7 @@ export default function AdminPropertiesPage() {
       <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
         <div className="flex flex-col gap-3">
           <div className="flex items-center h-9">
-            <p className="text-[14px] text-[#717171]">총 {filteredProperties.length}개</p>
+            <p className="text-[14px] text-ink-muted">총 {filteredProperties.length}개</p>
           </div>
           <Tabs
             value={filter}
@@ -50,7 +50,7 @@ export default function AdminPropertiesPage() {
             }}
             className="w-full"
           >
-            <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-xl bg-[#F7F7F7] p-1">
+            <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-xl bg-surface-soft p-1">
               <TabsTrigger value="all" className="shrink-0 rounded-lg px-3 py-2 text-[13px] font-medium">
                 전체({properties.length})
               </TabsTrigger>
@@ -66,10 +66,10 @@ export default function AdminPropertiesPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
           </div>
         ) : filteredProperties.length === 0 ? (
-          <p className="text-center text-[14px] text-[#717171] py-20">등록된 숙소가 없어요</p>
+          <p className="text-center text-[14px] text-ink-muted py-20">등록된 숙소가 없어요</p>
         ) : isMobile ? (
           /* ─── Mobile: Cards ─── */
           <div className="flex flex-col gap-3">
@@ -82,14 +82,14 @@ export default function AdminPropertiesPage() {
                   ].filter(Boolean)
                 : []
               const card = (
-                <div className="rounded-xl border border-[#EBEBEB] px-4 py-4">
+                <div className="rounded-xl border border-outline-dim px-4 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-[16px] font-semibold leading-snug text-[#222222]">
+                      <p className="text-[16px] font-semibold leading-snug text-ink">
                         {p.name}
                       </p>
                       {details.length > 0 && (
-                        <p className="mt-1 text-[13px] text-[#717171]">
+                        <p className="mt-1 text-[13px] text-ink-muted">
                           {details.join(' · ')}
                         </p>
                       )}
@@ -99,21 +99,21 @@ export default function AdminPropertiesPage() {
                     </span>
                   </div>
 
-                  <div className="mt-3 h-px w-full bg-[#F1F1F1]" />
+                  <div className="mt-3 h-px w-full bg-outline-dim" />
 
-                  <p className="mt-3 text-[13px] leading-relaxed text-[#717171]">
-                    <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-[#B0B0B0]" strokeWidth={1.75} />
+                  <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">
+                    <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
                     {p.address}
                   </p>
 
-                  <p className="mt-3 text-[12px] text-[#717171]">
+                  <p className="mt-3 text-[12px] text-ink-muted">
                     호스트: {p.hostName || p.hostEmail || '-'}
                   </p>
 
                   {p.status === 'pending_activation' && (
                     <Link
                       href={`/admin/properties/${p.id}`}
-                      className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-lg bg-[#222222] px-3 text-[14px] font-semibold text-white transition-all active:scale-[0.98]"
+                      className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-lg bg-ink px-3 text-[14px] font-semibold text-white transition-all active:scale-[0.98]"
                     >
                       등록 진행
                     </Link>
@@ -137,7 +137,7 @@ export default function AdminPropertiesPage() {
         ) : (
           /* ─── Desktop: Table ─── */
           <>
-          <div className="rounded-xl border border-[#EBEBEB] overflow-hidden">
+          <div className="rounded-xl border border-outline-dim overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -167,7 +167,7 @@ export default function AdminPropertiesPage() {
                         {STATUS_LABELS[p.status]}
                       </span>
                     </TableCell>
-                    <TableCell className="text-[#717171]">{p.address}</TableCell>
+                    <TableCell className="text-ink-muted">{p.address}</TableCell>
                     <TableCell>{p.status === 'active' && p.pyeong ? `${p.pyeong}평` : '-'}</TableCell>
                     <TableCell>
                       {p.status === 'active'
@@ -179,14 +179,14 @@ export default function AdminPropertiesPage() {
                       {p.status === 'pending_activation' ? (
                         <Link
                           href={`/admin/properties/${p.id}`}
-                          className="inline-flex h-8 items-center justify-center rounded-lg bg-[#222222] px-3 text-[12px] font-semibold text-white transition-all active:scale-[0.98]"
+                          className="inline-flex h-8 items-center justify-center rounded-lg bg-ink px-3 text-[12px] font-semibold text-white transition-all active:scale-[0.98]"
                         >
                           등록 진행
                         </Link>
                       ) : (
                         <Link
                           href={`/admin/properties/${p.id}`}
-                          className="text-[12px] text-[#717171] underline underline-offset-2"
+                          className="text-[12px] text-ink-muted underline underline-offset-2"
                         >
                           상세보기
                         </Link>

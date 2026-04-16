@@ -10,7 +10,7 @@ export function SiteHeader({ title = "대시보드" }: { title?: string }) {
   if (!hasSidebar) {
     return (
       <div className="px-6 pt-6 pb-2">
-        <h1 className="text-[22px] font-semibold text-[#222222]">{title}</h1>
+        <h1 className="text-[22px] font-semibold text-ink">{title}</h1>
       </div>
     )
   }

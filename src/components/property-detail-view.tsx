@@ -87,7 +87,7 @@ export function PropertyDetailView({
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[100dvh]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
       </div>
     )
   }
@@ -95,11 +95,11 @@ export function PropertyDetailView({
   if (!property) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
-        <p className="text-[14px] text-[#717171] mb-4">숙소를 찾을 수 없어요</p>
+        <p className="text-[14px] text-ink-muted mb-4">숙소를 찾을 수 없어요</p>
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-[13px] text-[#717171] underline underline-offset-2"
+          className="text-[13px] text-ink-muted underline underline-offset-2"
         >
           돌아가기
         </button>
@@ -117,45 +117,45 @@ export function PropertyDetailView({
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
       <Link
         href={backHref}
-        className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-[#F7F7F7] transition-colors text-[#222222]"
+        className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-surface-soft transition-colors text-ink"
       >
         <ChevronLeftIcon size={32} />
       </Link>
 
-      <h1 className="text-[22px] font-semibold text-[#222222] mb-2">
+      <h1 className="text-[22px] font-semibold text-ink mb-2">
         {property.name}
       </h1>
       <div className="mb-6 flex items-center gap-2">
-        <span className="rounded-full border border-[#EBEBEB] bg-[#FAFAFA] px-2.5 py-1 text-[11px] font-medium text-[#717171]">
+        <span className="rounded-full border border-outline-dim bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-ink-muted">
           {property.status === 'pending_activation' ? '등록 대기' : '등록 완료'}
         </span>
       </div>
 
-      <div className="rounded-xl border border-[#EBEBEB] px-4 py-4 flex flex-col gap-3 mb-4">
-        <p className="text-[13px] leading-relaxed text-[#717171]">
-          <MapPinIcon size={14} className="inline-block align-[-2px] mr-1 text-[#B0B0B0]" strokeWidth={1.75} />
+      <div className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-3 mb-4">
+        <p className="text-[13px] leading-relaxed text-ink-muted">
+          <MapPinIcon size={14} className="inline-block align-[-2px] mr-1 text-ink-faint" strokeWidth={1.75} />
           {property.address}
           {property.addressDetail ? ` ${property.addressDetail}` : ''}
         </p>
         {details.length > 0 && (
-          <p className="text-[13px] text-[#717171]">
+          <p className="text-[13px] text-ink-muted">
             {details.join(' · ')}
           </p>
         )}
       </div>
 
       {property.status === 'pending_activation' && (
-        <div className="rounded-xl border border-[#EBEBEB] px-4 py-4 mb-4">
-          <p className="text-[15px] font-semibold text-[#222222]">
+        <div className="rounded-xl border border-outline-dim px-4 py-4 mb-4">
+          <p className="text-[15px] font-semibold text-ink">
             숙소 등록을 진행하고 있어요
           </p>
-          <p className="mt-1 text-[13px] leading-relaxed text-[#717171]">
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
             48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
           </p>
           <button
             type="button"
             onClick={() => setRegistrationDrawerOpen(true)}
-            className="mt-3 text-[13px] text-[#717171] underline underline-offset-2 transition-colors hover:text-[#222222]"
+            className="mt-3 text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
           >
             숙소 등록은 어떻게 진행되나요?
           </button>
@@ -163,7 +163,7 @@ export function PropertyDetailView({
       )}
 
       {property.airbnbListingId && airbnbFetching && (
-        <div className="mb-4 flex items-center gap-2 text-[13px] text-[#717171]">
+        <div className="mb-4 flex items-center gap-2 text-[13px] text-ink-muted">
           <Loader2Icon className="size-3.5 animate-spin" />
           숙소 정보를 가져오는 중...
         </div>
@@ -174,7 +174,7 @@ export function PropertyDetailView({
           href={property.airbnbListingId}
           target="_blank"
           rel="noreferrer"
-          className="mb-6 block overflow-hidden rounded-xl border border-[#EBEBEB] animate-fade-up-fast"
+          className="mb-6 block overflow-hidden rounded-xl border border-outline-dim animate-fade-up-fast"
         >
           {airbnbPreview.imageUrl && (
             <div className="relative h-40 w-full">
@@ -189,10 +189,10 @@ export function PropertyDetailView({
             </div>
           )}
           <div className="px-4 py-3">
-            <p className="text-[15px] font-semibold leading-snug text-[#222222]">
+            <p className="text-[15px] font-semibold leading-snug text-ink">
               {airbnbPreview.name}
             </p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-[#717171]">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-ink-muted">
               {airbnbPreview.location && <span>{airbnbPreview.location}</span>}
               {airbnbPreview.rating && <span>★ {airbnbPreview.rating}</span>}
               {airbnbPreview.bedrooms != null && <span>침실 {airbnbPreview.bedrooms}</span>}
@@ -204,13 +204,13 @@ export function PropertyDetailView({
       )}
 
       {property.airbnbListingId && !airbnbPreview && !airbnbFetching && (
-        <div className="rounded-xl border border-[#EBEBEB] px-4 py-4 mb-6">
-          <p className="mb-2 text-[12px] font-medium text-[#B0B0B0]">에어비앤비 링크</p>
+        <div className="rounded-xl border border-outline-dim px-4 py-4 mb-6">
+          <p className="mb-2 text-[12px] font-medium text-ink-faint">에어비앤비 링크</p>
           <a
             href={property.airbnbListingId}
             target="_blank"
             rel="noreferrer"
-            className="break-all text-[13px] text-[#717171] underline underline-offset-2"
+            className="break-all text-[13px] text-ink-muted underline underline-offset-2"
           >
             {property.airbnbListingId}
           </a>
@@ -226,7 +226,7 @@ export function PropertyDetailView({
 
       <Link
         href={editHref}
-        className="mt-2 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#222222] text-[15px] font-semibold text-white transition-all active:scale-[0.98] hover:bg-[#333333]"
+        className="mt-2 inline-flex h-12 w-full items-center justify-center rounded-lg bg-ink text-[15px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
       >
         수정하기
       </Link>
@@ -234,7 +234,7 @@ export function PropertyDetailView({
         type="button"
         onClick={() => setDeleteOpen(true)}
         disabled={deleting}
-        className="mt-4 w-full text-center text-[13px] text-[#717171] underline underline-offset-2 transition-colors hover:text-[#C13515] disabled:opacity-50"
+        className="mt-4 w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
       >
         숙소 삭제
       </button>
@@ -243,11 +243,11 @@ export function PropertyDetailView({
         <DrawerContent>
           <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">
                 정말 삭제할까요?
               </DrawerTitle>
             </DrawerHeader>
-            <p className="mb-6 text-[14px] text-[#717171]">
+            <p className="mb-6 text-[14px] text-ink-muted">
               삭제하면 되돌릴 수 없어요.
             </p>
             <div className="flex flex-col gap-3">
@@ -263,7 +263,7 @@ export function PropertyDetailView({
               <button
                 type="button"
                 onClick={() => setDeleteOpen(false)}
-                className="w-full text-center text-[13px] text-[#717171] underline underline-offset-2 transition-colors hover:text-[#222222]"
+                className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
               >
                 취소
               </button>

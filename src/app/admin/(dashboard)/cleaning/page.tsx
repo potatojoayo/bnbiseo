@@ -17,12 +17,12 @@ import {
 import { LoadingButton } from '@/components/ui/loading-button'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: '결제 대기', color: 'bg-[#FFF8E1] text-[#F57F17]' },
-  pending: { label: '배정 대기', color: 'bg-[#FFF1F3] text-brand' },
-  confirmed: { label: '배정 완료', color: 'bg-[#E8F5E9] text-[#2E7D32]' },
-  in_progress: { label: '진행 중', color: 'bg-[#E3F2FD] text-[#1565C0]' },
-  completed: { label: '완료', color: 'bg-[#F7F7F7] text-[#222222]' },
-  cancelled: { label: '취소', color: 'bg-[#F7F7F7] text-[#B0B0B0]' },
+  pending_payment: { label: '결제 대기', color: 'bg-warning-soft text-warning' },
+  pending: { label: '배정 대기', color: 'bg-brand/8 text-brand' },
+  confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
+  in_progress: { label: '진행 중', color: 'bg-info-soft text-info' },
+  completed: { label: '완료', color: 'bg-surface-soft text-ink' },
+  cancelled: { label: '취소', color: 'bg-surface-soft text-ink-faint' },
 }
 
 const TABS = [
@@ -88,7 +88,7 @@ export default function AdminCleaningPage() {
               key={t.key}
               onClick={() => { setTab(t.key); setPage(1) }}
               className={`px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors ${
-                tab === t.key ? 'bg-[#222222] text-white' : 'bg-[#F7F7F7] text-[#717171] hover:bg-[#EBEBEB]'
+                tab === t.key ? 'bg-ink text-white' : 'bg-surface-soft text-ink-muted hover:bg-outline-dim'
               }`}
             >
               {t.label}
@@ -98,20 +98,20 @@ export default function AdminCleaningPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
           </div>
         ) : requests.length === 0 ? (
-          <p className="text-center text-[14px] text-[#717171] py-20">청소 요청이 없어요</p>
+          <p className="py-20 text-center text-[14px] text-ink-muted">청소 요청이 없어요</p>
         ) : isMobile ? (
           /* ─── Mobile: Cards ─── */
           <div className="flex flex-col gap-3">
             {requests.map((r) => (
-              <div key={r.id} className="rounded-xl border border-[#EBEBEB] px-4 py-4">
+              <div key={r.id} className="rounded-xl border border-outline-dim px-4 py-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[15px] font-semibold text-[#222222]">{r.propertyName || '숙소'}</span>
+                  <span className="text-[15px] font-semibold text-ink">{r.propertyName || '숙소'}</span>
                   <StatusBadge status={r.status} />
                 </div>
-                <div className="flex flex-col gap-1 text-[13px] text-[#717171] mb-3">
+                <div className="mb-3 flex flex-col gap-1 text-[13px] text-ink-muted">
                   <p>{formatDateLabel(r.scheduledDate)} {formatTimeKorean(r.scheduledTime)} {r.cleaningType === 'urgent' && '(긴급)'}</p>
                   <p>호스트: {r.hostName || r.hostEmail || '-'}</p>
                   <p>매니저: {r.managerName || '미배정'}</p>
@@ -119,10 +119,10 @@ export default function AdminCleaningPage() {
                 </div>
                 <div className="flex gap-2">
                   {r.status === 'pending' && (
-                    <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="px-3 py-1.5 rounded-lg bg-[#222222] text-white text-[12px] font-medium">매니저 배정</button>
+                    <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="rounded-lg bg-ink px-3 py-1.5 text-[12px] font-medium text-white">매니저 배정</button>
                   )}
                   {['pending', 'confirmed', 'in_progress'].includes(r.status) && (
-                    <button onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }} className="px-3 py-1.5 rounded-lg border border-[#EBEBEB] text-[12px] font-medium text-[#717171]">상태 변경</button>
+                    <button onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">상태 변경</button>
                   )}
                 </div>
               </div>
@@ -131,7 +131,7 @@ export default function AdminCleaningPage() {
         ) : (
           /* ─── Desktop: Table ─── */
           <>
-          <div className="rounded-xl border border-[#EBEBEB] overflow-hidden">
+          <div className="overflow-hidden rounded-xl border border-outline-dim">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -153,16 +153,16 @@ export default function AdminCleaningPage() {
                       {r.cleaningType === 'urgent' && <span className="text-brand ml-1 text-[11px]">긴급</span>}
                     </TableCell>
                     <TableCell>{r.hostName || r.hostEmail || '-'}</TableCell>
-                    <TableCell>{r.managerName || <span className="text-[#B0B0B0]">미배정</span>}</TableCell>
+                    <TableCell>{r.managerName || <span className="text-ink-faint">미배정</span>}</TableCell>
                     <TableCell>{r.finalPrice.toLocaleString()}원</TableCell>
                     <TableCell><StatusBadge status={r.status} /></TableCell>
                     <TableCell>
                       <div className="flex gap-1.5">
                         {r.status === 'pending' && (
-                          <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="px-2.5 py-1 rounded-md bg-[#222222] text-white text-[11px] font-medium">배정</button>
+                          <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="rounded-md bg-ink px-2.5 py-1 text-[11px] font-medium text-white">배정</button>
                         )}
                         {['pending', 'confirmed', 'in_progress'].includes(r.status) && (
-                          <button onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }} className="px-2.5 py-1 rounded-md border border-[#EBEBEB] text-[11px] font-medium text-[#717171]">상태</button>
+                          <button onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-muted">상태</button>
                         )}
                       </div>
                     </TableCell>
@@ -181,10 +181,10 @@ export default function AdminCleaningPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">매니저 배정</DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-ink">매니저 배정</DrawerTitle>
             </DrawerHeader>
             {activeManagers.length === 0 ? (
-              <p className="text-[14px] text-[#717171]">등록된 매니저가 없어요</p>
+              <p className="text-[14px] text-ink-muted">등록된 매니저가 없어요</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {activeManagers.map((m) => (
@@ -203,7 +203,7 @@ export default function AdminCleaningPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">상태 변경</DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-ink">상태 변경</DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-2">
               {['confirmed', 'in_progress', 'completed', 'cancelled'].map((s) => {

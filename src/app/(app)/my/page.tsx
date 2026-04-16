@@ -45,17 +45,17 @@ export default function MyPage() {
       {/* Profile header */}
       <Link
         href="/my/profile"
-        className="flex items-center justify-between px-6 pt-8 pb-6 active:bg-[#F7F7F7] transition-colors"
+        className="flex items-center justify-between px-6 pt-8 pb-6 active:bg-surface-soft transition-colors"
       >
         <div>
-          <h1 className="text-[22px] font-semibold text-[#222222]">
+          <h1 className="text-[22px] font-semibold text-ink">
             {displayName || '마이페이지'}
           </h1>
           {email && (
-            <p className="text-[14px] text-[#717171] mt-1">{email}</p>
+            <p className="text-[14px] text-ink-muted mt-1">{email}</p>
           )}
         </div>
-        <ChevronRightIcon size={20} className="text-[#B0B0B0] shrink-0" strokeWidth={1.5} />
+        <ChevronRightIcon size={20} className="text-ink-faint shrink-0" strokeWidth={1.5} />
       </Link>
 
       {/* Menu list */}
@@ -64,24 +64,24 @@ export default function MyPage() {
           <Link
             key={href}
             href={href}
-            className="flex items-center justify-between px-6 py-4 active:bg-[#F7F7F7] transition-colors"
+            className="flex items-center justify-between px-6 py-4 active:bg-surface-soft transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Icon size={20} className="text-[#717171]" strokeWidth={1.5} />
-              <span className="text-[15px] text-[#222222]">{label}</span>
+              <Icon size={20} className="text-ink-muted" strokeWidth={1.5} />
+              <span className="text-[15px] text-ink">{label}</span>
             </div>
-            <ChevronRightIcon size={18} className="text-[#B0B0B0]" strokeWidth={1.5} />
+            <ChevronRightIcon size={18} className="text-ink-faint" strokeWidth={1.5} />
           </Link>
         ))}
       </div>
 
       {/* Legal links */}
       <div className="mt-auto flex items-center justify-center gap-2.5 mb-4">
-        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#B0B0B0] hover:text-[#717171] transition-colors">
+        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint hover:text-ink-muted transition-colors">
           이용약관
         </a>
-        <div className="w-px h-3 bg-[#D0D0D0]" />
-        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#B0B0B0] hover:text-[#717171] transition-colors">
+        <div className="h-3 w-px bg-outline-strong" />
+        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint hover:text-ink-muted transition-colors">
           개인정보처리방침
         </a>
       </div>
@@ -91,7 +91,7 @@ export default function MyPage() {
         <button
           type="button"
           onClick={() => setLogoutOpen(true)}
-          className="text-[12px] text-[#B0B0B0] underline underline-offset-2 hover:text-[#717171] transition-colors"
+          className="text-[12px] text-ink-faint underline underline-offset-2 hover:text-ink-muted transition-colors"
         >
           로그아웃
         </button>
@@ -102,11 +102,11 @@ export default function MyPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">
                 로그아웃할까요?
               </DrawerTitle>
             </DrawerHeader>
-            <p className="text-[14px] text-[#717171] mb-6">
+            <p className="text-[14px] text-ink-muted mb-6">
               다시 로그인하면 모든 정보를 확인할 수 있어요.
             </p>
             <div className="flex flex-col gap-2">
@@ -122,7 +122,7 @@ export default function MyPage() {
               <button
                 type="button"
                 onClick={() => setLogoutOpen(false)}
-                className="h-12 rounded-lg text-[15px] font-semibold text-[#717171] active:bg-[#F7F7F7] transition-colors"
+                className="h-12 rounded-lg text-[15px] font-semibold text-ink-muted active:bg-surface-soft transition-colors"
               >
                 닫기
               </button>

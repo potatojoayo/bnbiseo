@@ -50,7 +50,7 @@ export default function AdminDashboardLayout({
   if (!ready) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }

@@ -124,7 +124,7 @@ export default function PropertyDetailPage() {
           </Badge>
           {!property.isActive && <Badge variant="outline">비활성</Badge>}
         </div>
-        <p className="text-sm text-[#6b7280] flex items-center gap-1">
+        <p className="flex items-center gap-1 text-sm text-ink-muted">
           <MapPin className="h-3.5 w-3.5" />
           {property.address}
           {property.addressDetail && ` ${property.addressDetail}`}
@@ -142,7 +142,7 @@ export default function PropertyDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-[#4b5563] whitespace-pre-line">{property.description}</p>
+                <p className="whitespace-pre-line text-sm text-slate-600">{property.description}</p>
               </CardContent>
             </Card>
           )}
@@ -153,7 +153,7 @@ export default function PropertyDetailPage() {
                 <CardTitle className="text-sm">체크인 안내</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-[#4b5563] whitespace-pre-line">{property.checkinInfo}</p>
+                <p className="whitespace-pre-line text-sm text-slate-600">{property.checkinInfo}</p>
               </CardContent>
             </Card>
           )}
@@ -164,7 +164,7 @@ export default function PropertyDetailPage() {
                 <CardTitle className="text-sm">주변 정보</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-[#4b5563] whitespace-pre-line">{property.nearbyInfo}</p>
+                <p className="whitespace-pre-line text-sm text-slate-600">{property.nearbyInfo}</p>
               </CardContent>
             </Card>
           )}
@@ -181,13 +181,13 @@ export default function PropertyDetailPage() {
             <CardContent className="space-y-2">
               {property.wifiSsid && (
                 <div>
-                  <p className="text-xs text-[#9ca3af]">이름 (SSID)</p>
+                  <p className="text-xs text-ink-faint">이름 (SSID)</p>
                   <p className="text-sm font-medium">{property.wifiSsid}</p>
                 </div>
               )}
               {property.wifiPassword && (
                 <div>
-                  <p className="text-xs text-[#9ca3af]">비밀번호</p>
+                  <p className="text-xs text-ink-faint">비밀번호</p>
                   <p className="text-sm font-medium">{property.wifiPassword}</p>
                 </div>
               )}
@@ -204,7 +204,7 @@ export default function PropertyDetailPage() {
             <h2 className="text-lg font-semibold" >
               시설물 목록
             </h2>
-            <p className="text-sm text-[#6b7280]">총 {propertyFixtures.length}개</p>
+            <p className="text-sm text-ink-muted">총 {propertyFixtures.length}개</p>
           </div>
           <Button size="sm" asChild>
             <Link href={`/dashboard/properties/${id}/fixtures/new`}>
@@ -217,10 +217,10 @@ export default function PropertyDetailPage() {
         {propertyFixtures.length === 0 ? (
           <Card>
             <CardContent className="py-12 flex flex-col items-center gap-3">
-              <Wrench className="h-10 w-10 text-[#D1C9BC]" />
+              <Wrench className="h-10 w-10 text-outline" />
               <div className="text-center">
                 <p className="font-medium text-sm">등록된 시설물이 없습니다</p>
-                <p className="text-xs text-[#6b7280] mt-1">
+                <p className="mt-1 text-xs text-ink-muted">
                   시설물을 등록하면 수리 접수 시 연결할 수 있습니다.
                 </p>
               </div>
@@ -245,7 +245,7 @@ export default function PropertyDetailPage() {
                       <CardTitle className="text-sm group-hover:text-brand transition-colors">
                         {fixture.name}
                       </CardTitle>
-                      <ChevronRight className="h-4 w-4 text-[#9ca3af] shrink-0 group-hover:text-brand transition-colors" />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-ink-faint transition-colors group-hover:text-brand" />
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -253,10 +253,10 @@ export default function PropertyDetailPage() {
                       <Badge variant="secondary" className="text-xs">
                         {fixtureCategoryLabel[fixture.category] ?? fixture.category}
                       </Badge>
-                      <span className="text-xs text-[#6b7280]">{fixture.location}</span>
+                      <span className="text-xs text-ink-muted">{fixture.location}</span>
                     </div>
                     {fixture.brand && (
-                      <p className="text-xs text-[#9ca3af] mt-1">{fixture.brand}</p>
+                      <p className="mt-1 text-xs text-ink-faint">{fixture.brand}</p>
                     )}
                   </CardContent>
                 </Card>

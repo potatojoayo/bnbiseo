@@ -210,11 +210,11 @@ export default function CleaningRequestDemo() {
               <div className="font-bold text-on-surface text-lg mb-1">예약 완료!</div>
               <div className="text-on-surface-subtle text-sm">4/12(토) 오전 · 홍대 스튜디오 A</div>
             </div>
-            <div className="w-full bg-[#FEE500] rounded-xl p-3.5 flex items-center gap-3">
+            <div className="flex w-full items-center gap-3 rounded-xl bg-kakao-yellow p-3.5">
               <span className="text-2xl">💬</span>
               <div>
-                <div className="text-xs font-bold text-[#3C1E1E]">카카오톡 알림</div>
-                <div className="text-xs text-[#3C1E1E]/70">매니저 배정 완료! 상세 안내를 보내드렸어요.</div>
+                <div className="text-xs font-bold text-kakao-brown">카카오톡 알림</div>
+                <div className="text-xs text-kakao-brown/70">매니저 배정 완료! 상세 안내를 보내드렸어요.</div>
               </div>
             </div>
           </div>

@@ -207,7 +207,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
       {backHref && (
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1.5 text-[13px] text-[#717171] hover:text-[#222222] transition-colors"
+          className="inline-flex items-center gap-1.5 text-[13px] text-ink-muted hover:text-ink transition-colors"
         >
           <ArrowLeftIcon className="size-3.5" />
           돌아가기
@@ -231,7 +231,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
 
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
         <div ref={addrContainerRef}>
-          <div className="rounded-xl border border-[#B0B0B0]">
+          <div className="rounded-xl border border-ink-faint">
             {/* 숙소 이름 */}
             <FloatingTextarea
               id="onboarding-name"
@@ -249,7 +249,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
             />
 
             {/* 주소 검색 / 선택된 주소 */}
-            <div className="border-t border-[#B0B0B0]" />
+            <div className="border-t border-ink-faint" />
             {!address ? (
               <CompoundField
                 label="주소 검색"
@@ -266,33 +266,33 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                   onBlur={() => setFocused(null)}
                   placeholder="도로명 주소 또는 지번을 입력하세요"
                   disabled={isAddressLocked}
-                  className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none [&::-webkit-search-cancel-button]:hidden"
+                  className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none [&::-webkit-search-cancel-button]:hidden"
                   autoComplete="off"
                 />
                 {errors.address?.[0] && (
-                  <p className="text-[12px] text-[#C13515] mt-1">{errors.address[0]}</p>
+                  <p className="text-[12px] text-destructive mt-1">{errors.address[0]}</p>
                 )}
               </CompoundField>
             ) : (
               isAddressLocked ? (
-                <div className="relative w-full px-4 pt-[26px] pb-[10px] text-left bg-[#F7F7F7]">
-                  <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
+                <div className="relative w-full px-4 pt-[26px] pb-[10px] text-left bg-surface-soft">
+                  <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
                     주소
                   </span>
-                  <p className="text-[16px] text-[#222222]">{address}</p>
-                  <span className="absolute top-[8px] right-4 text-[11px] text-[#B0B0B0]">등록 완료 후 잠금</span>
+                  <p className="text-[16px] text-ink">{address}</p>
+                  <span className="absolute top-[8px] right-4 text-[11px] text-ink-faint">등록 완료 후 잠금</span>
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={() => setAddress('')}
-                  className="relative w-full px-4 pt-[26px] pb-[10px] text-left bg-[#F7F7F7] hover:bg-[#EFEFEF] transition-colors"
+                  className="relative w-full bg-surface-soft px-4 pt-[26px] pb-[10px] text-left transition-colors hover:bg-surface-dim"
                 >
-                  <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
+                  <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
                     주소
                   </span>
-                  <p className="text-[16px] text-[#222222]">{address}</p>
-                  <span className="absolute top-[8px] right-4 text-[11px] text-[#717171]">변경</span>
+                  <p className="text-[16px] text-ink">{address}</p>
+                  <span className="absolute top-[8px] right-4 text-[11px] text-ink-muted">변경</span>
                 </button>
               )
             )}
@@ -306,11 +306,11 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                 overflow: 'hidden',
               }}
             >
-              <div className="border-t border-[#B0B0B0]" />
+              <div className="border-t border-ink-faint" />
               <div className="relative px-4 pt-[26px] pb-[10px]">
                 <label
                   htmlFor="onboarding-addressDetail"
-                  className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]"
+                  className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted"
                 >
                   상세 주소
                 </label>
@@ -320,7 +320,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                   value={addressDetail}
                   onChange={(e) => setAddressDetail(e.target.value)}
                   disabled={isAddressLocked}
-                  className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+                  className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
                 />
               </div>
             </div>
@@ -328,37 +328,37 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
 
           {/* 검색 결과 목록 */}
           {showAddrResults && addrResults.length > 0 && (
-            <div className="rounded-xl border border-[#EBEBEB] overflow-hidden shadow-sm mt-2">
+            <div className="rounded-xl border border-outline-dim overflow-hidden shadow-sm mt-2">
               {addrResults.map((r, i) => (
                 <div key={i}>
                   <button
                     type="button"
                     onMouseDown={(e) => { e.preventDefault(); handleAddrSelect(r) }}
-                    className="w-full text-left py-3 px-4 hover:bg-[#F7F7F7] transition-colors"
+                    className="w-full text-left py-3 px-4 hover:bg-surface-soft transition-colors"
                   >
-                    <p className="text-[15px] text-[#222222]">
+                    <p className="text-[15px] text-ink">
                       {r.roadAddress}
-                      {r.buildingName && <span className="text-[#717171] ml-1.5">({r.buildingName})</span>}
+                      {r.buildingName && <span className="text-ink-muted ml-1.5">({r.buildingName})</span>}
                     </p>
                     {r.jibunAddress && (
-                      <p className="text-[13px] text-[#717171] mt-0.5">{r.jibunAddress}</p>
+                      <p className="text-[13px] text-ink-muted mt-0.5">{r.jibunAddress}</p>
                     )}
                   </button>
-                  {i < addrResults.length - 1 && <div className="h-px bg-[#EBEBEB] mx-4" />}
+                  {i < addrResults.length - 1 && <div className="h-px bg-outline-dim mx-4" />}
                 </div>
               ))}
             </div>
           )}
 
           {showAddrResults && !addrSearching && addrResults.length === 0 && addrQuery.trim().length >= 2 && (
-            <div className="rounded-xl border border-[#EBEBEB] py-4 text-center text-[14px] text-[#717171] mt-2">
+            <div className="rounded-xl border border-outline-dim py-4 text-center text-[14px] text-ink-muted mt-2">
               검색 결과가 없습니다
             </div>
           )}
         </div>
 
         {/* 에어비앤비 링크 (선택) */}
-        <div className="rounded-xl border border-[#B0B0B0]">
+        <div className="rounded-xl border border-ink-faint">
           <FloatingTextarea
             id="onboarding-airbnb-url"
             label="에어비앤비 링크 (선택)"
@@ -377,7 +377,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
 
         {/* Fetching indicator */}
         {mode !== 'edit' && airbnbFetching && (
-          <div className="flex items-center gap-2 text-[13px] text-[#717171] -mt-4">
+          <div className="flex items-center gap-2 text-[13px] text-ink-muted -mt-4">
             <Loader2Icon className="size-3.5 animate-spin" />
             숙소 정보를 가져오는 중...
           </div>
@@ -385,14 +385,14 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
 
         {/* Fetch error */}
         {mode !== 'edit' && airbnbError && !airbnbFetching && (
-          <div className="text-[13px] text-[#C13515] -mt-4">
+          <div className="text-[13px] text-destructive -mt-4">
             {airbnbError}
           </div>
         )}
 
         {/* Preview card */}
         {mode !== 'edit' && airbnbPreview && !airbnbFetching && !airbnbError && (
-          <div className="rounded-xl border border-[#EBEBEB] overflow-hidden -mt-4 animate-fade-up-fast">
+          <div className="rounded-xl border border-outline-dim overflow-hidden -mt-4 animate-fade-up-fast">
             {airbnbPreview.imageUrl && (
               <div className="relative w-full h-40">
                 <Image
@@ -406,8 +406,8 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
               </div>
             )}
             <div className="px-4 py-3">
-              <p className="text-[15px] font-semibold text-[#222222] leading-snug">{airbnbPreview.name}</p>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[13px] text-[#717171]">
+              <p className="text-[15px] font-semibold text-ink leading-snug">{airbnbPreview.name}</p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[13px] text-ink-muted">
                 {airbnbPreview.location && <span>{airbnbPreview.location}</span>}
                 {airbnbPreview.rating && <span>★ {airbnbPreview.rating}</span>}
                 {airbnbPreview.bedrooms != null && <span>침실 {airbnbPreview.bedrooms}</span>}
@@ -423,7 +423,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
           <button
             type="button"
             onClick={() => setHelpOpen(true)}
-            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors -mt-4"
+            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors -mt-4"
           >
             링크는 어디서 복사하나요?
           </button>
@@ -432,7 +432,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
           <DrawerContent>
             <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
               <DrawerHeader className="px-0">
-                <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+                <DrawerTitle className="text-[18px] font-semibold text-ink">
                   에어비앤비 숙소 링크 복사 방법
                 </DrawerTitle>
               </DrawerHeader>
@@ -444,23 +444,23 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                   { num: 4, text: '복사한 링크를 위 입력란에 붙여넣으세요' },
                 ].map((step) => (
                   <div key={step.num} className="flex items-start gap-3">
-                    <div className="size-7 rounded-full bg-[#F7F7F7] flex items-center justify-center shrink-0 text-[13px] font-semibold text-[#222222]">
+                    <div className="size-7 rounded-full bg-surface-soft flex items-center justify-center shrink-0 text-[13px] font-semibold text-ink">
                       {step.num}
                     </div>
-                    <p className="text-[15px] text-[#222222] pt-0.5 leading-relaxed">{step.text}</p>
+                    <p className="text-[15px] text-ink pt-0.5 leading-relaxed">{step.text}</p>
                   </div>
                 ))}
               </div>
               <div className="mt-6">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">링크 예시</p>
-                <div className="rounded-lg bg-[#F7F7F7] px-4 py-3">
-                  <p className="text-[14px] text-[#222222] break-all">https://www.airbnb.com/rooms/12345678</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">링크 예시</p>
+                <div className="rounded-lg bg-surface-soft px-4 py-3">
+                  <p className="text-[14px] text-ink break-all">https://www.airbnb.com/rooms/12345678</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setHelpOpen(false)}
-                className="w-full h-12 rounded-lg text-[15px] font-semibold text-white mt-6 bg-[#222222] transition-all active:scale-[0.98]"
+                className="w-full h-12 rounded-lg text-[15px] font-semibold text-white mt-6 bg-ink transition-all active:scale-[0.98]"
               >
                 확인
               </button>
@@ -476,7 +476,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         )}
 
         {mode === 'create' && (
-          <div className="rounded-xl border border-[#EBEBEB] bg-[#FAFAFA] px-4 py-4 text-[13px] leading-relaxed text-[#717171]">
+          <div className="rounded-xl border border-outline-dim bg-surface-subtle px-4 py-4 text-[13px] leading-relaxed text-ink-muted">
             숙소 등록 후 48시간 이내에 비앤비서가 직접 방문해 운영 정보를 확인하고 등록을 완료해드려요.
           </div>
         )}

@@ -38,10 +38,10 @@ import {
 } from '@/components/ui/drawer'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: '배정 대기', color: 'bg-[#FFF1F3] text-brand' },
-  confirmed: { label: '배정 완료', color: 'bg-[#E8F5E9] text-[#2E7D32]' },
-  in_progress: { label: '진행 중', color: 'bg-[#E3F2FD] text-[#1565C0]' },
-  completed: { label: '완료', color: 'bg-[#F7F7F7] text-[#222222]' },
+  pending: { label: '배정 대기', color: 'bg-brand/8 text-brand' },
+  confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
+  in_progress: { label: '진행 중', color: 'bg-info-soft text-info' },
+  completed: { label: '완료', color: 'bg-surface-soft text-ink' },
 }
 
 export default function AdminDashboardPage() {
@@ -191,7 +191,7 @@ export default function AdminDashboardPage() {
                       <span className="text-[14px] font-medium">{r.propertyName || '숙소'}</span>
                       <button
                         onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }}
-                        className="px-2.5 py-1 rounded-md bg-[#222222] text-white text-[11px] font-medium"
+                        className="rounded-md bg-ink px-2.5 py-1 text-[11px] font-medium text-white"
                       >
                         배정
                       </button>
@@ -229,7 +229,7 @@ export default function AdminDashboardPage() {
                       <TableCell>
                         <button
                           onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }}
-                          className="px-2.5 py-1 rounded-md bg-[#222222] text-white text-[11px] font-medium"
+                          className="rounded-md bg-ink px-2.5 py-1 text-[11px] font-medium text-white"
                         >
                           배정
                         </button>
@@ -302,7 +302,7 @@ export default function AdminDashboardPage() {
                           {s.cleaningType === 'urgent' && <span className="text-brand ml-1 text-[11px]">긴급</span>}
                         </TableCell>
                         <TableCell>{s.propertyName || '숙소'}</TableCell>
-                        <TableCell>{s.managerName || <span className="text-[#B0B0B0]">미배정</span>}</TableCell>
+                        <TableCell>{s.managerName || <span className="text-ink-faint">미배정</span>}</TableCell>
                         <TableCell>
                           {statusInfo && (
                             <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${statusInfo.color}`}>
@@ -325,10 +325,10 @@ export default function AdminDashboardPage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">매니저 배정</DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-ink">매니저 배정</DrawerTitle>
             </DrawerHeader>
             {activeManagers.length === 0 ? (
-              <p className="text-[14px] text-[#717171]">등록된 매니저가 없어요</p>
+              <p className="text-[14px] text-ink-muted">등록된 매니저가 없어요</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {activeManagers.map((m) => (

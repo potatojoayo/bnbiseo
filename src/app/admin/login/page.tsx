@@ -53,9 +53,9 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-white px-6 pb-[10vh]">
       <div className="w-full max-w-[400px] animate-fade-up-fast">
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <Logo size="lg" />
-          <p className="text-[14px] text-[#717171] mt-2">관리자 로그인</p>
+          <p className="mt-2 text-[14px] text-ink-muted">관리자 로그인</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
           </CompoundInput>
 
           {error && (
-            <p className="text-[13px] text-[#C13515] text-center">{error}</p>
+            <p className="text-center text-[13px] text-destructive">{error}</p>
           )}
 
           <LoadingButton

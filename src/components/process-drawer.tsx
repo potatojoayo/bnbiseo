@@ -31,7 +31,7 @@ export function ProcessDrawer({
       <DrawerContent>
         <div className="w-full px-5 pb-8 overflow-y-auto">
           <DrawerHeader className="px-0">
-            <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+            <DrawerTitle className="text-[18px] font-semibold text-ink">
               {title}
             </DrawerTitle>
           </DrawerHeader>
@@ -39,18 +39,18 @@ export function ProcessDrawer({
             {steps.map((step, i) => (
               <div key={step.num} className="flex gap-3">
                 <div className="flex flex-col items-center">
-                  <div className="w-7 h-7 rounded-full bg-[#222222] text-white text-[13px] font-semibold flex items-center justify-center shrink-0">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-[13px] font-semibold text-white">
                     {step.num}
                   </div>
                   {i < steps.length - 1 && (
-                    <div className="w-px flex-1 bg-[#EBEBEB] my-1" />
+                    <div className="my-1 w-px flex-1 bg-outline-dim" />
                   )}
                 </div>
                 <div className="pb-5">
-                  <p className="text-[15px] font-semibold text-[#222222]">
+                  <p className="text-[15px] font-semibold text-ink">
                     {step.title}
                   </p>
-                  <p className="text-[13px] text-[#717171] mt-0.5 leading-relaxed">
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink-muted">
                     {step.desc}
                   </p>
                 </div>

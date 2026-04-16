@@ -103,18 +103,18 @@ export function CalendarPicker({ selected, onSelect, minDate }: CalendarPickerPr
           type="button"
           onClick={scrollPrev}
           disabled={!canPrev}
-          className="p-1.5 rounded-full hover:bg-[#F7F7F7] text-[#222222] disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
+          className="rounded-full p-1.5 text-ink transition-colors hover:bg-surface-soft disabled:opacity-20 disabled:hover:bg-transparent"
         >
           <ChevronLeftIcon size={18} />
         </button>
-        <span className="text-[15px] font-semibold text-[#222222]">
+        <span className="text-[15px] font-semibold text-ink">
           {currentMonth ? `${currentMonth.year}년 ${currentMonth.month + 1}월` : ''}
         </span>
         <button
           type="button"
           onClick={scrollNext}
           disabled={currentIndex >= months.length - 1}
-          className="p-1.5 rounded-full hover:bg-[#F7F7F7] text-[#222222] disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
+          className="rounded-full p-1.5 text-ink transition-colors hover:bg-surface-soft disabled:opacity-20 disabled:hover:bg-transparent"
         >
           <ChevronRightIcon size={18} />
         </button>
@@ -123,7 +123,7 @@ export function CalendarPicker({ selected, onSelect, minDate }: CalendarPickerPr
       {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
         {WEEKDAYS.map((w) => (
-          <div key={w} className="text-[13px] font-medium text-[#717171] text-center py-1.5">
+          <div key={w} className="py-1.5 text-center text-[13px] font-medium text-ink-muted">
             {w}
           </div>
         ))}
@@ -156,12 +156,12 @@ export function CalendarPicker({ selected, onSelect, minDate }: CalendarPickerPr
                           className={cn(
                             'w-[40px] h-[40px] rounded-full text-[14px] flex items-center justify-center transition-all',
                             isSelected
-                              ? 'bg-[#222222] text-white font-semibold'
+                              ? 'bg-ink text-white font-semibold'
                               : isToday
-                                ? 'font-bold text-[#222222] hover:bg-[#F7F7F7]'
+                                ? 'font-bold text-ink hover:bg-surface-soft'
                                 : isDisabled
-                                  ? 'text-[#D0D0D0] cursor-default'
-                                  : 'text-[#222222] hover:bg-[#F7F7F7] active:scale-90',
+                                  ? 'cursor-default text-outline-strong'
+                                  : 'text-ink hover:bg-surface-soft active:scale-90',
                           )}
                         >
                           {cell.day}

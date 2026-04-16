@@ -38,7 +38,7 @@ export function AdminBottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#EBEBEB] pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-outline-dim bg-white pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-center justify-around h-[56px]">
         {tabs.map(({ label, href, icon: Icon }) => {
           const active = isActive(href)
@@ -50,7 +50,7 @@ export function AdminBottomNav() {
               onClick={() => handleTap(href)}
               className={cn(
                 'flex flex-col items-center justify-center gap-[3px] flex-1 h-full',
-                active ? 'text-brand' : 'text-[#999999]'
+                active ? 'text-brand' : 'text-ink-faint'
               )}
             >
               <Icon size={22} strokeWidth={1.5} />

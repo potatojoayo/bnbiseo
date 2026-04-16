@@ -37,33 +37,33 @@ export function LoginForm() {
       {/* Error banner */}
       {message && (
         <div
-          className="flex items-center gap-3 px-4 py-3 mb-4 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[13px] text-[#B91C1C]"
+          className="mb-4 flex items-center gap-3 rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-[13px] text-danger"
           style={{ fontFamily: 'var(--font-body)' }}
           role="alert"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-            <circle cx="8" cy="8" r="7" stroke="#B91C1C" strokeWidth="1.5" />
-            <path d="M8 5v3.5" stroke="#B91C1C" strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="8" cy="11.5" r="0.75" fill="#B91C1C" />
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 5v3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
           </svg>
           {message}
         </div>
       )}
 
       {/* Compound input group */}
-      <div className="rounded-xl border border-[#B0B0B0] overflow-hidden divide-y divide-[#B0B0B0]">
+      <div className="rounded-xl border border-ink-faint overflow-hidden divide-y divide-ink-faint">
         {/* Email */}
         <div
           className="relative px-4 pt-[22px] pb-[10px]"
           style={{
-            boxShadow: focused === 'email' ? 'inset 0 0 0 1px #222222' : 'inset 0 0 0 0px #222222',
+            boxShadow: focused === 'email' ? 'inset 0 0 0 1px var(--on-surface)' : 'inset 0 0 0 0px var(--on-surface)',
             borderRadius: '12px 12px 0 0',
             transition: 'box-shadow 0.2s ease',
           }}
         >
           <label
             htmlFor="email"
-            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]"
+            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             이메일
@@ -76,7 +76,7 @@ export function LoginForm() {
             placeholder="you@example.com"
             onFocus={() => setFocused('email')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
         </div>
@@ -85,14 +85,14 @@ export function LoginForm() {
         <div
           className="relative px-4 pt-[22px] pb-[10px]"
           style={{
-            boxShadow: focused === 'password' ? 'inset 0 0 0 1px #222222' : 'inset 0 0 0 0px #222222',
+            boxShadow: focused === 'password' ? 'inset 0 0 0 1px var(--on-surface)' : 'inset 0 0 0 0px var(--on-surface)',
             borderRadius: '0 0 12px 12px',
             transition: 'box-shadow 0.2s ease',
           }}
         >
           <label
             htmlFor="password"
-            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]"
+            className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             비밀번호
@@ -105,7 +105,7 @@ export function LoginForm() {
             placeholder="••••••••"
             onFocus={() => setFocused('password')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
         </div>

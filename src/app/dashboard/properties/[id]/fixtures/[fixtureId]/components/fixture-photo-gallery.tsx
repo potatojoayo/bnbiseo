@@ -33,7 +33,7 @@ export function FixturePhotoGallery({ photos: initialPhotos, propertyId, fixture
   }
 
   if (photos.length === 0) {
-    return <p className="text-sm text-[#9ca3af]">등록된 사진이 없습니다.</p>
+    return <p className="text-sm text-ink-faint">등록된 사진이 없습니다.</p>
   }
 
   return (
@@ -41,7 +41,7 @@ export function FixturePhotoGallery({ photos: initialPhotos, propertyId, fixture
       {photos.map((photo) => (
         <div
           key={photo.id}
-          className="relative w-24 h-24 rounded-lg overflow-hidden border border-[#D1C9BC] group"
+          className="group relative h-24 w-24 overflow-hidden rounded-lg border border-outline"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

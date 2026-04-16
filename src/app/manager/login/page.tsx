@@ -64,7 +64,7 @@ export default function ManagerLoginPage() {
   if (authLoading || (user && managerLoading)) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-white px-6">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#EBEBEB] border-t-[#717171]" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }
@@ -83,13 +83,13 @@ export default function ManagerLoginPage() {
             >
               매니저 로그인
             </h1>
-            <p className="text-[14px] leading-relaxed text-[#717171]">
+            <p className="text-[14px] leading-relaxed text-ink-muted">
               연결된 매니저 계정으로 로그인해주세요.
             </p>
           </div>
 
           {message && (
-            <div className="mb-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-[13px] text-[#B91C1C]">
+            <div className="mb-4 rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-[13px] text-danger">
               {message}
             </div>
           )}
@@ -115,7 +115,7 @@ export default function ManagerLoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setFocused('email')}
                     onBlur={() => setFocused(null)}
-                    className="w-full bg-transparent text-[16px] text-[#222222] outline-none placeholder:text-[#C0C0C0]"
+                    className="w-full bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-faint"
                     placeholder="you@example.com"
                   />
                 </CompoundField>
@@ -131,7 +131,7 @@ export default function ManagerLoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setFocused('password')}
                     onBlur={() => setFocused(null)}
-                    className="w-full bg-transparent text-[16px] text-[#222222] outline-none placeholder:text-[#C0C0C0]"
+                    className="w-full bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-faint"
                     placeholder="••••••••"
                   />
                 </CompoundField>

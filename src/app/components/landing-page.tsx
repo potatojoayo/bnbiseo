@@ -392,7 +392,7 @@ export default function LandingPage() {
 
                   <div className="flex-1 flex flex-col justify-center px-6 py-5 max-md:px-4">
                     <div className="text-[16px] max-md:text-[15px] font-bold mb-1.5">{item.title}</div>
-                    <div className="text-[14px] max-md:text-[13px] text-[#717171] leading-relaxed">{item.desc}</div>
+                    <div className="text-[14px] leading-relaxed text-ink-muted max-md:text-[13px]">{item.desc}</div>
                   </div>
                 </div>
               </div>
@@ -424,10 +424,10 @@ export default function LandingPage() {
       </AnimatedSection>
 
       {/* Footer */}
-      <footer className="px-12 py-10 border-t border-outline-dim text-[13px] text-[#717171] max-md:px-6">
+      <footer className="border-t border-outline-dim px-12 py-10 text-[13px] text-ink-muted max-md:px-6">
         <div className="max-w-[960px] mx-auto flex flex-col gap-4">
           {/* Business info */}
-          <div className="flex flex-col gap-1 text-[12px] text-[#999999]">
+          <div className="flex flex-col gap-1 text-[12px] text-ink-faint">
             <p>실버백 고릴라즈 | 대표 최정호</p>
             <p>사업자등록번호 762-11-02534</p>
             <p>서울특별시 영등포구 신풍로 28, 2층 청년쿡 푸드테크 센터</p>
@@ -436,17 +436,17 @@ export default function LandingPage() {
 
           {/* Links */}
           <div className="flex gap-4">
-            <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#999999] hover:text-[#717171] transition-colors">
+            <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint transition-colors hover:text-ink-muted">
               이용약관
             </a>
-            <div className="w-px h-3 bg-[#D0D0D0] self-center" />
-            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#999999] hover:text-[#717171] transition-colors">
+            <div className="h-3 w-px self-center bg-outline-strong" />
+            <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint transition-colors hover:text-ink-muted">
               개인정보처리방침
             </a>
           </div>
 
           {/* Copyright */}
-          <p className="text-[11px] text-[#B0B0B0]">
+          <p className="text-[11px] text-ink-faint">
             © 2026 실버백 고릴라즈. All rights reserved.
           </p>
         </div>

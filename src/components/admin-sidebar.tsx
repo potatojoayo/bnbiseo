@@ -66,7 +66,7 @@ export function AdminSidebar({ user, ...props }: AdminSidebarProps) {
             >
               <Link href="/admin">
                 <Logo size="sm" />
-                <span className="text-[12px] text-[#717171] ml-1.5">Admin</span>
+                <span className="ml-1.5 text-[12px] text-ink-muted">Admin</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -69,11 +69,11 @@ export default function AdminSpaceEditPage() {
         {isMobile && (
           <div className="mx-auto w-full max-w-[720px] px-6 pt-6 max-md:p-5">
             <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-[#222222]">공간 수정</h1>
+            <h1 className="mt-2 text-[22px] font-semibold text-ink">공간 수정</h1>
           </div>
         )}
         <div className="flex flex-1 items-center justify-center py-20">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#EBEBEB] border-t-[#717171]" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
         </div>
       </>
     )
@@ -86,10 +86,10 @@ export default function AdminSpaceEditPage() {
         {isMobile && (
           <div className="mx-auto w-full max-w-[720px] px-6 pt-6 max-md:p-5">
             <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-[#222222]">공간 수정</h1>
+            <h1 className="mt-2 text-[22px] font-semibold text-ink">공간 수정</h1>
           </div>
         )}
-        <div className="flex flex-1 items-center justify-center px-6 py-20 text-center text-[14px] text-[#717171]">
+        <div className="flex flex-1 items-center justify-center px-6 py-20 text-center text-[14px] text-ink-muted">
           {error instanceof ApiError ? error.message : '공간 정보를 찾을 수 없어요.'}
         </div>
       </>
@@ -294,19 +294,19 @@ function AdminSpaceEditForm({
         {isMobile && (
           <div className="-mb-1">
             <MobileBackButton href={`/admin/properties/${propertyId}`} mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-[#222222]">공간 수정</h1>
+            <h1 className="mt-2 text-[22px] font-semibold text-ink">공간 수정</h1>
           </div>
         )}
 
         <section className="space-y-4">
-          <p className="text-[16px] font-semibold text-[#222222]">공간 정보</p>
+          <p className="text-[16px] font-semibold text-ink">공간 정보</p>
 
           <CompoundInput>
             <CompoundField label="카테고리" borderRadius="12px 12px 0 0">
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as SpaceCategory)}
-                className="w-full bg-transparent text-[16px] text-[#222222] outline-none"
+                className="w-full bg-transparent text-[16px] text-ink outline-none"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
                 {CATEGORY_OPTIONS.map((option) => (
@@ -325,8 +325,8 @@ function AdminSpaceEditForm({
                     onClick={() => setFloor(value as 1 | 2 | 3)}
                     className={`inline-flex h-9 min-w-0 flex-1 items-center justify-center rounded-lg border text-[14px] font-medium transition-colors ${
                       floor === value
-                        ? 'border-[#222222] bg-[#222222] text-white'
-                        : 'border-[#D9D9D9] text-[#222222] hover:bg-[#F7F7F7]'
+                        ? 'border-ink bg-ink text-white'
+                        : 'border-outline-strong text-ink hover:bg-surface-soft'
                     }`}
                   >
                     {value}층
@@ -362,13 +362,13 @@ function AdminSpaceEditForm({
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[16px] font-semibold text-[#222222]">사진</p>
-              <p className="mt-1 text-[13px] text-[#717171]">순서를 바꾸면 첫 번째 사진이 썸네일이 돼요.</p>
+              <p className="text-[16px] font-semibold text-ink">사진</p>
+              <p className="mt-1 text-[13px] text-ink-muted">순서를 바꾸면 첫 번째 사진이 썸네일이 돼요.</p>
             </div>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[#D9D9D9] px-3 text-[13px] font-medium text-[#222222] transition-colors hover:bg-[#F7F7F7]"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-outline-strong px-3 text-[13px] font-medium text-ink transition-colors hover:bg-surface-soft"
             >
               <ImagePlusIcon size={14} />
               사진 추가
@@ -385,11 +385,11 @@ function AdminSpaceEditForm({
           />
 
           {uploading && (
-            <p className="text-[12px] text-[#717171]">사진 업로드 중...</p>
+            <p className="text-[12px] text-ink-muted">사진 업로드 중...</p>
           )}
 
           {photos.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#D9D9D9] px-4 py-6 text-center text-[14px] text-[#717171]">
+            <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
               아직 추가된 사진이 없어요.
             </div>
           ) : (
@@ -438,7 +438,7 @@ function AdminSpaceEditForm({
         </section>
 
         {message && (
-          <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-[13px] text-[#B91C1C]">
+          <div className="rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-[13px] text-danger">
             {message}
           </div>
         )}
@@ -447,7 +447,7 @@ function AdminSpaceEditForm({
           <button
             type="button"
             onClick={handleCancel}
-            className="inline-flex h-12 min-w-0 items-center justify-center whitespace-nowrap rounded-lg border border-[#D9D9D9] px-4 text-[14px] font-medium text-[#222222] transition-colors hover:bg-[#F7F7F7] md:min-w-[120px]"
+            className="inline-flex h-12 min-w-0 items-center justify-center whitespace-nowrap rounded-lg border border-outline-strong px-4 text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft md:min-w-[120px]"
           >
             취소
           </button>
@@ -467,7 +467,7 @@ function AdminSpaceEditForm({
           type="button"
           onClick={() => setDeleteOpen(true)}
           disabled={deleting}
-          className="w-full text-center text-[13px] text-[#717171] underline underline-offset-2 transition-colors hover:text-[#C13515] disabled:opacity-50"
+          className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-danger disabled:opacity-50"
         >
           공간 삭제
         </button>
@@ -477,11 +477,11 @@ function AdminSpaceEditForm({
         <DrawerContent>
           <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">
                 삭제하시겠습니까?
               </DrawerTitle>
             </DrawerHeader>
-            <p className="mb-6 text-[14px] text-[#717171]">
+            <p className="mb-6 text-[14px] text-ink-muted">
               삭제하면 되돌릴 수 없어요.
             </p>
             <div className="flex flex-col gap-3">
@@ -497,7 +497,7 @@ function AdminSpaceEditForm({
               <button
                 type="button"
                 onClick={() => setDeleteOpen(false)}
-                className="w-full text-center text-[13px] text-[#717171] underline underline-offset-2 transition-colors hover:text-[#222222]"
+                className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
               >
                 취소
               </button>

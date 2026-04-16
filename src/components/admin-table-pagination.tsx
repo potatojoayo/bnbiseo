@@ -28,7 +28,7 @@ export function AdminTablePagination({
 }) {
   return (
     <div className="flex items-center justify-between pt-4">
-      <p className="text-[12px] text-[#B0B0B0]">
+      <p className="text-[12px] text-ink-faint">
         {page} / {totalPages} 페이지
       </p>
       <Pagination className="w-auto mx-0">

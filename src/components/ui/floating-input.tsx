@@ -6,9 +6,9 @@ import { cn } from '@/lib/utils'
 const FONT = { fontFamily: 'var(--font-body)' }
 
 const labelCls =
-  'absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171] pointer-events-none'
+  'pointer-events-none absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted'
 const inputCls =
-  'w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none'
+  'w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none'
 
 // ─── CompoundInput ────────────────────────────────────────────────────────────
 // Outer wrapper: rounded-xl border with divide-y between children
@@ -22,7 +22,7 @@ export function CompoundInput({ children, className }: CompoundInputProps) {
   return (
     <div
       className={cn(
-        'rounded-xl border border-[#B0B0B0] overflow-hidden divide-y divide-[#B0B0B0]',
+        'overflow-hidden rounded-xl border border-input divide-y divide-input',
         className,
       )}
     >
@@ -40,7 +40,7 @@ interface CompoundFieldProps {
   focused?: boolean
   /** Override border-radius on the focus box-shadow element */
   borderRadius?: string
-  /** Background override, e.g. '#F7F7F7' for readonly fields */
+  /** Background override, e.g. surface token for readonly fields */
   bg?: string
   className?: string
 }
@@ -57,7 +57,9 @@ export function CompoundField({
     <div
       className={cn('relative px-4 pt-[26px] pb-[10px]', className)}
       style={{
-        boxShadow: focused ? 'inset 0 0 0 1px #222222' : 'inset 0 0 0 0px #222222',
+        boxShadow: focused
+          ? 'inset 0 0 0 1px var(--on-surface)'
+          : 'inset 0 0 0 0px var(--on-surface)',
         borderRadius: borderRadius ?? undefined,
         transition: 'box-shadow 0.2s ease',
         background: bg,
@@ -148,7 +150,7 @@ export function FloatingTextarea({
         {...props}
       />
       {error && (
-        <p className="text-[12px] text-[#C13515] mt-1" style={FONT}>
+        <p className="mt-1 text-[12px] text-destructive" style={FONT}>
           {error}
         </p>
       )}
@@ -196,7 +198,7 @@ export function FloatingInput({
         {...props}
       />
       {error && (
-        <p className="text-[12px] text-[#C13515] mt-1" style={FONT}>
+        <p className="mt-1 text-[12px] text-destructive" style={FONT}>
           {error}
         </p>
       )}

@@ -29,7 +29,7 @@ export default function ManagerProfilePage() {
   if (isLoading) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#EBEBEB] border-t-[#717171]" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }
@@ -37,18 +37,18 @@ export default function ManagerProfilePage() {
   return (
     <div className="animate-fade-up-fast flex min-h-[calc(100dvh-80px)] flex-col">
       <div className="px-6 pb-6 pt-8">
-        <h1 className="text-[22px] font-semibold text-[#222222]">
+        <h1 className="text-[22px] font-semibold text-ink">
           {managerMe?.manager.name || managerMe?.profile.fullName || '마이페이지'}
         </h1>
         {(managerMe?.profile.email || managerMe?.manager.phone) && (
           <div className="mt-1 flex flex-col gap-0.5">
             {managerMe?.profile.email && (
-              <p className="text-[14px] text-[#717171]">
+              <p className="text-[14px] text-ink-muted">
                 {managerMe.profile.email}
               </p>
             )}
             {managerMe?.manager.phone && (
-              <p className="text-[14px] text-[#717171]">
+              <p className="text-[14px] text-ink-muted">
                 {managerMe.manager.phone}
               </p>
             )}
@@ -59,22 +59,22 @@ export default function ManagerProfilePage() {
       <div className="flex flex-col">
         <Link
           href="/manager/cleaning-history"
-          className="flex items-center justify-between px-6 py-4 transition-colors active:bg-[#F7F7F7]"
+          className="flex items-center justify-between px-6 py-4 transition-colors active:bg-surface-soft"
         >
           <div className="flex items-center gap-3">
-            <ClipboardListIcon size={20} className="text-[#717171]" strokeWidth={1.5} />
-            <span className="text-[15px] text-[#222222]">청소 내역</span>
+            <ClipboardListIcon size={20} className="text-ink-muted" strokeWidth={1.5} />
+            <span className="text-[15px] text-ink">청소 내역</span>
           </div>
-          <ChevronRightIcon size={18} className="text-[#B0B0B0]" strokeWidth={1.5} />
+          <ChevronRightIcon size={18} className="text-ink-faint" strokeWidth={1.5} />
         </Link>
       </div>
 
       <div className="mb-4 mt-auto flex items-center justify-center gap-2.5">
-        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#B0B0B0] transition-colors hover:text-[#717171]">
+        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint transition-colors hover:text-ink-muted">
           이용약관
         </a>
-        <div className="h-3 w-px bg-[#D0D0D0]" />
-        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-[#B0B0B0] transition-colors hover:text-[#717171]">
+        <div className="h-3 w-px bg-outline-strong" />
+        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint transition-colors hover:text-ink-muted">
           개인정보처리방침
         </a>
       </div>
@@ -83,7 +83,7 @@ export default function ManagerProfilePage() {
         <button
           type="button"
           onClick={() => setLogoutOpen(true)}
-          className="text-[12px] text-[#B0B0B0] underline underline-offset-2 transition-colors hover:text-[#717171]"
+          className="text-[12px] text-ink-faint underline underline-offset-2 transition-colors hover:text-ink-muted"
         >
           로그아웃
         </button>
@@ -93,11 +93,11 @@ export default function ManagerProfilePage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">
                 로그아웃할까요?
               </DrawerTitle>
             </DrawerHeader>
-            <p className="mb-6 text-[14px] text-[#717171]">
+            <p className="mb-6 text-[14px] text-ink-muted">
               다시 로그인하면 배정된 청소와 요청을 다시 확인할 수 있어요.
             </p>
             <div className="flex flex-col gap-2">
@@ -113,7 +113,7 @@ export default function ManagerProfilePage() {
               <button
                 type="button"
                 onClick={() => setLogoutOpen(false)}
-                className="h-12 rounded-lg text-[15px] font-semibold text-[#717171] transition-colors active:bg-[#F7F7F7]"
+                className="h-12 rounded-lg text-[15px] font-semibold text-ink-muted transition-colors active:bg-surface-soft"
               >
                 닫기
               </button>

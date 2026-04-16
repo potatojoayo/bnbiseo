@@ -41,7 +41,7 @@ export default function EditPropertyPage() {
 
   if (!property) {
     return (
-      <div className="text-center text-[15px] text-[#717171] py-20">
+      <div className="py-20 text-center text-[15px] text-ink-muted">
         숙소를 찾을 수 없습니다.
       </div>
     )

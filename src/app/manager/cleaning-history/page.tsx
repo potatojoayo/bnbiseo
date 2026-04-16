@@ -6,9 +6,9 @@ import { useManagerMyCleanings } from '@/lib/hooks/use-manager'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  confirmed: { label: '배정 완료', color: 'bg-[#E8F5E9] text-[#2E7D32]' },
-  in_progress: { label: '청소 진행 중', color: 'bg-[#E3F2FD] text-[#1565C0]' },
-  completed: { label: '청소 완료', color: 'bg-[#F7F7F7] text-[#222222]' },
+  confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
+  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
+  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink' },
 }
 
 export default function ManagerCleaningHistoryPage() {
@@ -18,7 +18,7 @@ export default function ManagerCleaningHistoryPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#EBEBEB] border-t-[#717171]" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }
@@ -28,17 +28,17 @@ export default function ManagerCleaningHistoryPage() {
       <button
         type="button"
         onClick={() => router.back()}
-        className="inline-flex h-10 w-10 -ml-4 items-center justify-center rounded-full text-[#222222] transition-colors hover:bg-[#F7F7F7]"
+        className="inline-flex h-10 w-10 -ml-4 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
       >
         <ChevronLeftIcon size={32} />
       </button>
-      <h1 className="mb-6 text-[22px] font-semibold text-[#222222]">
+      <h1 className="mb-6 text-[22px] font-semibold text-ink">
         청소 내역
       </h1>
 
       {requests.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <p className="mb-4 text-[14px] text-[#717171]">청소 내역이 없어요</p>
+          <p className="mb-4 text-[14px] text-ink-muted">청소 내역이 없어요</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -48,10 +48,10 @@ export default function ManagerCleaningHistoryPage() {
             return (
               <div
                 key={request.id}
-                className="flex flex-col gap-2 rounded-xl border border-[#EBEBEB] px-4 py-4"
+                className="flex flex-col gap-2 rounded-xl border border-outline-dim px-4 py-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[15px] font-semibold text-[#222222]">
+                  <span className="text-[15px] font-semibold text-ink">
                     {request.propertyName || '숙소'}
                   </span>
                   {statusInfo && (
@@ -61,7 +61,7 @@ export default function ManagerCleaningHistoryPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-4 text-[13px] text-[#717171]">
+                <div className="flex items-center gap-4 text-[13px] text-ink-muted">
                   <span className="flex items-center gap-1">
                     <CalendarIcon size={13} strokeWidth={1.5} />
                     {formatDateLabel(request.scheduledDate)}
@@ -72,7 +72,7 @@ export default function ManagerCleaningHistoryPage() {
                   </span>
                 </div>
 
-                <p className="text-[13px] text-[#717171]">
+                <p className="text-[13px] text-ink-muted">
                   {request.finalPrice.toLocaleString()}원
                   {request.cleaningType === 'urgent' && (
                     <span className="ml-1 text-[11px] text-brand">긴급</span>

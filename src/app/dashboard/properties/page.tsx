@@ -68,10 +68,10 @@ export default function PropertiesPage() {
       {properties.length === 0 ? (
         <Card>
           <CardContent className="py-16 flex flex-col items-center gap-4">
-            <Building2 className="h-14 w-14 text-[#D1C9BC]" />
+            <Building2 className="h-14 w-14 text-outline" />
             <div className="text-center">
               <p className="font-medium">등록된 숙소가 없습니다</p>
-              <p className="text-sm text-[#6b7280] mt-1">
+              <p className="mt-1 text-sm text-ink-muted">
                 아래 버튼을 클릭해 첫 번째 숙소를 등록하세요.
               </p>
             </div>
@@ -93,7 +93,7 @@ export default function PropertiesPage() {
                     <CardTitle className="text-base group-hover:text-brand transition-colors">
                       {property.name}
                     </CardTitle>
-                    <ChevronRight className="h-4 w-4 text-[#9ca3af] mt-0.5 shrink-0 group-hover:text-brand transition-colors" />
+                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-ink-faint transition-colors group-hover:text-brand" />
                   </div>
                   <CardDescription className="text-sm">
                     {property.address}
@@ -106,7 +106,7 @@ export default function PropertiesPage() {
                       {propertyTypeLabel[property.propertyType] ?? property.propertyType}
                     </Badge>
                     {!property.isActive && (
-                      <Badge variant="outline" className="text-[#9ca3af]">
+                      <Badge variant="outline" className="text-ink-faint">
                         비활성
                       </Badge>
                     )}

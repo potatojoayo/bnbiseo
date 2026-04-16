@@ -3,10 +3,10 @@ import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import type { ManagerCleaning } from '@/lib/hooks/use-manager'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  confirmed: { label: '배정 완료', color: 'bg-[#E8F5E9] text-[#2E7D32]' },
-  in_progress: { label: '청소 진행 중', color: 'bg-[#E3F2FD] text-[#1565C0]' },
-  completed: { label: '청소 완료', color: 'bg-[#F7F7F7] text-[#222222]' },
-  pending: { label: '배정 대기', color: 'bg-[#FFF1F3] text-brand' },
+  confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
+  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
+  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink' },
+  pending: { label: '배정 대기', color: 'bg-brand/8 text-brand' },
 }
 
 type ManagerCleaningCardProps = {
@@ -25,10 +25,10 @@ export function ManagerCleaningCard({
   const statusInfo = showStatus ? STATUS_LABELS[cleaning.status] : null
 
   return (
-    <div className={cn('rounded-xl border border-[#EBEBEB] px-4 py-4', className)}>
+    <div className={cn('rounded-xl border border-outline-dim px-4 py-4', className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold text-[#222222]">
+          <p className="text-[15px] font-semibold text-ink">
             {cleaning.propertyName || '숙소'}
           </p>
           {cleaning.cleaningType === 'urgent' && (
@@ -44,7 +44,7 @@ export function ManagerCleaningCard({
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-[#717171]">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-ink-muted">
         <span className="flex items-center gap-1">
           <CalendarIcon size={13} strokeWidth={1.5} />
           {formatDateLabel(cleaning.scheduledDate)}
@@ -53,21 +53,21 @@ export function ManagerCleaningCard({
           <ClockIcon size={13} strokeWidth={1.5} />
           {formatTimeKorean(cleaning.scheduledTime)}
         </span>
-        <span className="font-medium text-[#222222]">
+        <span className="font-medium text-ink">
           {cleaning.finalPrice.toLocaleString()}원
         </span>
       </div>
 
       {cleaning.propertyAddress && (
-        <p className="mt-2 text-[13px] leading-relaxed text-[#717171]">
-          <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-[#B0B0B0]" strokeWidth={1.75} />
+        <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+          <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
           {cleaning.propertyAddress}
           {cleaning.propertyAddressDetail ? ` ${cleaning.propertyAddressDetail}` : ''}
         </p>
       )}
 
       {cleaning.memo && (
-        <p className="mt-2 text-[13px] leading-relaxed text-[#717171]">
+        <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
           {cleaning.memo}
         </p>
       )}

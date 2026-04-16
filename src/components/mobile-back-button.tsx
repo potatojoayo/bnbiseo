@@ -24,7 +24,7 @@ export function MobileBackButton({
           }
           router.push(href)
         }}
-        className="-ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-[#222222] transition-colors hover:bg-[#F7F7F7]"
+        className="-ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
         aria-label="뒤로가기"
       >
         <ChevronLeftIcon size={32} />
@@ -35,7 +35,7 @@ export function MobileBackButton({
   return (
     <Link
       href={href}
-      className="-ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-[#222222] transition-colors hover:bg-[#F7F7F7]"
+      className="-ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
     >
       <ChevronLeftIcon size={32} />
     </Link>

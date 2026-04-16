@@ -46,7 +46,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#EBEBEB] pb-[env(safe-area-inset-bottom)] max-w-[480px] mx-auto sm:border-x sm:rounded-t-2xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[480px] border-t border-outline-dim bg-white pb-[env(safe-area-inset-bottom)] sm:rounded-t-2xl sm:border-x">
       <div className="flex items-center justify-around h-[56px]">
         {tabs.map(({ label, href, icon: Icon, exact }) => {
           const active = isActive(href, exact)
@@ -58,7 +58,7 @@ export function BottomNav() {
               onClick={() => handleTap(href)}
               className={cn(
                 'flex flex-col items-center justify-center gap-[3px] flex-1 h-full',
-                active ? 'text-brand' : 'text-[#999999]'
+                active ? 'text-brand' : 'text-ink-faint'
               )}
             >
               <Icon

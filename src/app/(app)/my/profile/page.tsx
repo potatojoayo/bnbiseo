@@ -70,11 +70,11 @@ export default function ProfilePage() {
       <button
         type="button"
         onClick={() => router.back()}
-        className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-[#F7F7F7] transition-colors text-[#222222]"
+        className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
       >
         <ChevronLeftIcon size={32} />
       </button>
-      <h1 className="text-[22px] font-semibold text-[#222222] mb-6">
+      <h1 className="mb-6 text-[22px] font-semibold text-ink">
         내 정보 수정
       </h1>
 
@@ -82,7 +82,7 @@ export default function ProfilePage() {
       <div className="flex flex-col gap-5">
         <CompoundInput>
           <CompoundField label="이메일" borderRadius="12px 12px 0 0">
-            <span className="block w-full text-[16px] text-[#B0B0B0]">
+            <span className="block w-full text-[16px] text-ink-faint">
               {email}
             </span>
           </CompoundField>
@@ -111,7 +111,7 @@ export default function ProfilePage() {
         <button
           type="button"
           onClick={() => setDeleteOpen(true)}
-          className="text-[13px] text-[#B0B0B0] underline underline-offset-2 hover:text-[#717171] transition-colors"
+          className="text-[13px] text-ink-faint underline underline-offset-2 transition-colors hover:text-ink-muted"
         >
           회원탈퇴
         </button>
@@ -122,15 +122,15 @@ export default function ProfilePage() {
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">
                 정말 탈퇴할까요?
               </DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-1.5 mb-6">
-              <p className="text-[14px] text-[#717171]">
+              <p className="text-[14px] text-ink-muted">
                 탈퇴하면 모든 숙소 정보와 청소 내역이 삭제돼요.
               </p>
-              <p className="text-[13px] text-[#B0B0B0]">
+              <p className="text-[13px] text-ink-faint">
                 이 작업은 되돌릴 수 없어요.
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setDeleteOpen(false)}
-                className="h-12 rounded-lg text-[15px] font-semibold text-[#717171] active:bg-[#F7F7F7] transition-colors"
+                className="h-12 rounded-lg text-[15px] font-semibold text-ink-muted transition-colors active:bg-surface-soft"
               >
                 닫기
               </button>

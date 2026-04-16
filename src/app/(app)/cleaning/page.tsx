@@ -143,7 +143,7 @@ export default function CleaningPage() {
   if (propertiesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
       </div>
     )
   }
@@ -151,10 +151,10 @@ export default function CleaningPage() {
   if (properties.length === 0) {
     return (
       <div className="animate-fade-up-fast flex flex-col items-center justify-center min-h-[calc(100dvh-80px)] px-6 text-center">
-        <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
+        <h2 className="text-[18px] font-semibold text-ink mb-2">
           등록된 숙소가 없어요
         </h2>
-        <p className="text-[14px] text-[#717171] leading-relaxed">
+        <p className="text-[14px] text-ink-muted leading-relaxed">
           청소를 요청하려면 먼저 숙소를 등록해주세요
         </p>
         <Link
@@ -170,21 +170,21 @@ export default function CleaningPage() {
   if (activeProperties.length === 0) {
     return (
       <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
-        <h1 className="text-[22px] font-semibold text-[#222222] mb-6">
+        <h1 className="text-[22px] font-semibold text-ink mb-6">
           청소 요청
         </h1>
 
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
+          <h2 className="text-[18px] font-semibold text-ink mb-2">
             숙소 등록 완료 후 청소를 요청할 수 있어요
           </h2>
-          <p className="text-[14px] text-[#717171] leading-relaxed">
+          <p className="text-[14px] text-ink-muted leading-relaxed">
             48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
           </p>
           <button
             type="button"
             onClick={() => setRegistrationDrawerOpen(true)}
-            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors mt-4"
+            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
           >
             숙소 등록은 어떻게 진행되나요?
           </button>
@@ -203,7 +203,7 @@ export default function CleaningPage() {
   return (
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-0">
       {/* Header */}
-      <h1 className="text-[22px] font-semibold text-[#222222] mb-6">
+      <h1 className="text-[22px] font-semibold text-ink mb-6">
         청소 요청
       </h1>
 
@@ -240,7 +240,7 @@ export default function CleaningPage() {
             <div className="flex justify-end mt-2">
               <Link
                 href="/properties/new"
-                className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors"
+                className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors"
               >
                 + 숙소 추가
               </Link>
@@ -261,7 +261,7 @@ export default function CleaningPage() {
                 label="희망 날짜"
                 borderRadius="12px 12px 0 0"
               >
-                <span className="block w-full text-[16px] text-[#222222]" style={{ fontFamily: 'var(--font-body)' }}>
+                <span className="block w-full text-[16px] text-ink" style={{ fontFamily: 'var(--font-body)' }}>
                   {formatDateLabel(date)}
                 </span>
               </CompoundField>
@@ -277,7 +277,7 @@ export default function CleaningPage() {
                 label="희망 시간"
                 borderRadius="0 0 12px 12px"
               >
-                <span className="block w-full text-[16px] text-[#222222]" style={{ fontFamily: 'var(--font-body)' }}>
+                <span className="block w-full text-[16px] text-ink" style={{ fontFamily: 'var(--font-body)' }}>
                   {formatTimeKorean(time)}
                 </span>
               </CompoundField>
@@ -304,18 +304,18 @@ export default function CleaningPage() {
 
         {/* Price estimate */}
         {priceInfo && (
-          <div className="rounded-xl border border-[#B0B0B0] px-4 py-4">
+          <div className="rounded-xl border border-ink-faint px-4 py-4">
             <div className="flex items-center justify-between">
-              <span className="text-[14px] text-[#717171]">
+              <span className="text-[14px] text-ink-muted">
                 {isUrgent ? '긴급 청소 금액' : '청소 금액'}
               </span>
               <div className="text-right">
                 {isFirstCleaning && (
-                  <span className="text-[14px] text-[#B0B0B0] line-through mr-2">
+                  <span className="text-[14px] text-ink-faint line-through mr-2">
                     {priceInfo.total.toLocaleString()}원
                   </span>
                 )}
-                <span className="text-[20px] font-semibold text-[#222222]">
+                <span className="text-[20px] font-semibold text-ink">
                   {estimatedPrice.toLocaleString()}원
                 </span>
               </div>
@@ -326,7 +326,7 @@ export default function CleaningPage() {
               </p>
             )}
             {isUrgent && (
-              <p className="text-[12px] text-[#717171] mt-1">
+              <p className="text-[12px] text-ink-muted mt-1">
                 긴급 할증 50% 포함
               </p>
             )}
@@ -338,7 +338,7 @@ export default function CleaningPage() {
           <button
             type="button"
             onClick={() => setPricingDrawerOpen(true)}
-            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors -mt-3"
+            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors -mt-3"
           >
             청소 금액은 어떻게 계산되나요?
           </button>
@@ -346,45 +346,45 @@ export default function CleaningPage() {
           <DrawerContent>
             <div className="w-full px-5 pb-8 overflow-y-auto">
               <DrawerHeader className="px-0">
-                <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+                <DrawerTitle className="text-[18px] font-semibold text-ink">
                   청소 금액 안내
                 </DrawerTitle>
               </DrawerHeader>
 
               <div className="flex flex-col gap-5 mt-2">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">기본 요금</p>
-                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">기본 요금</p>
+                  <div className="rounded-lg bg-surface-soft px-4 py-3 text-[14px] text-ink leading-relaxed">
                     숙소 면적(평수)에 따라 기본 청소 비용이 산정돼요.
-                    <span className="block text-[13px] text-[#717171] mt-1">10평 이하 2,500원/평 · 11~20평 2,200원/평 · 21평+ 2,000원/평</span>
+                    <span className="block text-[13px] text-ink-muted mt-1">10평 이하 2,500원/평 · 11~20평 2,200원/평 · 21평+ 2,000원/평</span>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">추가 요금</p>
-                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">추가 요금</p>
+                  <div className="rounded-lg bg-surface-soft px-4 py-3 text-[14px] text-ink leading-relaxed">
                     방과 욕실 수에 따라 추가 비용이 발생해요.
-                    <span className="block text-[13px] text-[#717171] mt-1">방 1개당 8,000원 · 욕실 1개당 10,000원</span>
+                    <span className="block text-[13px] text-ink-muted mt-1">방 1개당 8,000원 · 욕실 1개당 10,000원</span>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">포함 서비스</p>
-                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">포함 서비스</p>
+                  <div className="rounded-lg bg-surface-soft px-4 py-3 text-[14px] text-ink leading-relaxed">
                     호텔식 침구 세팅과 15항목 시설 점검 리포트가 기본 포함돼요.
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">긴급 청소</p>
-                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">긴급 청소</p>
+                  <div className="rounded-lg bg-surface-soft px-4 py-3 text-[14px] text-ink leading-relaxed">
                     당일 요청 시 긴급 청소로 진행되며, 50% 할증이 적용돼요.
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#717171] mb-2">최소 금액</p>
-                  <div className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-[14px] text-[#222222] leading-relaxed">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">최소 금액</p>
+                  <div className="rounded-lg bg-surface-soft px-4 py-3 text-[14px] text-ink leading-relaxed">
                     기본 청소 요금은 최소 35,000원부터 시작해요.
                   </div>
                 </div>
@@ -414,7 +414,7 @@ export default function CleaningPage() {
       <Drawer open={dateDrawerOpen} onOpenChange={setDateDrawerOpen}>
         <DrawerContent>
           <DrawerHeader className="text-left px-4 pt-4 pb-2">
-            <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+            <DrawerTitle className="text-[18px] font-semibold text-ink">
               날짜 선택
             </DrawerTitle>
           </DrawerHeader>
@@ -431,7 +431,7 @@ export default function CleaningPage() {
       <Drawer open={timeDrawerOpen} onOpenChange={setTimeDrawerOpen}>
         <DrawerContent>
           <DrawerHeader className="text-left px-4 pt-4 pb-2">
-            <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+            <DrawerTitle className="text-[18px] font-semibold text-ink">
               시간 선택
             </DrawerTitle>
           </DrawerHeader>
@@ -447,17 +447,17 @@ export default function CleaningPage() {
                   onClick={() => !isDisabled && handleTimeSelect(t)}
                   className={cn(
                     'w-full flex items-center justify-between py-3 px-4 text-[15px] transition-colors',
-                    i > 0 && 'border-t border-[#EBEBEB]',
+                    i > 0 && 'border-t border-outline-dim',
                     isDisabled
-                      ? 'text-[#D0D0D0] cursor-default'
+                      ? 'text-outline-strong cursor-default'
                       : isSelected
-                        ? 'font-semibold text-[#222222]'
-                        : 'text-[#222222] hover:bg-[#F7F7F7] active:bg-[#F0F0F0]'
+                        ? 'font-semibold text-ink'
+                        : 'text-ink hover:bg-surface-soft active:bg-surface-dim'
                   )}
                 >
                   <span>{formatTimeKorean(t)}</span>
                   {isSelected && !isDisabled && (
-                    <span className="w-[20px] h-[20px] rounded-full bg-[#222222] flex items-center justify-center shrink-0">
+                    <span className="w-[20px] h-[20px] rounded-full bg-ink flex items-center justify-center shrink-0">
                       <CheckIcon size={12} strokeWidth={3} className="text-white" />
                     </span>
                   )}

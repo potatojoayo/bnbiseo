@@ -62,7 +62,7 @@ export function PhotoUploader({ folder, onUploaded }: PhotoUploaderProps) {
       {previews.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {previews.map((p, i) => (
-            <div key={p.url} className="relative w-20 h-20 rounded-lg overflow-hidden border border-[#D1C9BC]">
+            <div key={p.url} className="relative h-20 w-20 overflow-hidden rounded-lg border border-outline">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.url} alt="" className="w-full h-full object-cover" />
               <button

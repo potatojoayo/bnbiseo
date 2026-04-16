@@ -7,12 +7,12 @@ import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: '결제 대기', color: 'bg-[#FFF8E1] text-[#F57F17]' },
-  pending: { label: '매니저 배정 중', color: 'bg-[#FFF1F3] text-brand' },
-  confirmed: { label: '매니저 배정 완료', color: 'bg-[#E8F5E9] text-[#2E7D32]' },
-  in_progress: { label: '청소 진행 중', color: 'bg-[#E3F2FD] text-[#1565C0]' },
-  completed: { label: '청소 완료', color: 'bg-[#F7F7F7] text-[#222222]' },
-  cancelled: { label: '취소됨', color: 'bg-[#F7F7F7] text-[#B0B0B0]' },
+  pending_payment: { label: '결제 대기', color: 'bg-warning-soft text-warning' },
+  pending: { label: '매니저 배정 중', color: 'bg-brand/8 text-brand' },
+  confirmed: { label: '매니저 배정 완료', color: 'bg-success-soft text-success' },
+  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
+  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink' },
+  cancelled: { label: '취소됨', color: 'bg-surface-soft text-ink-faint' },
 }
 
 export default function CleaningHistoryPage() {
@@ -22,7 +22,7 @@ export default function CleaningHistoryPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }
@@ -36,17 +36,17 @@ export default function CleaningHistoryPage() {
       <button
         type="button"
         onClick={() => router.back()}
-        className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-[#F7F7F7] transition-colors text-[#222222]"
+        className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
       >
         <ChevronLeftIcon size={32} />
       </button>
-      <h1 className="text-[22px] font-semibold text-[#222222] mb-6">
+      <h1 className="mb-6 text-[22px] font-semibold text-ink">
         청소 내역
       </h1>
 
       {visible.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <p className="text-[14px] text-[#717171] mb-4">청소 내역이 없어요</p>
+          <p className="mb-4 text-[14px] text-ink-muted">청소 내역이 없어요</p>
           <Link
             href="/cleaning"
             className="px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
@@ -64,11 +64,11 @@ export default function CleaningHistoryPage() {
               <Link
                 key={r.id}
                 href={`/cleaning/${r.id}`}
-                className="rounded-xl border border-[#EBEBEB] px-4 py-4 flex flex-col gap-2 active:scale-[0.99] transition-all"
+                className="flex flex-col gap-2 rounded-xl border border-outline-dim px-4 py-4 transition-all active:scale-[0.99]"
               >
                 {/* Property + Status */}
                 <div className="flex items-center justify-between">
-                  <span className={`text-[15px] font-semibold ${isCancelled ? 'text-[#B0B0B0]' : 'text-[#222222]'}`}>
+                  <span className={`text-[15px] font-semibold ${isCancelled ? 'text-ink-faint' : 'text-ink'}`}>
                     {r.propertyName || '숙소'}
                   </span>
                   {statusInfo && (
@@ -79,7 +79,7 @@ export default function CleaningHistoryPage() {
                 </div>
 
                 {/* Date & Time */}
-                <div className={`flex items-center gap-4 text-[13px] ${isCancelled ? 'text-[#B0B0B0]' : 'text-[#717171]'}`}>
+                <div className={`flex items-center gap-4 text-[13px] ${isCancelled ? 'text-ink-faint' : 'text-ink-muted'}`}>
                   <span className="flex items-center gap-1">
                     <CalendarIcon size={13} strokeWidth={1.5} />
                     {formatDateLabel(r.scheduledDate)}
@@ -91,7 +91,7 @@ export default function CleaningHistoryPage() {
                 </div>
 
                 {/* Price */}
-                <p className={`text-[13px] ${isCancelled ? 'text-[#B0B0B0] line-through' : 'text-[#717171]'}`}>
+                <p className={`text-[13px] ${isCancelled ? 'text-ink-faint line-through' : 'text-ink-muted'}`}>
                   {r.finalPrice.toLocaleString()}원
                   {r.cleaningType === 'urgent' && !isCancelled && (
                     <span className="text-brand ml-1 text-[11px]">긴급</span>

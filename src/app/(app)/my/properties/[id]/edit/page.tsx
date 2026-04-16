@@ -14,7 +14,7 @@ export default function MyPropertyEditPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[100dvh]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }
@@ -22,11 +22,11 @@ export default function MyPropertyEditPage() {
   if (!property) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
-        <p className="text-[14px] text-[#717171] mb-4">숙소를 찾을 수 없어요</p>
+        <p className="mb-4 text-[14px] text-ink-muted">숙소를 찾을 수 없어요</p>
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-[13px] text-[#717171] underline underline-offset-2"
+          className="text-[13px] text-ink-muted underline underline-offset-2"
         >
           돌아가기
         </button>
@@ -40,7 +40,7 @@ export default function MyPropertyEditPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-[#F7F7F7] transition-colors text-[#222222]"
+          className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
         >
           <ChevronLeftIcon size={32} />
         </button>

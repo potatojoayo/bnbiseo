@@ -16,10 +16,10 @@ import { PendingActivationPanel } from '@/components/pending-activation-panel'
 import { ProcessDrawer } from '@/components/process-drawer'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: '매니저 배정 중', color: 'bg-[#FFF1F3] text-brand' },
-  confirmed: { label: '매니저 배정 완료', color: 'bg-[#E8F5E9] text-[#2E7D32]' },
-  in_progress: { label: '청소 진행 중', color: 'bg-[#E3F2FD] text-[#1565C0]' },
-  completed: { label: '청소 완료', color: 'bg-[#F7F7F7] text-[#222222]' },
+  pending: { label: '매니저 배정 중', color: 'bg-brand/8 text-brand' },
+  confirmed: { label: '매니저 배정 완료', color: 'bg-success-soft text-success' },
+  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
+  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink' },
 }
 
 export default function HomePage() {
@@ -49,7 +49,7 @@ export default function HomePage() {
     return (
       <div className="mt-5">
         <div className="flex flex-col gap-3">
-          <p className="px-1 text-left text-[13px] font-medium text-[#717171]">등록 대기 숙소</p>
+          <p className="px-1 text-left text-[13px] font-medium text-ink-muted">등록 대기 숙소</p>
           {pendingProperties.map((property) => (
             <Link
               key={property.id}
@@ -66,7 +66,7 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => setRegistrationProcessOpen(true)}
-            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors"
+            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors"
           >
             숙소 등록은 어떻게 진행되나요?
           </button>
@@ -78,7 +78,7 @@ export default function HomePage() {
   if (cleaningLoading || propertiesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
       </div>
     )
   }
@@ -88,17 +88,17 @@ export default function HomePage() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-6 pb-2">
         <Logo className="text-[20px]" />
-        <button className="text-[#222222]">
+        <button className="text-ink">
           <BellIcon size={20} strokeWidth={1.5} />
         </button>
       </div>
 
       {/* Greeting */}
       <div className="px-6 pt-4 pb-2">
-        <h1 className="text-[22px] font-semibold text-[#222222]">
+        <h1 className="text-[22px] font-semibold text-ink">
           안녕하세요, {displayName}님
         </h1>
-        <p className="text-[14px] text-[#717171] mt-1">{today}</p>
+        <p className="text-[14px] text-ink-muted mt-1">{today}</p>
       </div>
 
       {showPendingOnlyState ? (
@@ -111,7 +111,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setRegistrationProcessOpen(true)}
-                className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors mt-4"
+                className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
               >
                 숙소 등록은 어떻게 진행되나요?
               </button>
@@ -121,18 +121,18 @@ export default function HomePage() {
       ) : upcoming.length > 0 ? (
         /* ─── Upcoming Cleanings ─── */
         <div className="px-6 pt-6 pb-8 flex flex-col gap-3">
-          <p className="text-[13px] font-medium text-[#717171] px-1">청소 내역</p>
+          <p className="text-[13px] font-medium text-ink-muted px-1">청소 내역</p>
           {upcoming.map((r) => {
             const statusInfo = STATUS_LABELS[r.status]
             return (
               <Link
                 key={r.id}
                 href={`/cleaning/${r.id}`}
-                className="rounded-xl border border-[#EBEBEB] px-4 py-4 flex flex-col gap-2.5 active:scale-[0.99] transition-all"
+                className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-2.5 active:scale-[0.99] transition-all"
               >
                 {/* Status badge + property name */}
                 <div className="flex items-center justify-between">
-                  <span className="text-[15px] font-semibold text-[#222222]">
+                  <span className="text-[15px] font-semibold text-ink">
                     {r.propertyName || '숙소'}
                   </span>
                   {statusInfo && (
@@ -143,7 +143,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Date & Time */}
-                <div className="flex items-center gap-4 text-[13px] text-[#717171]">
+                <div className="flex items-center gap-4 text-[13px] text-ink-muted">
                   <span className="flex items-center gap-1">
                     <CalendarIcon size={13} strokeWidth={1.5} />
                     {formatDateLabel(r.scheduledDate)}
@@ -156,7 +156,7 @@ export default function HomePage() {
 
                 {/* Address */}
                 {r.propertyAddress && (
-                  <p className="text-[12px] text-[#B0B0B0] flex items-center gap-1">
+                  <p className="text-[12px] text-ink-faint flex items-center gap-1">
                     <MapPinIcon size={12} strokeWidth={1.5} />
                     {r.propertyAddress}
                   </p>
@@ -179,10 +179,10 @@ export default function HomePage() {
             priority
             className="mb-5 object-contain"
           />
-          <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
+          <h2 className="text-[18px] font-semibold text-ink mb-2">
             처음 오셨나요?
           </h2>
-          <p className="text-[14px] text-[#717171] leading-relaxed">
+          <p className="text-[14px] text-ink-muted leading-relaxed">
             10,000원 할인을 받고 첫 청소를 요청해보세요!
           </p>
           <Link
@@ -194,7 +194,7 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => setProcessOpen(true)}
-            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors mt-4"
+            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
           >
             청소는 어떻게 진행되나요?
           </button>

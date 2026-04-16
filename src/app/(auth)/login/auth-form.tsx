@@ -246,14 +246,14 @@ export function AuthForm() {
       {/* Error banner */}
       {message && (
         <div
-          className="flex items-center gap-3 px-4 py-3 mb-4 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[13px] text-[#B91C1C]"
+          className="mb-4 flex items-center gap-3 rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-[13px] text-danger"
           style={font}
           role="alert"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-            <circle cx="8" cy="8" r="7" stroke="#B91C1C" strokeWidth="1.5" />
-            <path d="M8 5v3.5" stroke="#B91C1C" strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="8" cy="11.5" r="0.75" fill="#B91C1C" />
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 5v3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
           </svg>
           {message}
         </div>
@@ -261,7 +261,7 @@ export function AuthForm() {
 
       <form onSubmit={handleSubmit} noValidate>
         {/* Outer container — no divide-y here because extra fields slide in */}
-        <div className="rounded-xl border border-[#B0B0B0] overflow-hidden">
+        <div className="rounded-xl border border-ink-faint overflow-hidden">
           {/* Email — always visible */}
           <CompoundField
             label="이메일"
@@ -277,12 +277,12 @@ export function AuthForm() {
               onChange={(e) => onEmailChange(e.target.value)}
               onFocus={() => setFocused('email')}
               onBlur={() => setFocused(null)}
-              className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+              className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
               style={font}
               autoFocus
             />
             {errors.email && (
-              <p className="text-[12px] text-[#C13515] mt-1" style={font}>{errors.email}</p>
+              <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.email}</p>
             )}
           </CompoundField>
 
@@ -298,7 +298,7 @@ export function AuthForm() {
             <div ref={extraRef}>
               {/* Login: password only */}
               {visibleStep === 'login' && (
-                <div className="border-t border-[#B0B0B0]">
+                <div className="border-t border-ink-faint">
                   <CompoundField
                     label="비밀번호"
                     focused={focused === 'password'}
@@ -313,7 +313,7 @@ export function AuthForm() {
                       onChange={(e) => onPasswordChange(e.target.value)}
                       onFocus={() => setFocused('password')}
                       onBlur={() => setFocused(null)}
-                      className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+                      className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
                       style={font}
                     />
                   </CompoundField>
@@ -323,7 +323,7 @@ export function AuthForm() {
               {/* Signup: name + password */}
               {visibleStep === 'signup' && (
                 <>
-                  <div className="border-t border-[#B0B0B0]">
+                  <div className="border-t border-ink-faint">
                     <CompoundField
                       label="이름"
                       focused={focused === 'fullName'}
@@ -337,15 +337,15 @@ export function AuthForm() {
                         onChange={(e) => onNameChange(e.target.value)}
                         onFocus={() => setFocused('fullName')}
                         onBlur={() => setFocused(null)}
-                        className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+                        className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
                         style={font}
                       />
                       {errors.fullName && (
-                        <p className="text-[12px] text-[#C13515] mt-1" style={font}>{errors.fullName}</p>
+                        <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.fullName}</p>
                       )}
                     </CompoundField>
                   </div>
-                  <div className="border-t border-[#B0B0B0]">
+                  <div className="border-t border-ink-faint">
                     <CompoundField
                       label="비밀번호"
                       focused={focused === 'password'}
@@ -360,11 +360,11 @@ export function AuthForm() {
                         onChange={(e) => onPasswordChange(e.target.value)}
                         onFocus={() => setFocused('password')}
                         onBlur={() => setFocused(null)}
-                        className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
+                        className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
                         style={font}
                       />
                       {errors.password && (
-                        <p className="text-[12px] text-[#C13515] mt-1" style={font}>{errors.password}</p>
+                        <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.password}</p>
                       )}
                     </CompoundField>
                   </div>
@@ -387,7 +387,7 @@ export function AuthForm() {
                   setAgreedPrivacy(next)
                 }}
                 className={`w-[18px] h-[18px] rounded border-[1.5px] shrink-0 flex items-center justify-center transition-all ${
-                  allAgreed ? 'bg-[#222222] border-[#222222]' : 'border-[#CCCCCC]'
+                  allAgreed ? 'bg-ink border-ink' : 'border-outline'
                 }`}
               >
                 {allAgreed && (
@@ -396,10 +396,10 @@ export function AuthForm() {
                   </svg>
                 )}
               </button>
-              <span className="text-[13px] text-[#222222] font-medium">전체 동의</span>
+              <span className="text-[13px] text-ink font-medium">전체 동의</span>
             </label>
 
-            <div className="w-full h-px bg-[#EBEBEB]" />
+            <div className="w-full h-px bg-outline-dim" />
 
             {/* Terms */}
             <label className="flex items-center gap-2.5 cursor-pointer">
@@ -407,7 +407,7 @@ export function AuthForm() {
                 type="button"
                 onClick={() => setAgreedTerms(!agreedTerms)}
                 className={`w-[18px] h-[18px] rounded border-[1.5px] shrink-0 flex items-center justify-center transition-all ${
-                  agreedTerms ? 'bg-[#222222] border-[#222222]' : 'border-[#CCCCCC]'
+                  agreedTerms ? 'bg-ink border-ink' : 'border-outline'
                 }`}
               >
                 {agreedTerms && (
@@ -416,8 +416,8 @@ export function AuthForm() {
                   </svg>
                 )}
               </button>
-              <span className="text-[12px] text-[#717171] flex-1">
-                서비스 <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[#222222] underline underline-offset-2 font-medium">이용약관</a>에 동의합니다
+              <span className="text-[12px] text-ink-muted flex-1">
+                서비스 <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-2 font-medium">이용약관</a>에 동의합니다
                 <span className="text-brand ml-0.5">(필수)</span>
               </span>
             </label>
@@ -428,7 +428,7 @@ export function AuthForm() {
                 type="button"
                 onClick={() => setAgreedPrivacy(!agreedPrivacy)}
                 className={`w-[18px] h-[18px] rounded border-[1.5px] shrink-0 flex items-center justify-center transition-all ${
-                  agreedPrivacy ? 'bg-[#222222] border-[#222222]' : 'border-[#CCCCCC]'
+                  agreedPrivacy ? 'bg-ink border-ink' : 'border-outline'
                 }`}
               >
                 {agreedPrivacy && (
@@ -437,8 +437,8 @@ export function AuthForm() {
                   </svg>
                 )}
               </button>
-              <span className="text-[12px] text-[#717171] flex-1">
-                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[#222222] underline underline-offset-2 font-medium">개인정보 수집·이용</a>에 동의합니다
+              <span className="text-[12px] text-ink-muted flex-1">
+                <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-2 font-medium">개인정보 수집·이용</a>에 동의합니다
                 <span className="text-brand ml-0.5">(필수)</span>
               </span>
             </label>
@@ -461,7 +461,7 @@ export function AuthForm() {
           <button
             type="button"
             onClick={handleBack}
-            className="w-full text-center text-sm text-[#717171] mt-4 hover:text-[#222222] transition-colors animate-fade-only"
+            className="w-full text-center text-sm text-ink-muted mt-4 hover:text-ink transition-colors animate-fade-only"
             style={font}
           >
             다른 이메일로 계속하기

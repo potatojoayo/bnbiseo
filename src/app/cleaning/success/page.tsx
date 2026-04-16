@@ -39,7 +39,7 @@ export default function CleaningSuccessPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[100dvh]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
       </div>
     }>
       <SuccessContent />
@@ -90,8 +90,8 @@ function SuccessContent() {
   if (status === 'confirming') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
-        <div className="w-8 h-8 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin mb-5" />
-        <p className="text-[15px] text-[#717171]">결제를 확인하고 있어요...</p>
+        <div className="w-8 h-8 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin mb-5" />
+        <p className="text-[15px] text-ink-muted">결제를 확인하고 있어요...</p>
       </div>
     )
   }
@@ -99,15 +99,15 @@ function SuccessContent() {
   if (status === 'error') {
     return (
       <div className="animate-fade-up-fast flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
-        <h2 className="text-[20px] font-semibold text-[#222222] mb-2">
+        <h2 className="text-[20px] font-semibold text-ink mb-2">
           결제 승인에 실패했어요
         </h2>
-        <p className="text-[14px] text-[#717171] leading-relaxed mb-8">
+        <p className="text-[14px] text-ink-muted leading-relaxed mb-8">
           {errorMessage}
         </p>
         <Link
           href="/cleaning"
-          className="px-6 h-12 rounded-lg bg-[#222222] text-white text-[15px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+          className="px-6 h-12 rounded-lg bg-ink text-white text-[15px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
         >
           다시 시도하기
         </Link>
@@ -118,23 +118,23 @@ function SuccessContent() {
   return (
     <div className="animate-fade-up-fast min-h-[100dvh] flex flex-col px-6 pt-6 pb-10 mx-auto max-w-[480px]">
       {/* Title */}
-      <h1 className="text-[22px] font-semibold text-[#222222] mb-2">
+      <h1 className="text-[22px] font-semibold text-ink mb-2">
         청소 요청이 완료되었어요
       </h1>
-      <p className="text-[14px] text-[#717171] mb-6">
+      <p className="text-[14px] text-ink-muted mb-6">
         매니저 배정 후 알림을 보내드려요
       </p>
 
       {/* Cleaning summary card */}
       {cleaning && (
-        <div className="rounded-xl border border-[#EBEBEB] px-4 py-4 flex flex-col gap-3 mb-8">
+        <div className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-3 mb-8">
           {cleaning.property && (
             <div className="flex items-center gap-2.5">
-              <HomeIcon size={16} className="text-[#717171] shrink-0" strokeWidth={1.5} />
-              <div className="text-[14px] text-[#222222]">
+              <HomeIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
+              <div className="text-[14px] text-ink">
                 <span className="font-medium">{cleaning.property.name}</span>
                 {(cleaning.property.pyeong || cleaning.property.bedrooms != null || cleaning.property.bathrooms != null) && (
-                  <span className="text-[#717171] ml-1.5 text-[12px]">
+                  <span className="text-ink-muted ml-1.5 text-[12px]">
                     {[
                       cleaning.property.pyeong && `${cleaning.property.pyeong}평`,
                       cleaning.property.bedrooms != null && `방 ${cleaning.property.bedrooms}`,
@@ -147,22 +147,22 @@ function SuccessContent() {
           )}
           {cleaning.property && (
             <div className="flex items-center gap-2.5">
-              <MapPinIcon size={16} className="text-[#717171] shrink-0" strokeWidth={1.5} />
-              <span className="text-[13px] text-[#717171]">
+              <MapPinIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
+              <span className="text-[13px] text-ink-muted">
                 {cleaning.property.address}
                 {cleaning.property.addressDetail && ` ${cleaning.property.addressDetail}`}
               </span>
             </div>
           )}
           <div className="flex items-center gap-2.5">
-            <CalendarIcon size={16} className="text-[#717171] shrink-0" strokeWidth={1.5} />
-            <span className="text-[14px] text-[#222222]">
+            <CalendarIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
+            <span className="text-[14px] text-ink">
               {formatDateLabel(cleaning.scheduledDate)}
             </span>
           </div>
           <div className="flex items-center gap-2.5">
-            <ClockIcon size={16} className="text-[#717171] shrink-0" strokeWidth={1.5} />
-            <span className="text-[14px] text-[#222222]">
+            <ClockIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
+            <span className="text-[14px] text-ink">
               {formatTimeKorean(cleaning.scheduledTime)}
               {cleaning.cleaningType === 'urgent' && (
                 <span className="text-brand ml-1.5 text-[12px]">긴급</span>
@@ -170,8 +170,8 @@ function SuccessContent() {
             </span>
           </div>
           <div className="flex items-center gap-2.5">
-            <CreditCardIcon size={16} className="text-[#717171] shrink-0" strokeWidth={1.5} />
-            <span className="text-[14px] text-[#222222]">
+            <CreditCardIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
+            <span className="text-[14px] text-ink">
               {cleaning.finalPrice.toLocaleString()}원
               {cleaning.discount > 0 && (
                 <span className="text-brand ml-1.5 text-[12px]">
@@ -182,15 +182,15 @@ function SuccessContent() {
           </div>
           {cleaning.memo && (
             <div className="flex items-start gap-2.5">
-              <MessageSquareTextIcon size={16} className="text-[#717171] shrink-0 mt-0.5" strokeWidth={1.5} />
-              <span className="text-[14px] text-[#717171]">{cleaning.memo}</span>
+              <MessageSquareTextIcon size={16} className="text-ink-muted shrink-0 mt-0.5" strokeWidth={1.5} />
+              <span className="text-[14px] text-ink-muted">{cleaning.memo}</span>
             </div>
           )}
         </div>
       )}
 
       {/* Process timeline */}
-      <p className="text-[13px] font-medium text-[#717171] mb-3 px-1">앞으로의 진행 과정</p>
+      <p className="text-[13px] font-medium text-ink-muted mb-3 px-1">앞으로의 진행 과정</p>
       <div className="flex flex-col gap-0">
         {steps.map((step, i) => (
           <div key={step.num} className="flex gap-3">
@@ -198,21 +198,21 @@ function SuccessContent() {
             <div className="flex flex-col items-center">
               <div className={cn(
                 'w-7 h-7 rounded-full text-[13px] font-semibold flex items-center justify-center shrink-0',
-                i === 0 ? 'bg-brand text-white' : 'bg-[#222222] text-white'
+                i === 0 ? 'bg-brand text-white' : 'bg-ink text-white'
               )}>
                 {step.num}
               </div>
               {i < steps.length - 1 && (
-                <div className="w-px flex-1 bg-[#EBEBEB] my-1" />
+                <div className="w-px flex-1 bg-outline-dim my-1" />
               )}
             </div>
             {/* Content */}
             <div className="pb-5">
-              <p className="text-[15px] font-semibold text-[#222222]">
+              <p className="text-[15px] font-semibold text-ink">
                 {step.title}
                 {i === 0 && <span className="text-brand ml-1.5 text-[12px] font-normal">완료</span>}
               </p>
-              <p className="text-[13px] text-[#717171] mt-0.5 leading-relaxed">
+              <p className="text-[13px] text-ink-muted mt-0.5 leading-relaxed">
                 {step.desc}
               </p>
             </div>
@@ -224,7 +224,7 @@ function SuccessContent() {
       <div className="mt-auto pt-6">
         <Link
           href="/home"
-          className="w-full h-12 rounded-lg bg-[#222222] text-white text-[15px] font-semibold flex items-center justify-center active:scale-[0.98] transition-all"
+          className="w-full h-12 rounded-lg bg-ink text-white text-[15px] font-semibold flex items-center justify-center active:scale-[0.98] transition-all"
         >
           홈으로
         </Link>

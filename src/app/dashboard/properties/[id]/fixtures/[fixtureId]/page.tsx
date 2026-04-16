@@ -96,7 +96,7 @@ export default function FixtureDetailPage() {
             {fixtureCategoryLabel[fixture.category] ?? fixture.category}
           </Badge>
         </div>
-        <p className="text-sm text-[#6b7280] flex items-center gap-1">
+        <p className="flex items-center gap-1 text-sm text-ink-muted">
           <MapPin className="h-3.5 w-3.5" />
           {fixture.location}
         </p>
@@ -110,39 +110,39 @@ export default function FixtureDetailPage() {
           <CardContent className="space-y-3">
             {fixture.brand && (
               <div>
-                <p className="text-xs text-[#9ca3af]">브랜드</p>
+                <p className="text-xs text-ink-faint">브랜드</p>
                 <p className="text-sm font-medium">{fixture.brand}</p>
               </div>
             )}
             {fixture.modelNumber && (
               <div>
-                <p className="text-xs text-[#9ca3af]">모델 번호</p>
+                <p className="text-xs text-ink-faint">모델 번호</p>
                 <p className="text-sm font-medium">{fixture.modelNumber}</p>
               </div>
             )}
             {fixture.installedAt && (
               <div className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-[#9ca3af]" />
+                <Calendar className="h-3.5 w-3.5 text-ink-faint" />
                 <div>
-                  <p className="text-xs text-[#9ca3af]">설치일</p>
+                  <p className="text-xs text-ink-faint">설치일</p>
                   <p className="text-sm font-medium">{fixture.installedAt}</p>
                 </div>
               </div>
             )}
             {fixture.specNotes && (
               <div>
-                <p className="text-xs text-[#9ca3af]">사양</p>
-                <p className="text-sm whitespace-pre-line text-[#4b5563]">{fixture.specNotes}</p>
+                <p className="text-xs text-ink-faint">사양</p>
+                <p className="whitespace-pre-line text-sm text-slate-600">{fixture.specNotes}</p>
               </div>
             )}
             {fixture.notes && (
               <div>
-                <p className="text-xs text-[#9ca3af]">메모</p>
-                <p className="text-sm whitespace-pre-line text-[#4b5563]">{fixture.notes}</p>
+                <p className="text-xs text-ink-faint">메모</p>
+                <p className="whitespace-pre-line text-sm text-slate-600">{fixture.notes}</p>
               </div>
             )}
             {!fixture.brand && !fixture.modelNumber && !fixture.installedAt && !fixture.specNotes && !fixture.notes && (
-              <p className="text-sm text-[#9ca3af]">등록된 정보가 없습니다.</p>
+              <p className="text-sm text-ink-faint">등록된 정보가 없습니다.</p>
             )}
           </CardContent>
         </Card>
