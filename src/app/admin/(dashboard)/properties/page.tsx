@@ -81,8 +81,8 @@ export default function AdminPropertiesPage() {
                     p.bathrooms != null && `욕실 ${p.bathrooms}`,
                   ].filter(Boolean)
                 : []
-              return (
-                <div key={p.id} className="rounded-xl border border-[#EBEBEB] px-4 py-4">
+              const card = (
+                <div className="rounded-xl border border-[#EBEBEB] px-4 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-[16px] font-semibold leading-snug text-[#222222]">
@@ -120,6 +120,18 @@ export default function AdminPropertiesPage() {
                   )}
                 </div>
               )
+
+              return p.status === 'active' ? (
+                <Link
+                  key={p.id}
+                  href={`/admin/properties/${p.id}`}
+                  className="block transition-transform active:scale-[0.99]"
+                >
+                  {card}
+                </Link>
+              ) : (
+                <div key={p.id}>{card}</div>
+              )
             })}
           </div>
         ) : (
@@ -141,7 +153,15 @@ export default function AdminPropertiesPage() {
               <TableBody>
                 {paged.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell>{p.name}</TableCell>
+                    <TableCell>
+                      {p.status === 'active' ? (
+                        <Link href={`/admin/properties/${p.id}`} className="hover:underline underline-offset-2">
+                          {p.name}
+                        </Link>
+                      ) : (
+                        p.name
+                      )}
+                    </TableCell>
                     <TableCell>
                       <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLES[p.status]}`}>
                         {STATUS_LABELS[p.status]}
@@ -164,7 +184,12 @@ export default function AdminPropertiesPage() {
                           등록 진행
                         </Link>
                       ) : (
-                        <span className="text-[12px] text-[#B0B0B0]">완료</span>
+                        <Link
+                          href={`/admin/properties/${p.id}`}
+                          className="text-[12px] text-[#717171] underline underline-offset-2"
+                        >
+                          상세보기
+                        </Link>
                       )}
                     </TableCell>
                   </TableRow>

@@ -118,6 +118,10 @@ export default function AdminPropertyRegistrationPage() {
     )
   }
 
+  if (data.status === 'active') {
+    return <AdminPropertyDetailView property={data} />
+  }
+
   return (
     <AdminPropertyRegistrationForm
       key={`${id}-${data.spaces?.length ?? 0}-${data.fixtures?.length ?? 0}`}
@@ -133,9 +137,13 @@ function AdminPropertyRegistrationForm({
 }: {
   propertyId: string
   initialData: {
+    status: 'pending_activation' | 'active'
     name: string
     address: string
     addressDetail: string | null
+    pyeong: number | null
+    bedrooms: number | null
+    bathrooms: number | null
     entrancePassword: string | null
     doorLockPassword: string | null
     wifiSsid: string | null
@@ -453,6 +461,178 @@ function AdminPropertyRegistrationForm({
             등록 완료
           </LoadingButton>
         </div>
+      </div>
+    </>
+  )
+}
+
+function AdminPropertyDetailView({
+  property,
+}: {
+  property: {
+    status: 'pending_activation' | 'active'
+    name: string
+    address: string
+    addressDetail: string | null
+    pyeong: number | null
+    bedrooms: number | null
+    bathrooms: number | null
+    entrancePassword: string | null
+    doorLockPassword: string | null
+    wifiSsid: string | null
+    wifiPassword: string | null
+    hostName: string | null
+    hostEmail: string | null
+    spaces: RegistrationDetail['spaces']
+    fixtures: RegistrationDetail['fixtures']
+  }
+}) {
+  const isMobile = useIsMobile()
+
+  const details = [
+    property.pyeong != null && `${property.pyeong}평`,
+    property.bedrooms != null && `방 ${property.bedrooms}`,
+    property.bathrooms != null && `욕실 ${property.bathrooms}`,
+  ].filter(Boolean)
+
+  return (
+    <>
+      {!isMobile && <SiteHeader title="숙소 상세" />}
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-7 p-6 max-md:gap-6 max-md:p-5">
+        {isMobile && (
+          <div className="-mb-2">
+            <MobileBackButton href="/admin/properties" mode="back" />
+            <h1 className="mt-2 text-[22px] font-semibold text-[#222222]">숙소 상세</h1>
+          </div>
+        )}
+
+        <section className="rounded-xl border border-[#EBEBEB] px-5 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[20px] font-semibold text-[#222222]">{property.name}</p>
+              <p className="mt-2 text-[14px] leading-relaxed text-[#717171]">
+                <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-[#B0B0B0]" strokeWidth={1.75} />
+                {property.address}{property.addressDetail ? ` ${property.addressDetail}` : ''}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-[#E8F5E9] px-2 py-0.5 text-[11px] font-medium text-[#2E7D32]">
+              등록 완료
+            </span>
+          </div>
+          {details.length > 0 && (
+            <p className="mt-2 text-[13px] text-[#717171]">{details.join(' · ')}</p>
+          )}
+          <p className="mt-2 text-[13px] text-[#717171]">호스트: {property.hostName || property.hostEmail || '-'}</p>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <p className="text-[16px] font-semibold text-[#222222]">출입 및 와이파이 정보</p>
+          </div>
+          <div className="rounded-xl border border-[#EBEBEB] px-5 py-4">
+            <div className="flex flex-col gap-3 text-[14px] text-[#222222]">
+              <div>
+                <p className="text-[12px] text-[#717171]">현관 비밀번호</p>
+                <p className="mt-1">{property.entrancePassword || '-'}</p>
+              </div>
+              <div>
+                <p className="text-[12px] text-[#717171]">도어락 비밀번호</p>
+                <p className="mt-1">{property.doorLockPassword || '-'}</p>
+              </div>
+              <div>
+                <p className="text-[12px] text-[#717171]">와이파이 이름</p>
+                <p className="mt-1">{property.wifiSsid || '-'}</p>
+              </div>
+              <div>
+                <p className="text-[12px] text-[#717171]">와이파이 비밀번호</p>
+                <p className="mt-1">{property.wifiPassword || '-'}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <p className="text-[16px] font-semibold text-[#222222]">공간 정보</p>
+          </div>
+          {property.spaces.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#D9D9D9] px-4 py-6 text-center text-[14px] text-[#717171]">
+              등록된 공간이 없어요.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {property.spaces.map((space) => (
+                <div key={space.id} className="overflow-hidden rounded-xl border border-[#EBEBEB]">
+                  <div className="relative aspect-[16/10] w-full bg-[#F7F7F7]">
+                    {space.photos[0]?.signedUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={space.photos[0].signedUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[13px] text-[#B0B0B0]">
+                        사진 없음
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-[15px] font-semibold text-[#222222]">{space.name}</p>
+                    <p className="mt-1 text-[13px] text-[#717171]">
+                      {space.floor}층 · {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
+                    </p>
+                    {space.notes && (
+                      <p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-[#717171]">{space.notes}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <p className="text-[16px] font-semibold text-[#222222]">시설물 정보</p>
+          </div>
+          {property.fixtures.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#D9D9D9] px-4 py-6 text-center text-[14px] text-[#717171]">
+              등록된 시설물이 없어요.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {property.fixtures.map((fixture) => (
+                <div key={fixture.id} className="overflow-hidden rounded-xl border border-[#EBEBEB]">
+                  <div className="flex items-stretch">
+                    <div className="relative w-[104px] shrink-0 overflow-hidden bg-[#F7F7F7]">
+                      {fixture.photos[0]?.signedUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={fixture.photos[0].signedUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[12px] text-[#B0B0B0]">
+                          사진 없음
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex min-w-0 flex-1 items-start px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-[15px] font-semibold text-[#222222]">{fixture.name}</p>
+                        <p className="mt-1 text-[13px] text-[#717171]">
+                          {CATEGORY_LABELS[fixture.category]} · {fixture.location}
+                        </p>
+                        {(fixture.brand || fixture.modelNumber) && (
+                          <p className="mt-1 text-[13px] text-[#717171]">
+                            {[fixture.brand, fixture.modelNumber].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
+                        {fixture.notes && (
+                          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-[#717171]">{fixture.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </>
   )
