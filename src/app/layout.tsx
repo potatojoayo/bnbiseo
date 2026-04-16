@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth-provider";
 import { QueryProvider } from "@/lib/query-client";
 import { KeyboardScrollFix } from "@/components/keyboard-scroll-fix";
+import { Toaster } from "@/components/ui/sonner";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -64,6 +65,7 @@ export default function RootLayout({
             <AuthProvider>
               <KeyboardScrollFix />
               {children}
+              <Toaster position="top-center" />
             </AuthProvider>
           </QueryProvider>
         </body>

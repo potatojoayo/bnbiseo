@@ -57,7 +57,11 @@ export default function AdminPropertiesPage() {
           <div className="flex flex-col gap-3">
             {properties.map((p) => {
               const details = p.status === 'active'
-                ? [p.pyeong && `${p.pyeong}평`, `방 ${p.bedrooms}`, `욕실 ${p.bathrooms}`].filter(Boolean)
+                ? [
+                    p.pyeong && `${p.pyeong}평`,
+                    p.bedrooms != null && `방 ${p.bedrooms}`,
+                    p.bathrooms != null && `욕실 ${p.bathrooms}`,
+                  ].filter(Boolean)
                 : []
               return (
                 <div key={p.id} className="rounded-xl border border-[#EBEBEB] px-4 py-4">
@@ -114,7 +118,11 @@ export default function AdminPropertiesPage() {
                     </TableCell>
                     <TableCell className="text-[#717171]">{p.address}</TableCell>
                     <TableCell>{p.status === 'active' && p.pyeong ? `${p.pyeong}평` : '-'}</TableCell>
-                    <TableCell>{p.status === 'active' ? `방 ${p.bedrooms} · 욕실 ${p.bathrooms}` : '-'}</TableCell>
+                    <TableCell>
+                      {p.status === 'active'
+                        ? [p.bedrooms != null && `방 ${p.bedrooms}`, p.bathrooms != null && `욕실 ${p.bathrooms}`].filter(Boolean).join(' · ') || '-'
+                        : '-'}
+                    </TableCell>
                     <TableCell>{p.hostName || p.hostEmail || '-'}</TableCell>
                     <TableCell className="text-right">
                       {p.status === 'pending_activation' ? (

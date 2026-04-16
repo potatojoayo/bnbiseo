@@ -9,8 +9,8 @@ type Property = {
   address: string
   addressDetail: string | null
   pyeong: number | null
-  bedrooms: number
-  bathrooms: number
+  bedrooms: number | null
+  bathrooms: number | null
   airbnbListingId: string | null
   activatedAt?: string | null
 }

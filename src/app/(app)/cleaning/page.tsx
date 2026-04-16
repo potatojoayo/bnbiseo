@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckIcon } from 'lucide-react'
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk'
+import { toast } from 'sonner'
 import { CalendarPicker } from '@/components/calendar-picker'
 import { PropertyCard } from '@/components/property-card'
 import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
@@ -42,6 +43,7 @@ export default function CleaningPage() {
   const [dateDrawerOpen, setDateDrawerOpen] = useState(false)
   const [timeDrawerOpen, setTimeDrawerOpen] = useState(false)
   const [pricingDrawerOpen, setPricingDrawerOpen] = useState(false)
+  const [registrationDrawerOpen, setRegistrationDrawerOpen] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
 
@@ -54,14 +56,21 @@ export default function CleaningPage() {
   const priceInfo = selectedProperty?.pyeong
     ? calculateCleaningPrice({
         pyeong: selectedProperty.pyeong,
-        bedrooms: selectedProperty.bedrooms,
-        bathrooms: selectedProperty.bathrooms,
+        bedrooms: selectedProperty.bedrooms ?? 0,
+        bathrooms: selectedProperty.bathrooms ?? 0,
         isUrgent,
       })
     : null
   const estimatedPrice = priceInfo
     ? (isFirstCleaning ? Math.max(priceInfo.total - FIRST_CLEANING_DISCOUNT, 0) : priceInfo.total)
     : 0
+
+  const registrationSteps = [
+    { num: 1, title: '숙소 등록 접수', desc: '호스트가 입력한 숙소 정보를 먼저 확인해요.' },
+    { num: 2, title: '현장 방문', desc: '48시간 이내에 직접 방문해 숙소 상태를 살펴봐요.' },
+    { num: 3, title: '숙소 정보 수집', desc: '숙소 및 시설 정보를 꼼꼼히 기록해 둘게요.' },
+    { num: 4, title: '등록 완료', desc: '등록이 끝나면 바로 청소를 요청할 수 있어요.' },
+  ]
 
   useEffect(() => {
     if (!propertiesLoading && activeProperties.length === 1 && !selectedPropertyId) {
@@ -175,33 +184,55 @@ export default function CleaningPage() {
           청소 요청
         </h1>
 
-        <div className="rounded-2xl bg-[#FFF8EF] px-5 py-5">
-          <div className="inline-flex rounded-full bg-[#FFE7C2] px-2.5 py-1 text-[11px] font-semibold text-[#9A5B00]">
-            등록 대기
-          </div>
-          <h2 className="mt-3 text-[18px] font-semibold text-[#222222]">
-            등록 완료된 숙소가 아직 없어요
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
+            숙소 등록 후 청소를 요청할 수 있어요
           </h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-[#717171]">
-            등록 대기 중인 숙소는 현장 확인 후 청소 요청이 가능해요. 숙소 등록 후 48시간 이내에 비앤비서가 직접 방문해 등록을 완료해드려요.
+          <p className="text-[14px] text-[#717171] leading-relaxed">
+            48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
           </p>
+          <button
+            type="button"
+            onClick={() => setRegistrationDrawerOpen(true)}
+            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors mt-4"
+          >
+            숙소 등록은 어떻게 진행되나요?
+          </button>
         </div>
 
-        {pendingProperties.length > 0 && (
-          <div className="mt-6 flex flex-col gap-3">
-            <p className="text-[13px] font-medium text-[#717171] px-1">등록 대기 숙소</p>
-            <div className="rounded-xl border border-[#B0B0B0] overflow-hidden">
-              {pendingProperties.map((property, index) => (
-                <div
-                  key={property.id}
-                  className={cn(index > 0 && 'border-t border-[#EBEBEB]')}
-                >
-                  <PropertyCard property={property} />
-                </div>
-              ))}
+        <Drawer open={registrationDrawerOpen} onOpenChange={setRegistrationDrawerOpen}>
+          <DrawerContent>
+            <div className="w-full px-5 pb-8 overflow-y-auto">
+              <DrawerHeader className="px-0">
+                <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+                  숙소 등록 진행 과정
+                </DrawerTitle>
+              </DrawerHeader>
+              <div className="flex flex-col gap-0 mt-2">
+                {registrationSteps.map((step, i) => (
+                  <div key={step.num} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-7 h-7 rounded-full bg-[#222222] text-white text-[13px] font-semibold flex items-center justify-center shrink-0">
+                        {step.num}
+                      </div>
+                      {i < registrationSteps.length - 1 && (
+                        <div className="w-px flex-1 bg-[#EBEBEB] my-1" />
+                      )}
+                    </div>
+                    <div className="pb-5">
+                      <p className="text-[15px] font-semibold text-[#222222]">
+                        {step.title}
+                      </p>
+                      <p className="text-[13px] text-[#717171] mt-0.5 leading-relaxed">
+                        {step.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          </DrawerContent>
+        </Drawer>
       </div>
     )
   }
@@ -217,19 +248,26 @@ export default function CleaningPage() {
         {/* Property Selection */}
         {activeProperties.length >= 1 && (
           <div>
-            <div className="rounded-xl border border-[#B0B0B0] overflow-hidden">
-              {activeProperties.map((p, i) => {
-                const selected = selectedPropertyId === p.id
+            <div className="flex flex-col gap-3">
+              {[...activeProperties, ...pendingProperties].map((p) => {
+                const selected = p.status === 'active' && selectedPropertyId === p.id
+                const disabled = p.status === 'pending_activation'
                 return (
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setSelectedPropertyId(p.id)}
+                    onClick={() => {
+                      if (disabled) {
+                        toast.info('등록 완료 후 청소를 요청할 수 있어요.')
+                        return
+                      }
+                      setSelectedPropertyId(p.id)
+                    }}
                     className={cn(
                       'w-full text-left transition-all active:scale-[0.99]',
-                      i > 0 && 'border-t border-[#EBEBEB]',
-                      selected ? 'bg-[#F7F7F7]' : 'bg-white'
+                      disabled && 'opacity-70'
                     )}
+                    aria-disabled={disabled}
                   >
                     <PropertyCard property={p} selected={selected} />
                   </button>

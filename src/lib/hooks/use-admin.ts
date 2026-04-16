@@ -65,8 +65,8 @@ type Property = {
   name: string
   address: string
   pyeong: number | null
-  bedrooms: number
-  bathrooms: number
+  bedrooms: number | null
+  bathrooms: number | null
   hostName: string | null
   hostEmail: string | null
   createdAt: string

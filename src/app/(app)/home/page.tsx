@@ -11,6 +11,7 @@ import { Logo } from '@/components/logo'
 import { BellIcon, CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import { PropertyCard } from '@/components/property-card'
+import { PendingActivationPanel } from '@/components/pending-activation-panel'
 import {
   Drawer,
   DrawerContent,
@@ -31,6 +32,7 @@ export default function HomePage() {
   const { data: properties = [], isLoading: propertiesLoading } = useProperties()
   const { data: cleaningRequests = [], isLoading: cleaningLoading } = useCleaningRequests()
   const [processOpen, setProcessOpen] = useState(false)
+  const [registrationProcessOpen, setRegistrationProcessOpen] = useState(false)
 
   const displayName = profile?.fullName || user?.user_metadata?.full_name || ''
   const today = new Intl.DateTimeFormat('ko-KR', {
@@ -45,7 +47,7 @@ export default function HomePage() {
   )
   const activeProperties = properties.filter((property) => property.status === 'active')
   const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
-  const showPendingActivation = activeProperties.length === 0 && pendingProperties.length > 0
+  const showPendingOnlyState = activeProperties.length === 0 && pendingProperties.length > 0
 
   const steps = [
     { num: 1, title: '청소 요청 및 결제', desc: '숙소와 희망 일시를 선택하고 청소를 요청해요.' },
@@ -53,6 +55,38 @@ export default function HomePage() {
     { num: 3, title: '호텔식 청소 + 시설 점검', desc: '호텔식 침구 세팅과 15항목 시설 점검을 진행해요.' },
     { num: 4, title: '점검 리포트 수신', desc: '청소 완료 후 사진과 함께 시설 점검 리포트를 받아요.' },
   ]
+
+  const registrationSteps = [
+    { num: 1, title: '숙소 등록 접수', desc: '호스트가 입력한 숙소 정보를 먼저 확인해요.' },
+    { num: 2, title: '현장 방문', desc: '48시간 이내에 직접 방문해 숙소 상태를 살펴봐요.' },
+    { num: 3, title: '숙소 정보 수집', desc: '숙소 및 시설 정보를 꼼꼼히 기록해 둘게요.' },
+    { num: 4, title: '등록 완료', desc: '등록이 끝나면 바로 청소를 요청할 수 있어요.' },
+  ]
+
+  function renderPendingList() {
+    return (
+      <div className="mt-5">
+        <div className="flex flex-col gap-3">
+          <p className="px-1 text-left text-[13px] font-medium text-[#717171]">등록 대기 숙소</p>
+          {pendingProperties.map((property) => (
+            <PropertyCard
+              key={property.id}
+              property={{ ...property, status: 'pending_activation' }}
+            />
+          ))}
+        </div>
+        <div className="flex justify-center mt-4">
+          <button
+            type="button"
+            onClick={() => setRegistrationProcessOpen(true)}
+            className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors"
+          >
+            숙소 등록은 어떻게 진행되나요?
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (cleaningLoading || propertiesLoading) {
     return (
@@ -80,35 +114,26 @@ export default function HomePage() {
         <p className="text-[14px] text-[#717171] mt-1">{today}</p>
       </div>
 
-      {showPendingActivation ? (
-        <div className="px-6 pt-6 pb-8 flex flex-col gap-4">
-          <div className="rounded-2xl bg-[#FFF8EF] px-5 py-5">
-            <div className="inline-flex rounded-full bg-[#FFE7C2] px-2.5 py-1 text-[11px] font-semibold text-[#9A5B00]">
-              등록 대기
-            </div>
-            <h2 className="mt-3 text-[18px] font-semibold text-[#222222]">
-              등록 완료 전에는 청소 요청을 할 수 없어요
-            </h2>
-            <p className="mt-2 text-[14px] leading-relaxed text-[#717171]">
-              숙소 등록 후 48시간 이내에 비앤비서가 직접 방문해 운영 정보를 확인하고 등록을 완료해드려요.
-            </p>
-            <p className="mt-3 text-[13px] text-[#717171]">
-              현장에서 출입 정보, 도어락, 와이파이, 시설 정보를 함께 확인합니다.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <p className="text-[13px] font-medium text-[#717171] px-1">등록 대기 숙소</p>
-            {pendingProperties.map((property) => (
-              <div key={property.id} className="rounded-xl border border-[#EBEBEB] bg-white">
-                <PropertyCard property={property} />
-              </div>
-            ))}
+      {showPendingOnlyState ? (
+        <div className="px-6 pt-6 pb-8">
+          <PendingActivationPanel
+            title="숙소 등록을 진행하고 있어요"
+            description="48시간 이내 직접 방문해 숙소 등록을 완료해드려요."
+            properties={pendingProperties}
+          />
+          <div className="flex justify-center mt-4">
+            <button
+              type="button"
+              onClick={() => setRegistrationProcessOpen(true)}
+              className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors"
+            >
+              숙소 등록은 어떻게 진행되나요?
+            </button>
           </div>
         </div>
       ) : upcoming.length > 0 ? (
         /* ─── Upcoming Cleanings ─── */
-        <div className="px-6 pt-6 flex flex-col gap-3">
+        <div className="px-6 pt-6 pb-8 flex flex-col gap-3">
           <p className="text-[13px] font-medium text-[#717171] px-1">청소 내역</p>
           {upcoming.map((r) => {
             const statusInfo = STATUS_LABELS[r.status]
@@ -152,7 +177,9 @@ export default function HomePage() {
               </Link>
             )
           })}
-
+          {pendingProperties.length > 0 && (
+            renderPendingList()
+          )}
         </div>
       ) : (
         /* ─── Empty State ─── */
@@ -184,10 +211,49 @@ export default function HomePage() {
           >
             청소는 어떻게 진행되나요?
           </button>
+          {pendingProperties.length > 0 && (
+            <div className="w-full mt-10 text-left">
+              {renderPendingList()}
+            </div>
+          )}
         </div>
       )}
 
       {/* Process Drawer */}
+      <Drawer open={registrationProcessOpen} onOpenChange={setRegistrationProcessOpen}>
+        <DrawerContent>
+          <div className="w-full px-5 pb-8 overflow-y-auto">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
+                숙소 등록 진행 과정
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="flex flex-col gap-0 mt-2">
+              {registrationSteps.map((step, i) => (
+                <div key={step.num} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-7 h-7 rounded-full bg-[#222222] text-white text-[13px] font-semibold flex items-center justify-center shrink-0">
+                      {step.num}
+                    </div>
+                    {i < registrationSteps.length - 1 && (
+                      <div className="w-px flex-1 bg-[#EBEBEB] my-1" />
+                    )}
+                  </div>
+                  <div className="pb-5">
+                    <p className="text-[15px] font-semibold text-[#222222]">
+                      {step.title}
+                    </p>
+                    <p className="text-[13px] text-[#717171] mt-0.5 leading-relaxed">
+                      {step.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
       <Drawer open={processOpen} onOpenChange={setProcessOpen}>
         <DrawerContent>
           <div className="w-full px-5 pb-8 overflow-y-auto">

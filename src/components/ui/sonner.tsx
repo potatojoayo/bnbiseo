@@ -10,7 +10,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      className="toaster group font-sans font-normal"
       icons={{
         success: (
           <CircleCheckIcon className="size-4" />
@@ -34,11 +34,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          fontFamily: "var(--font-body)",
+          fontWeight: 400,
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          toast: "cn-toast font-sans !font-normal",
+          title: "font-sans !font-normal",
+          description: "font-sans !font-normal",
         },
       }}
       {...props}

@@ -73,7 +73,7 @@ export default function CompletePage() {
           <Link
             key={property.id}
             href={`/onboarding/edit/${property.id}`}
-            className="rounded-xl border border-[#EBEBEB] bg-white hover:bg-[#F7F7F7] transition-colors"
+            className="block"
           >
             <PropertyCard property={property} />
           </Link>
