@@ -47,7 +47,13 @@ export class ApiError extends Error {
     public status: number,
     public data: Record<string, unknown>,
   ) {
-    super(typeof data.message === 'string' ? data.message : `API error ${status}`)
+    super(
+      typeof data.message === 'string'
+        ? data.message
+        : typeof data.error === 'string'
+          ? data.error
+          : `API error ${status}`,
+    )
   }
 }
 

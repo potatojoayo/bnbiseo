@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -18,8 +18,11 @@ export default function AdminDashboardLayout({
 }) {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const isMobile = useIsMobile()
   const [ready, setReady] = useState(false)
+  const rootNavPaths = ['/admin', '/admin/cleaning', '/admin/users', '/admin/properties', '/admin/managers']
+  const showBottomNav = rootNavPaths.includes(pathname)
 
   useEffect(() => {
     if (authLoading) return
@@ -56,10 +59,12 @@ export default function AdminDashboardLayout({
   if (isMobile) {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-white">
-        <main className="flex-1 pb-[72px]">
-          {children}
+        <main className={`flex-1 ${showBottomNav ? 'pb-[72px]' : ''}`}>
+          <div key={pathname} className="animate-fade-up-fast">
+            {children}
+          </div>
         </main>
-        <AdminBottomNav />
+        {showBottomNav && <AdminBottomNav />}
       </div>
     )
   }

@@ -130,8 +130,8 @@ cleaningRoutes.post('/', async (c) => {
   // Calculate price
   const priceResult = calculateCleaningPrice({
     pyeong: property.pyeong,
-    bedrooms: property.bedrooms,
-    bathrooms: property.bathrooms,
+    bedrooms: property.bedrooms ?? 0,
+    bathrooms: property.bathrooms ?? 0,
     isUrgent,
   })
 

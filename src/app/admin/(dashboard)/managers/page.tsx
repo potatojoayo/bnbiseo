@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
-import { api } from '@/lib/api-client'
-import { useAdminManagers, useAdminUsers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
+import { api, ApiError } from '@/lib/api-client'
+import { useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { PlusIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -20,74 +20,85 @@ import {
 type Manager = {
   id: string
   profileId: string
+  email: string | null
   name: string
   phone: string
   memo: string | null
   isActive: boolean
 }
 
-type User = {
-  id: string
-  email: string | null
-  fullName: string | null
-  phone: string | null
-  role: string
+function formatPhoneNumber(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+
+  if (digits.length <= 3) return digits
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
 }
 
 export default function AdminManagersPage() {
   const { data: managers = [], isLoading } = useAdminManagers()
-  const { data: users = [] } = useAdminUsers()
   const invalidate = useInvalidateAdmin()
   const isMobile = useIsMobile()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Manager | null>(null)
-  const [profileId, setProfileId] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [memo, setMemo] = useState('')
   const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Manager | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [page, setPage] = useState(1)
   const { paged, totalPages } = useTablePagination(managers, page)
-  const managerUsers = (users as User[]).filter((user) => user.role === 'manager')
-  const linkedProfileIds = new Set(managers.map((manager) => manager.profileId))
-  const availableManagerUsers = managerUsers.filter((user) =>
-    !linkedProfileIds.has(user.id) || user.id === editTarget?.profileId
-  )
 
   function openCreate() {
     setEditTarget(null)
-    setProfileId('')
+    setEmail('')
+    setPassword('')
     setName('')
     setPhone('')
     setMemo('')
+    setMessage(null)
     setFormOpen(true)
   }
 
   function openEdit(m: Manager) {
     setEditTarget(m)
-    setProfileId(m.profileId)
+    setEmail(m.email || '')
+    setPassword('')
     setName(m.name)
     setPhone(m.phone)
     setMemo(m.memo || '')
+    setMessage(null)
     setFormOpen(true)
   }
 
   async function handleSave() {
     setSaving(true)
-    if (editTarget) {
-      await api.patch(`/admin/managers/${editTarget.id}`, { profileId, name, phone, memo: memo || undefined })
-    } else {
-      await api.post('/admin/managers', { profileId, name, phone, memo: memo || undefined })
+    setMessage(null)
+    try {
+      if (editTarget) {
+        await api.patch(`/admin/managers/${editTarget.id}`, { name, phone, memo: memo || undefined })
+      } else {
+        await api.post('/admin/managers', { email, password, name, phone, memo: memo || undefined })
+      }
+      setFormOpen(false)
+      invalidate.managers()
+      invalidate.stats()
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setMessage(error.message)
+      } else {
+        setMessage(editTarget ? '매니저 수정에 실패했어요.' : '매니저 생성에 실패했어요.')
+      }
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    setFormOpen(false)
-    invalidate.managers()
-    invalidate.stats()
   }
 
   async function handleToggle(m: Manager) {
@@ -138,6 +149,7 @@ export default function AdminManagersPage() {
                     {m.isActive ? '활성' : '비활성'}
                   </span>
                 </div>
+                {m.email && <p className="text-[13px] text-[#717171]">{m.email}</p>}
                 <p className="text-[13px] text-[#717171]">{m.phone}</p>
                 {m.memo && <p className="text-[12px] text-[#B0B0B0] mt-1">{m.memo}</p>}
                 <div className="flex gap-2 mt-3">
@@ -156,6 +168,7 @@ export default function AdminManagersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>이름</TableHead>
+                  <TableHead>이메일</TableHead>
                   <TableHead>전화번호</TableHead>
                   <TableHead>메모</TableHead>
                   <TableHead>상태</TableHead>
@@ -166,6 +179,7 @@ export default function AdminManagersPage() {
                 {paged.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>{m.name}</TableCell>
+                    <TableCell className="text-[#717171]">{m.email || '-'}</TableCell>
                     <TableCell>{m.phone}</TableCell>
                     <TableCell className="text-[#717171]">{m.memo || '-'}</TableCell>
                     <TableCell>
@@ -198,33 +212,29 @@ export default function AdminManagersPage() {
               <DrawerTitle className="text-[18px] font-semibold text-[#222222]">{editTarget ? '매니저 수정' : '매니저 추가'}</DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-4">
-              <CompoundInput>
-                <div className="relative rounded-[12px] border border-[#B0B0B0] px-4 pb-[10px] pt-[26px]">
-                  <label className="absolute left-4 top-[8px] text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
-                    매니저 회원
-                  </label>
-                  <select
-                    value={profileId}
-                    onChange={(e) => setProfileId(e.target.value)}
-                    className="w-full bg-transparent text-[16px] text-[#222222] outline-none"
-                  >
-                    <option value="">매니저 회원 선택</option>
-                    {availableManagerUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.fullName || user.email || user.id}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </CompoundInput>
+              {!editTarget ? (
+                <CompoundInput>
+                  <FloatingInput label="이메일" type="email" value={email} onChange={(e) => setEmail(e.target.value)} borderRadius="12px 12px 0 0" />
+                  <FloatingInput label="비밀번호" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} borderRadius="0 0 12px 12px" />
+                </CompoundInput>
+              ) : (
+                <CompoundInput>
+                  <FloatingInput label="이메일" type="email" value={email} onChange={() => {}} disabled borderRadius="12px" />
+                </CompoundInput>
+              )}
               <CompoundInput>
                 <FloatingInput label="이름" value={name} onChange={(e) => setName(e.target.value)} borderRadius="12px 12px 0 0" />
-                <FloatingInput label="전화번호" value={phone} onChange={(e) => setPhone(e.target.value)} borderRadius="0 0 12px 12px" />
+                <FloatingInput label="전화번호" inputMode="numeric" placeholder="010-1234-5678" value={phone} onChange={(e) => setPhone(formatPhoneNumber(e.target.value))} borderRadius="0 0 12px 12px" />
               </CompoundInput>
               <CompoundInput>
                 <FloatingInput label="메모 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} borderRadius="12px" />
               </CompoundInput>
-              <LoadingButton type="button" variant="primary" loading={saving} loadingText="저장 중..." disabled={!profileId || !name || !phone} onClick={handleSave}>
+              {message && (
+                <p className="text-[13px] text-[#C13515]">
+                  {message}
+                </p>
+              )}
+              <LoadingButton type="button" variant="primary" loading={saving} loadingText="저장 중..." disabled={!name || !phone || (!editTarget && (!email || !password))} onClick={handleSave}>
                 {editTarget ? '수정하기' : '추가하기'}
               </LoadingButton>
             </div>

@@ -1,17 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
-import { useAdminProperties, useInvalidateAdmin } from '@/lib/hooks/use-admin'
+import { useAdminProperties } from '@/lib/hooks/use-admin'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MapPinIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
-import { api } from '@/lib/api-client'
-import { LoadingButton } from '@/components/ui/loading-button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const STATUS_STYLES = {
-  pending_activation: 'bg-[#FFF4E5] text-[#9A5B00]',
+  pending_activation: 'border border-[#EBEBEB] bg-[#FAFAFA] text-[#717171]',
   active: 'bg-[#E8F5E9] text-[#2E7D32]',
 } as const
 
@@ -20,42 +20,60 @@ const STATUS_LABELS = {
   active: '등록 완료',
 } as const
 
+type PropertyFilter = 'all' | 'pending_activation' | 'active'
+
 export default function AdminPropertiesPage() {
   const { data: properties = [], isLoading } = useAdminProperties()
-  const invalidateAdmin = useInvalidateAdmin()
   const isMobile = useIsMobile()
   const [page, setPage] = useState(1)
-  const [activatingId, setActivatingId] = useState<string | null>(null)
-  const { paged, totalPages } = useTablePagination(properties, page)
-
-  async function handleActivate(propertyId: string) {
-    setActivatingId(propertyId)
-    try {
-      await api.post(`/admin/properties/${propertyId}/activate`)
-      await invalidateAdmin.properties()
-    } finally {
-      setActivatingId(null)
-    }
-  }
+  const [filter, setFilter] = useState<PropertyFilter>('all')
+  const pendingCount = properties.filter((property) => property.status === 'pending_activation').length
+  const activeCount = properties.filter((property) => property.status === 'active').length
+  const filteredProperties = properties.filter((property) =>
+    filter === 'all' ? true : property.status === filter,
+  )
+  const { paged, totalPages } = useTablePagination(filteredProperties, page)
 
   return (
     <>
       <SiteHeader title="숙소 관리" />
       <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
-        <div className="flex items-center h-9">
-          <p className="text-[14px] text-[#717171]">총 {properties.length}개</p>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center h-9">
+            <p className="text-[14px] text-[#717171]">총 {filteredProperties.length}개</p>
+          </div>
+          <Tabs
+            value={filter}
+            onValueChange={(value) => {
+              setFilter(value as PropertyFilter)
+              setPage(1)
+            }}
+            className="w-full"
+          >
+            <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-xl bg-[#F7F7F7] p-1">
+              <TabsTrigger value="all" className="shrink-0 rounded-lg px-3 py-2 text-[13px] font-medium">
+                전체({properties.length})
+              </TabsTrigger>
+              <TabsTrigger value="pending_activation" className="shrink-0 rounded-lg px-3 py-2 text-[13px] font-medium">
+                등록 대기({pendingCount})
+              </TabsTrigger>
+              <TabsTrigger value="active" className="shrink-0 rounded-lg px-3 py-2 text-[13px] font-medium">
+                등록 완료({activeCount})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
           </div>
-        ) : properties.length === 0 ? (
+        ) : filteredProperties.length === 0 ? (
           <p className="text-center text-[14px] text-[#717171] py-20">등록된 숙소가 없어요</p>
         ) : isMobile ? (
           /* ─── Mobile: Cards ─── */
           <div className="flex flex-col gap-3">
-            {properties.map((p) => {
+            {filteredProperties.map((p) => {
               const details = p.status === 'active'
                 ? [
                     p.pyeong && `${p.pyeong}평`,
@@ -65,27 +83,40 @@ export default function AdminPropertiesPage() {
                 : []
               return (
                 <div key={p.id} className="rounded-xl border border-[#EBEBEB] px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-[15px] font-semibold text-[#222222]">{p.name}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[16px] font-semibold leading-snug text-[#222222]">
+                        {p.name}
+                      </p>
+                      {details.length > 0 && (
+                        <p className="mt-1 text-[13px] text-[#717171]">
+                          {details.join(' · ')}
+                        </p>
+                      )}
+                    </div>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLES[p.status]}`}>
                       {STATUS_LABELS[p.status]}
                     </span>
                   </div>
-                  {details.length > 0 && <p className="text-[13px] text-[#717171] mt-0.5">{details.join(' · ')}</p>}
-                  <p className="text-[12px] text-[#B0B0B0] mt-0.5 flex items-center gap-0.5">
-                    <MapPinIcon size={11} strokeWidth={1.75} />{p.address}
+
+                  <div className="mt-3 h-px w-full bg-[#F1F1F1]" />
+
+                  <p className="mt-3 text-[13px] leading-relaxed text-[#717171]">
+                    <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-[#B0B0B0]" strokeWidth={1.75} />
+                    {p.address}
                   </p>
-                  <p className="text-[12px] text-[#717171] mt-2">호스트: {p.hostName || p.hostEmail || '-'}</p>
+
+                  <p className="mt-3 text-[12px] text-[#717171]">
+                    호스트: {p.hostName || p.hostEmail || '-'}
+                  </p>
+
                   {p.status === 'pending_activation' && (
-                    <LoadingButton
-                      type="button"
-                      loading={activatingId === p.id}
-                      loadingText="처리 중..."
-                      onClick={() => handleActivate(p.id)}
-                      className="mt-3 h-9 w-full"
+                    <Link
+                      href={`/admin/properties/${p.id}`}
+                      className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-lg bg-[#222222] px-3 text-[14px] font-semibold text-white transition-all active:scale-[0.98]"
                     >
-                      등록 완료 처리
-                    </LoadingButton>
+                      등록 진행
+                    </Link>
                   )}
                 </div>
               )
@@ -126,15 +157,12 @@ export default function AdminPropertiesPage() {
                     <TableCell>{p.hostName || p.hostEmail || '-'}</TableCell>
                     <TableCell className="text-right">
                       {p.status === 'pending_activation' ? (
-                        <LoadingButton
-                          type="button"
-                          loading={activatingId === p.id}
-                          loadingText="처리 중..."
-                          onClick={() => handleActivate(p.id)}
-                          className="h-8 px-3"
+                        <Link
+                          href={`/admin/properties/${p.id}`}
+                          className="inline-flex h-8 items-center justify-center rounded-lg bg-[#222222] px-3 text-[12px] font-semibold text-white transition-all active:scale-[0.98]"
                         >
-                          등록 완료 처리
-                        </LoadingButton>
+                          등록 진행
+                        </Link>
                       ) : (
                         <span className="text-[12px] text-[#B0B0B0]">완료</span>
                       )}

@@ -1,0 +1,168 @@
+import { Hono } from 'hono'
+import { and, asc, desc, eq, isNull, ne } from 'drizzle-orm'
+import { db } from '@/db'
+import { cleaningRequests, managers, profiles, properties } from '@/db/schema'
+import { authMiddleware, type AuthEnv } from '../middleware/auth'
+
+type ManagerEnv = {
+  Variables: AuthEnv['Variables'] & {
+    managerId: string
+  }
+}
+
+export const managerRoutes = new Hono<ManagerEnv>()
+
+managerRoutes.use('*', authMiddleware)
+
+managerRoutes.use('*', async (c, next) => {
+  const profileId = c.get('profileId')
+
+  if (!profileId) {
+    return c.json({ error: '프로필을 찾을 수 없어요.' }, 401)
+  }
+
+  const [linked] = await db
+    .select({
+      profileId: profiles.id,
+      role: profiles.role,
+      managerId: managers.id,
+    })
+    .from(profiles)
+    .leftJoin(managers, eq(managers.profileId, profiles.id))
+    .where(and(eq(profiles.id, profileId), isNull(profiles.deletedAt)))
+    .limit(1)
+
+  if (!linked || linked.role !== 'manager' || !linked.managerId) {
+    return c.json({ error: '연결된 매니저 계정이 아니에요.' }, 403)
+  }
+
+  c.set('managerId', linked.managerId)
+  await next()
+})
+
+managerRoutes.get('/me', async (c) => {
+  const profileId = c.get('profileId')
+  const managerId = c.get('managerId')
+
+  const [result] = await db
+    .select({
+      profileId: profiles.id,
+      email: profiles.email,
+      fullName: profiles.fullName,
+      phone: profiles.phone,
+      role: profiles.role,
+      managerId: managers.id,
+      managerProfileId: managers.profileId,
+      managerName: managers.name,
+      managerPhone: managers.phone,
+      managerMemo: managers.memo,
+      managerIsActive: managers.isActive,
+      managerCreatedAt: managers.createdAt,
+    })
+    .from(profiles)
+    .innerJoin(managers, eq(managers.profileId, profiles.id))
+    .where(and(eq(profiles.id, profileId), eq(managers.id, managerId), isNull(profiles.deletedAt)))
+    .limit(1)
+
+  if (!result) {
+    return c.json({ error: '매니저 정보를 찾을 수 없어요.' }, 404)
+  }
+
+  return c.json({
+    profile: {
+      id: result.profileId,
+      email: result.email,
+      fullName: result.fullName,
+      phone: result.phone,
+      role: result.role,
+    },
+    manager: {
+      id: result.managerId,
+      profileId: result.managerProfileId,
+      name: result.managerName,
+      phone: result.managerPhone,
+      memo: result.managerMemo,
+      isActive: result.managerIsActive,
+      createdAt: result.managerCreatedAt,
+    },
+  })
+})
+
+managerRoutes.get('/cleanings/open', async (c) => {
+  const result = await db
+    .select({
+      id: cleaningRequests.id,
+      status: cleaningRequests.status,
+      scheduledDate: cleaningRequests.scheduledDate,
+      scheduledTime: cleaningRequests.scheduledTime,
+      cleaningType: cleaningRequests.cleaningType,
+      memo: cleaningRequests.memo,
+      finalPrice: cleaningRequests.finalPrice,
+      createdAt: cleaningRequests.createdAt,
+      propertyId: properties.id,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+    })
+    .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .where(and(eq(cleaningRequests.status, 'pending'), isNull(cleaningRequests.managerId)))
+    .orderBy(asc(cleaningRequests.scheduledDate), asc(cleaningRequests.scheduledTime), desc(cleaningRequests.createdAt))
+
+  return c.json(result)
+})
+
+managerRoutes.get('/cleanings/me', async (c) => {
+  const managerId = c.get('managerId')
+
+  const result = await db
+    .select({
+      id: cleaningRequests.id,
+      status: cleaningRequests.status,
+      scheduledDate: cleaningRequests.scheduledDate,
+      scheduledTime: cleaningRequests.scheduledTime,
+      cleaningType: cleaningRequests.cleaningType,
+      memo: cleaningRequests.memo,
+      finalPrice: cleaningRequests.finalPrice,
+      createdAt: cleaningRequests.createdAt,
+      propertyId: properties.id,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+    })
+    .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .where(and(
+      eq(cleaningRequests.managerId, managerId),
+      ne(cleaningRequests.status, 'pending_payment'),
+      ne(cleaningRequests.status, 'cancelled'),
+    ))
+    .orderBy(asc(cleaningRequests.scheduledDate), asc(cleaningRequests.scheduledTime), desc(cleaningRequests.createdAt))
+
+  return c.json(result)
+})
+
+managerRoutes.post('/cleanings/:id/claim', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+
+  const [claimed] = await db
+    .update(cleaningRequests)
+    .set({
+      managerId,
+      status: 'confirmed',
+      updatedAt: new Date(),
+    })
+    .where(and(
+      eq(cleaningRequests.id, id),
+      eq(cleaningRequests.status, 'pending'),
+      isNull(cleaningRequests.managerId),
+    ))
+    .returning({ id: cleaningRequests.id })
+
+  if (!claimed) {
+    return c.json({ error: '다른 매니저가 먼저 배정했어요.' }, 409)
+  }
+
+  return c.json({ success: true, id: claimed.id })
+})

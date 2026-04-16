@@ -30,6 +30,7 @@ export const propertyStatusEnum = pgEnum('property_status', [
 
 export const fixtureCategoryEnum = pgEnum('fixture_category', [
   'lighting',
+  'furniture',
   'faucet',
   'boiler',
   'appliance',
@@ -39,6 +40,12 @@ export const fixtureCategoryEnum = pgEnum('fixture_category', [
   'dryer',
   'vent',
   'other',
+])
+
+export const propertySpaceCategoryEnum = pgEnum('property_space_category', [
+  'living_room',
+  'bedroom',
+  'bathroom',
 ])
 
 export const repairSourceEnum = pgEnum('repair_source', ['host', 'guest'])
@@ -126,6 +133,8 @@ export const properties = pgTable('properties', {
   description: text('description'),
   nearbyInfo: text('nearby_info'),
   checkinInfo: text('checkin_info'),
+  entrancePassword: text('entrance_password'),
+  doorLockPassword: text('door_lock_password'),
   wifiSsid: text('wifi_ssid'),
   wifiPassword: text('wifi_password'),
   qrToken: uuid('qr_token').defaultRandom().notNull(),
@@ -214,6 +223,31 @@ export const fixturePhotos = pgTable('fixture_photos', {
   fixtureId: uuid('fixture_id')
     .notNull()
     .references(() => fixtures.id, { onDelete: 'cascade' }),
+  storagePath: text('storage_path').notNull(),
+  caption: text('caption'),
+  sortOrder: smallint('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+export const propertySpaces = pgTable('property_spaces', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  propertyId: uuid('property_id')
+    .notNull()
+    .references(() => properties.id, { onDelete: 'cascade' }),
+  category: propertySpaceCategoryEnum('category').notNull(),
+  floor: smallint('floor').default(1).notNull(),
+  name: text('name').notNull(),
+  pyeong: smallint('pyeong').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+export const propertySpacePhotos = pgTable('property_space_photos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  propertySpaceId: uuid('property_space_id')
+    .notNull()
+    .references(() => propertySpaces.id, { onDelete: 'cascade' }),
   storagePath: text('storage_path').notNull(),
   caption: text('caption'),
   sortOrder: smallint('sort_order').default(0).notNull(),
@@ -339,6 +373,7 @@ export const profilesRelations = relations(profiles, ({ many }) => ({
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
   host: one(profiles, { fields: [properties.hostId], references: [profiles.id] }),
   photos: many(propertyPhotos),
+  spaces: many(propertySpaces),
   fixtures: many(fixtures),
   cleaningRequests: many(cleaningRequests),
   repairRequests: many(repairRequests),
@@ -389,6 +424,21 @@ export const fixturePhotosRelations = relations(fixturePhotos, ({ one }) => ({
   fixture: one(fixtures, {
     fields: [fixturePhotos.fixtureId],
     references: [fixtures.id],
+  }),
+}))
+
+export const propertySpacesRelations = relations(propertySpaces, ({ one, many }) => ({
+  property: one(properties, {
+    fields: [propertySpaces.propertyId],
+    references: [properties.id],
+  }),
+  photos: many(propertySpacePhotos),
+}))
+
+export const propertySpacePhotosRelations = relations(propertySpacePhotos, ({ one }) => ({
+  propertySpace: one(propertySpaces, {
+    fields: [propertySpacePhotos.propertySpaceId],
+    references: [propertySpaces.id],
   }),
 }))
 
