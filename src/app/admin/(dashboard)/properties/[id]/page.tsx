@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { MapPinIcon, PlusIcon } from 'lucide-react'
@@ -336,8 +337,13 @@ function AdminPropertyRegistrationForm({
                   <div>
                     <div className="relative aspect-[16/10] w-full bg-surface-soft">
                       {space.photos[0]?.signedUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={space.photos[0].signedUrl} alt="" className="h-full w-full object-cover" />
+                        <Image
+                          src={space.photos[0].signedUrl}
+                          alt=""
+                          fill
+                          sizes="(max-width: 768px) 100vw, 720px"
+                          className="object-cover"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
                           사진 없음
@@ -390,8 +396,13 @@ function AdminPropertyRegistrationForm({
                   <div className="flex items-stretch">
                     <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                       {fixture.photos[0]?.signedUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={fixture.photos[0].signedUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                        <Image
+                          src={fixture.photos[0].signedUrl}
+                          alt=""
+                          fill
+                          sizes="104px"
+                          className="object-cover"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">
                           사진 없음
@@ -547,8 +558,13 @@ function AdminPropertyDetailView({
                 <div key={space.id} className="overflow-hidden rounded-xl border border-outline-dim">
                   <div className="relative aspect-[16/10] w-full bg-surface-soft">
                     {space.photos[0]?.signedUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={space.photos[0].signedUrl} alt="" className="h-full w-full object-cover" />
+                      <Image
+                        src={space.photos[0].signedUrl}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 100vw, 720px"
+                        className="object-cover"
+                      />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
                         사진 없음
@@ -585,8 +601,13 @@ function AdminPropertyDetailView({
                   <div className="flex items-stretch">
                     <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                       {fixture.photos[0]?.signedUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={fixture.photos[0].signedUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                        <Image
+                          src={fixture.photos[0].signedUrl}
+                          alt=""
+                          fill
+                          sizes="104px"
+                          className="object-cover"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">
                           사진 없음
