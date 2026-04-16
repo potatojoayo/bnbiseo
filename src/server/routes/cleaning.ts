@@ -119,6 +119,10 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ error: '숙소를 찾을 수 없어요' }, 404)
   }
 
+  if (property.status !== 'active') {
+    return c.json({ error: '등록 완료된 숙소만 청소를 요청할 수 있어요' }, 400)
+  }
+
   if (!property.pyeong) {
     return c.json({ error: '숙소 면적 정보가 필요해요' }, 400)
   }

@@ -46,7 +46,9 @@ export default function CleaningPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const isUrgent = date === getToday()
-  const selectedProperty = properties.find((p) => p.id === selectedPropertyId)
+  const activeProperties = properties.filter((property) => property.status === 'active')
+  const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
+  const selectedProperty = activeProperties.find((p) => p.id === selectedPropertyId)
   const timeSlots = getAvailableTimeSlots(date)
 
   const priceInfo = selectedProperty?.pyeong
@@ -62,10 +64,15 @@ export default function CleaningPage() {
     : 0
 
   useEffect(() => {
-    if (!propertiesLoading && properties.length === 1 && !selectedPropertyId) {
-      setSelectedPropertyId(properties[0].id)
+    if (!propertiesLoading && activeProperties.length === 1 && !selectedPropertyId) {
+      setSelectedPropertyId(activeProperties[0].id)
+      return
     }
-  }, [properties, propertiesLoading, selectedPropertyId])
+
+    if (!propertiesLoading && selectedPropertyId && !activeProperties.some((property) => property.id === selectedPropertyId)) {
+      setSelectedPropertyId(activeProperties[0]?.id ?? '')
+    }
+  }, [activeProperties, propertiesLoading, selectedPropertyId])
 
   // When date changes, validate time
   function handleDateSelect(newDate: string) {
@@ -161,6 +168,44 @@ export default function CleaningPage() {
     )
   }
 
+  if (activeProperties.length === 0) {
+    return (
+      <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
+        <h1 className="text-[22px] font-semibold text-[#222222] mb-6">
+          청소 요청
+        </h1>
+
+        <div className="rounded-2xl bg-[#FFF8EF] px-5 py-5">
+          <div className="inline-flex rounded-full bg-[#FFE7C2] px-2.5 py-1 text-[11px] font-semibold text-[#9A5B00]">
+            등록 대기
+          </div>
+          <h2 className="mt-3 text-[18px] font-semibold text-[#222222]">
+            등록 완료된 숙소가 아직 없어요
+          </h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-[#717171]">
+            등록 대기 중인 숙소는 현장 확인 후 청소 요청이 가능해요. 숙소 등록 후 48시간 이내에 비앤비서가 직접 방문해 등록을 완료해드려요.
+          </p>
+        </div>
+
+        {pendingProperties.length > 0 && (
+          <div className="mt-6 flex flex-col gap-3">
+            <p className="text-[13px] font-medium text-[#717171] px-1">등록 대기 숙소</p>
+            <div className="rounded-xl border border-[#B0B0B0] overflow-hidden">
+              {pendingProperties.map((property, index) => (
+                <div
+                  key={property.id}
+                  className={cn(index > 0 && 'border-t border-[#EBEBEB]')}
+                >
+                  <PropertyCard property={property} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-0">
       {/* Header */}
@@ -170,10 +215,10 @@ export default function CleaningPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {/* Property Selection */}
-        {properties.length >= 1 && (
+        {activeProperties.length >= 1 && (
           <div>
             <div className="rounded-xl border border-[#B0B0B0] overflow-hidden">
-              {properties.map((p, i) => {
+              {activeProperties.map((p, i) => {
                 const selected = selectedPropertyId === p.id
                 return (
                   <button

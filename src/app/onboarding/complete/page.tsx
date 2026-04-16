@@ -60,9 +60,12 @@ export default function CompletePage() {
           className="text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface leading-tight"
           style={{ fontFamily: 'var(--font-body)' }}
         >
-          숙소 등록이
-          <br />완료되었어요!
+          숙소 등록 신청이
+          <br />완료되었어요
         </h2>
+        <p className="mt-3 text-[14px] leading-relaxed text-[#717171]">
+          48시간 이내에 비앤비서가 직접 방문해 운영 정보를 확인하고 등록을 완료해드려요.
+        </p>
       </div>
 
       <div className="flex flex-col gap-3">

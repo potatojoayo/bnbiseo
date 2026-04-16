@@ -6,6 +6,13 @@ import { profiles, properties, cleaningRequests, managers } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 
 export const adminRoutes = new Hono<AuthEnv>()
+const AdminCleaningStatusSchema = z.enum([
+  'pending',
+  'confirmed',
+  'in_progress',
+  'completed',
+  'cancelled',
+])
 
 // Admin auth: verify user + admin role
 adminRoutes.use('*', authMiddleware)
@@ -127,7 +134,12 @@ adminRoutes.get('/stats', async (c) => {
 
 // List all cleaning requests
 adminRoutes.get('/cleaning', async (c) => {
-  const status = c.req.query('status')
+  const statusQuery = c.req.query('status')
+  const status = statusQuery ? AdminCleaningStatusSchema.safeParse(statusQuery) : null
+
+  if (statusQuery && !status?.success) {
+    return c.json({ error: '유효하지 않은 상태값입니다.' }, 400)
+  }
 
   const result = await db
     .select({
@@ -156,7 +168,7 @@ adminRoutes.get('/cleaning', async (c) => {
     .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
     .where(and(
       ne(cleaningRequests.status, 'pending_payment'),
-      status ? eq(cleaningRequests.status, status as any) : undefined,
+      status?.success ? eq(cleaningRequests.status, status.data) : undefined,
     ))
     .orderBy(desc(cleaningRequests.createdAt))
 
@@ -340,6 +352,7 @@ adminRoutes.get('/properties', async (c) => {
   const result = await db
     .select({
       id: properties.id,
+      status: properties.status,
       name: properties.name,
       address: properties.address,
       pyeong: properties.pyeong,
@@ -348,6 +361,7 @@ adminRoutes.get('/properties', async (c) => {
       hostName: profiles.fullName,
       hostEmail: profiles.email,
       createdAt: properties.createdAt,
+      activatedAt: properties.activatedAt,
     })
     .from(properties)
     .leftJoin(profiles, eq(properties.hostId, profiles.id))
@@ -355,4 +369,28 @@ adminRoutes.get('/properties', async (c) => {
     .orderBy(desc(properties.createdAt))
 
   return c.json(result)
+})
+
+adminRoutes.post('/properties/:id/activate', async (c) => {
+  const id = c.req.param('id')
+
+  const [updated] = await db
+    .update(properties)
+    .set({
+      status: 'active',
+      activatedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
+    .returning({
+      id: properties.id,
+      status: properties.status,
+      activatedAt: properties.activatedAt,
+    })
+
+  if (!updated) {
+    return c.json({ error: '숙소를 찾을 수 없어요' }, 404)
+  }
+
+  return c.json(updated)
 })

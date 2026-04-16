@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 
 type Property = {
   id: string
+  status?: 'pending_activation' | 'active'
   name: string
   address: string
   addressDetail?: string | null
@@ -18,11 +19,13 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property, selected, className }: PropertyCardProps) {
-  const details = [
-    property.pyeong && `${property.pyeong}평`,
-    property.bedrooms && `방 ${property.bedrooms}`,
-    property.bathrooms && `욕실 ${property.bathrooms}`,
-  ].filter(Boolean)
+  const details = property.status === 'pending_activation'
+    ? []
+    : [
+        property.pyeong && `${property.pyeong}평`,
+        property.bedrooms && `방 ${property.bedrooms}`,
+        property.bathrooms && `욕실 ${property.bathrooms}`,
+      ].filter(Boolean)
 
   return (
     <div className={cn('px-4 py-3.5', className)}>
@@ -38,6 +41,11 @@ export function PropertyCard({ property, selected, className }: PropertyCardProp
         <p className="text-[15px] font-semibold text-[#222222] leading-snug">
           {property.name}
         </p>
+        {property.status === 'pending_activation' && (
+          <span className="rounded-full bg-[#FFF4E5] px-2 py-0.5 text-[11px] font-medium text-[#9A5B00]">
+            등록 대기
+          </span>
+        )}
       </div>
       {details.length > 0 && (
         <p className="text-[13px] text-[#717171] mt-1">

@@ -43,11 +43,13 @@ export default function MyPropertiesPage() {
           {/* Property list */}
           <div className="rounded-xl border border-[#EBEBEB] overflow-hidden">
             {properties.map((p, i) => {
-              const details = [
-                p.pyeong && `${p.pyeong}평`,
-                `방 ${p.bedrooms}`,
-                `욕실 ${p.bathrooms}`,
-              ].filter(Boolean)
+              const details = p.status === 'pending_activation'
+                ? []
+                : [
+                    p.pyeong && `${p.pyeong}평`,
+                    `방 ${p.bedrooms}`,
+                    `욕실 ${p.bathrooms}`,
+                  ].filter(Boolean)
 
               return (
                 <Link
@@ -56,7 +58,14 @@ export default function MyPropertiesPage() {
                   className={`block px-4 py-4 active:bg-[#F7F7F7] transition-colors ${i > 0 ? 'border-t border-[#EBEBEB]' : ''}`}
                 >
                   <div className="min-w-0">
-                    <p className="text-[15px] font-semibold text-[#222222]">{p.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[15px] font-semibold text-[#222222]">{p.name}</p>
+                      {p.status === 'pending_activation' && (
+                        <span className="rounded-full bg-[#FFF4E5] px-2 py-0.5 text-[11px] font-medium text-[#9A5B00]">
+                          등록 대기
+                        </span>
+                      )}
+                    </div>
                     {details.length > 0 && (
                       <p className="text-[13px] text-[#717171] mt-0.5">{details.join(' · ')}</p>
                     )}

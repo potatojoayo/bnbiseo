@@ -61,6 +61,7 @@ type Manager = {
 
 type Property = {
   id: string
+  status: 'pending_activation' | 'active'
   name: string
   address: string
   pyeong: number | null
@@ -69,6 +70,7 @@ type Property = {
   hostName: string | null
   hostEmail: string | null
   createdAt: string
+  activatedAt: string | null
 }
 
 type User = {

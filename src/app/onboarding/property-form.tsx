@@ -10,7 +10,7 @@ import { api, ApiError } from '@/lib/api-client'
 import { useInvalidateProperties } from '@/lib/hooks/use-properties'
 import { extractListingId } from '@/lib/airbnb-scraper'
 import type { AirbnbListingInfo } from '@/lib/airbnb-scraper'
-import { FloatingTextarea, CompoundInput, CompoundField } from '@/components/ui/floating-input'
+import { FloatingTextarea, CompoundField } from '@/components/ui/floating-input'
 import {
   Drawer,
   DrawerContent,
@@ -20,12 +20,10 @@ import {
 
 type PropertyData = {
   id?: string
+  status?: 'pending_activation' | 'active'
   name?: string
   address?: string
   addressDetail?: string | null
-  pyeong?: number | null
-  bedrooms?: number | null
-  bathrooms?: number | null
   airbnbListingId?: string | null
 }
 
@@ -48,14 +46,12 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [message, setMessage] = useState<string | undefined>()
   const [focused, setFocused] = useState<string | null>(null)
+  const isAddressLocked = mode === 'edit' && initialData?.status === 'active'
 
   // Form fields
   const [name, setName] = useState(initialData?.name ?? '')
   const [address, setAddress] = useState(initialData?.address ?? '')
   const [addressDetail, setAddressDetail] = useState(initialData?.addressDetail ?? '')
-  const [pyeong, setPyeong] = useState(initialData?.pyeong?.toString() ?? '')
-  const [bedrooms, setBedrooms] = useState(initialData?.bedrooms?.toString() ?? '1')
-  const [bathrooms, setBathrooms] = useState(initialData?.bathrooms?.toString() ?? '1')
   const [airbnbUrl, setAirbnbUrl] = useState(initialData?.airbnbListingId ?? '')
 
   // Airbnb preview
@@ -158,7 +154,6 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
     const newErrors: Record<string, string[]> = {}
     if (!name.trim()) newErrors.name = ['숙소 이름을 알려주세요']
     if (!address) newErrors.address = ['주소를 검색해주세요']
-    if (!pyeong || Number(pyeong) < 1) newErrors.pyeong = ['면적을 입력해주세요']
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       setIsPending(false)
@@ -175,10 +170,6 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
       name: name.trim(),
       address,
       addressDetail: addressDetail.trim() || undefined,
-      pyeong: pyeong ? Number(pyeong) : undefined,
-      bedrooms: Number(bedrooms) || 1,
-      bathrooms: Number(bathrooms) || 1,
-      propertyType: 'apartment',
       airbnbListingId: cleanUrl || undefined,
     }
 
@@ -244,8 +235,8 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
             : mode === 'edit'
               ? <>숙소 정보를<br />수정해주세요</>
               : backHref
-                ? <>숙소 정보를<br />입력해주세요</>
-                : <>첫 숙소를<br />등록해주세요</>
+                ? <>숙소 정보를<br />추가해주세요</>
+                : <>첫 숙소 등록을<br />신청해주세요</>
           }
         </h2>
       </div>
@@ -286,6 +277,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                   onFocus={() => { setFocused('address'); if (addrResults.length > 0) setShowAddrResults(true) }}
                   onBlur={() => setFocused(null)}
                   placeholder="도로명 주소 또는 지번을 입력하세요"
+                  disabled={isAddressLocked}
                   className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none [&::-webkit-search-cancel-button]:hidden"
                   autoComplete="off"
                 />
@@ -294,17 +286,27 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                 )}
               </CompoundField>
             ) : (
-              <button
-                type="button"
-                onClick={() => setAddress('')}
-                className="relative w-full px-4 pt-[26px] pb-[10px] text-left bg-[#F7F7F7] hover:bg-[#EFEFEF] transition-colors"
-              >
-                <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
-                  주소
-                </span>
-                <p className="text-[16px] text-[#222222]">{address}</p>
-                <span className="absolute top-[8px] right-4 text-[11px] text-[#717171]">변경</span>
-              </button>
+              isAddressLocked ? (
+                <div className="relative w-full px-4 pt-[26px] pb-[10px] text-left bg-[#F7F7F7]">
+                  <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
+                    주소
+                  </span>
+                  <p className="text-[16px] text-[#222222]">{address}</p>
+                  <span className="absolute top-[8px] right-4 text-[11px] text-[#B0B0B0]">등록 완료 후 잠금</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddress('')}
+                  className="relative w-full px-4 pt-[26px] pb-[10px] text-left bg-[#F7F7F7] hover:bg-[#EFEFEF] transition-colors"
+                >
+                  <span className="absolute top-[8px] left-4 text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
+                    주소
+                  </span>
+                  <p className="text-[16px] text-[#222222]">{address}</p>
+                  <span className="absolute top-[8px] right-4 text-[11px] text-[#717171]">변경</span>
+                </button>
+              )
             )}
 
             {/* 상세 주소 — slide down */}
@@ -329,6 +331,7 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
                   placeholder="예: 3층 301호"
                   value={addressDetail}
                   onChange={(e) => setAddressDetail(e.target.value)}
+                  disabled={isAddressLocked}
                   className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none"
                 />
               </div>
@@ -365,80 +368,6 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
             </div>
           )}
         </div>
-
-        {/* 면적 · 침실 · 욕실 */}
-        <CompoundInput>
-          <CompoundField
-            label="실평수"
-            focused={focused === 'pyeong'}
-            borderRadius="12px 12px 0 0"
-          >
-            <input
-              id="onboarding-pyeong"
-              type="number"
-              inputMode="numeric"
-              value={pyeong}
-              onChange={(e) => {
-                setPyeong(e.target.value)
-                if (errors.pyeong) setErrors((prev) => { const { pyeong: _, ...rest } = prev; return rest })
-              }}
-              onFocus={() => setFocused('pyeong')}
-              onBlur={() => setFocused(null)}
-              placeholder="예: 15"
-              className="w-full bg-transparent text-[16px] text-[#222222] placeholder:text-[#C0C0C0] outline-none [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden"
-              style={{ MozAppearance: 'textfield' } as React.CSSProperties}
-            />
-            {errors.pyeong?.[0] && (
-              <p className="text-[12px] text-[#C13515] mt-1">{errors.pyeong[0]}</p>
-            )}
-          </CompoundField>
-          <CompoundField
-            label="방 수"
-            focused={focused === 'bedrooms'}
-          >
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setBedrooms(String(Math.max(1, Number(bedrooms) - 1)))}
-                disabled={Number(bedrooms) <= 1}
-                className="w-8 h-8 rounded-full border border-[#B0B0B0] flex items-center justify-center text-[#717171] hover:border-[#222222] hover:text-[#222222] transition-colors active:scale-95 disabled:opacity-0 disabled:pointer-events-none"
-              >
-                <span className="text-[18px] leading-none">−</span>
-              </button>
-              <span className="text-[16px] font-semibold text-[#222222] tabular-nums">{bedrooms || '0'}</span>
-              <button
-                type="button"
-                onClick={() => setBedrooms(String(Number(bedrooms) + 1))}
-                className="w-8 h-8 rounded-full border border-[#B0B0B0] flex items-center justify-center text-[#717171] hover:border-[#222222] hover:text-[#222222] transition-colors active:scale-95"
-              >
-                <span className="text-[18px] leading-none">+</span>
-              </button>
-            </div>
-          </CompoundField>
-          <CompoundField
-            label="욕실 수"
-            focused={focused === 'bathrooms'}
-            borderRadius="0 0 12px 12px"
-          >
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setBathrooms(String(Math.max(0, Number(bathrooms) - 1)))}
-                className="w-8 h-8 rounded-full border border-[#B0B0B0] flex items-center justify-center text-[#717171] hover:border-[#222222] hover:text-[#222222] transition-colors active:scale-95"
-              >
-                <span className="text-[18px] leading-none">−</span>
-              </button>
-              <span className="text-[16px] font-semibold text-[#222222] tabular-nums">{bathrooms || '0'}</span>
-              <button
-                type="button"
-                onClick={() => setBathrooms(String(Number(bathrooms) + 1))}
-                className="w-8 h-8 rounded-full border border-[#B0B0B0] flex items-center justify-center text-[#717171] hover:border-[#222222] hover:text-[#222222] transition-colors active:scale-95"
-              >
-                <span className="text-[18px] leading-none">+</span>
-              </button>
-            </div>
-          </CompoundField>
-        </CompoundInput>
 
         {/* 에어비앤비 링크 (선택) */}
         <div className="rounded-xl border border-[#B0B0B0]">
@@ -590,13 +519,19 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
           </div>
         )}
 
+        {mode === 'create' && (
+          <div className="rounded-xl border border-[#EBEBEB] bg-[#FAFAFA] px-4 py-4 text-[13px] leading-relaxed text-[#717171]">
+            숙소 등록 후 48시간 이내에 비앤비서가 직접 방문해 운영 정보를 확인하고 등록을 완료해드려요.
+          </div>
+        )}
+
         <LoadingButton
           type="submit"
           loading={isPending}
-          loadingText={mode === 'edit' ? '수정 중...' : '등록 중...'}
+          loadingText={mode === 'edit' ? '수정 중...' : '신청 중...'}
           disabled={airbnbFetching || deleting}
         >
-          {mode === 'edit' ? '수정하기' : '숙소 등록하기'}
+          {mode === 'edit' ? '수정하기' : '숙소 등록 신청하기'}
         </LoadingButton>
 
         {mode === 'edit' && (

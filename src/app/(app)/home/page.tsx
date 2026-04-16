@@ -5,10 +5,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/auth-provider'
 import { useProfile } from '@/lib/hooks/use-profile'
+import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { Logo } from '@/components/logo'
 import { BellIcon, CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { PropertyCard } from '@/components/property-card'
 import {
   Drawer,
   DrawerContent,
@@ -26,6 +28,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 export default function HomePage() {
   const { user } = useAuth()
   const { data: profile } = useProfile()
+  const { data: properties = [], isLoading: propertiesLoading } = useProperties()
   const { data: cleaningRequests = [], isLoading: cleaningLoading } = useCleaningRequests()
   const [processOpen, setProcessOpen] = useState(false)
 
@@ -40,6 +43,9 @@ export default function HomePage() {
   const upcoming = cleaningRequests.filter(
     (r) => r.status !== 'pending_payment' && r.status !== 'cancelled'
   )
+  const activeProperties = properties.filter((property) => property.status === 'active')
+  const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
+  const showPendingActivation = activeProperties.length === 0 && pendingProperties.length > 0
 
   const steps = [
     { num: 1, title: '청소 요청 및 결제', desc: '숙소와 희망 일시를 선택하고 청소를 요청해요.' },
@@ -48,7 +54,7 @@ export default function HomePage() {
     { num: 4, title: '점검 리포트 수신', desc: '청소 완료 후 사진과 함께 시설 점검 리포트를 받아요.' },
   ]
 
-  if (cleaningLoading) {
+  if (cleaningLoading || propertiesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
         <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] border-t-[#717171] animate-spin" />
@@ -74,7 +80,33 @@ export default function HomePage() {
         <p className="text-[14px] text-[#717171] mt-1">{today}</p>
       </div>
 
-      {upcoming.length > 0 ? (
+      {showPendingActivation ? (
+        <div className="px-6 pt-6 pb-8 flex flex-col gap-4">
+          <div className="rounded-2xl bg-[#FFF8EF] px-5 py-5">
+            <div className="inline-flex rounded-full bg-[#FFE7C2] px-2.5 py-1 text-[11px] font-semibold text-[#9A5B00]">
+              등록 대기
+            </div>
+            <h2 className="mt-3 text-[18px] font-semibold text-[#222222]">
+              등록 완료 전에는 청소 요청을 할 수 없어요
+            </h2>
+            <p className="mt-2 text-[14px] leading-relaxed text-[#717171]">
+              숙소 등록 후 48시간 이내에 비앤비서가 직접 방문해 운영 정보를 확인하고 등록을 완료해드려요.
+            </p>
+            <p className="mt-3 text-[13px] text-[#717171]">
+              현장에서 출입 정보, 도어락, 와이파이, 시설 정보를 함께 확인합니다.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <p className="text-[13px] font-medium text-[#717171] px-1">등록 대기 숙소</p>
+            {pendingProperties.map((property) => (
+              <div key={property.id} className="rounded-xl border border-[#EBEBEB] bg-white">
+                <PropertyCard property={property} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : upcoming.length > 0 ? (
         /* ─── Upcoming Cleanings ─── */
         <div className="px-6 pt-6 flex flex-col gap-3">
           <p className="text-[13px] font-medium text-[#717171] px-1">청소 내역</p>

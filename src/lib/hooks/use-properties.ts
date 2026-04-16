@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth-provider'
 
 type Property = {
   id: string
+  status: 'pending_activation' | 'active'
   name: string
   address: string
   addressDetail: string | null
@@ -11,6 +12,7 @@ type Property = {
   bedrooms: number
   bathrooms: number
   airbnbListingId: string | null
+  activatedAt?: string | null
 }
 
 export function useProperties() {

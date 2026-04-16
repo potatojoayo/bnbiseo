@@ -5,14 +5,30 @@ import { db } from '@/db'
 import { properties, fixtures, repairRequests } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 
-const PropertySchema = z.object({
+const CreatePropertySchema = z.object({
   name: z.string().min(1, { message: '숙소 이름을 입력해주세요.' }).trim(),
   address: z.string().min(1, { message: '주소를 입력해주세요.' }).trim(),
   addressDetail: z.string().optional(),
   pyeong: z.number().min(1, { message: '면적을 입력해주세요.' }).optional(),
   bedrooms: z.number().min(0).default(1),
   bathrooms: z.number().min(0).default(1),
-  propertyType: z.enum(['apartment', 'house', 'studio', 'villa', 'other']),
+  propertyType: z.enum(['apartment', 'house', 'studio', 'villa', 'other']).default('apartment'),
+  description: z.string().optional(),
+  nearbyInfo: z.string().optional(),
+  checkinInfo: z.string().optional(),
+  wifiSsid: z.string().optional(),
+  wifiPassword: z.string().optional(),
+  airbnbListingId: z.string().optional(),
+})
+
+const UpdatePropertySchema = z.object({
+  name: z.string().min(1, { message: '숙소 이름을 입력해주세요.' }).trim().optional(),
+  address: z.string().min(1, { message: '주소를 입력해주세요.' }).trim().optional(),
+  addressDetail: z.string().optional(),
+  pyeong: z.number().min(1, { message: '면적을 입력해주세요.' }).optional(),
+  bedrooms: z.number().min(0).optional(),
+  bathrooms: z.number().min(0).optional(),
+  propertyType: z.enum(['apartment', 'house', 'studio', 'villa', 'other']).optional(),
   description: z.string().optional(),
   nearbyInfo: z.string().optional(),
   checkinInfo: z.string().optional(),
@@ -64,7 +80,7 @@ propertiesRoutes.get('/:id', async (c) => {
 propertiesRoutes.post('/', async (c) => {
   const profileId = c.get('profileId')
   const body = await c.req.json()
-  const validated = PropertySchema.safeParse(body)
+  const validated = CreatePropertySchema.safeParse(body)
 
   if (!validated.success) {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
@@ -83,16 +99,39 @@ propertiesRoutes.patch('/:id', async (c) => {
   const profileId = c.get('profileId')
   const id = c.req.param('id')
   const body = await c.req.json()
-  const validated = PropertySchema.safeParse(body)
+  const validated = UpdatePropertySchema.safeParse(body)
 
   if (!validated.success) {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
   }
 
+  const [existing] = await db
+    .select({
+      id: properties.id,
+      status: properties.status,
+    })
+    .from(properties)
+    .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
+    .limit(1)
+
+  if (!existing) {
+    return c.json({ error: '숙소를 찾을 수 없거나 권한이 없습니다.' }, 404)
+  }
+
+  if (
+    existing.status === 'active'
+    && (
+      validated.data.address !== undefined
+      || validated.data.addressDetail !== undefined
+    )
+  ) {
+    return c.json({ error: '등록 완료 후에는 주소를 수정할 수 없어요.' }, 400)
+  }
+
   const [updated] = await db
     .update(properties)
     .set({ ...validated.data, updatedAt: new Date() })
-    .where(and(eq(properties.id, id), eq(properties.hostId, profileId)))
+    .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
     .returning()
 
   if (!updated) {

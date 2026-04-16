@@ -23,6 +23,11 @@ export const propertyTypeEnum = pgEnum('property_type', [
   'other',
 ])
 
+export const propertyStatusEnum = pgEnum('property_status', [
+  'pending_activation',
+  'active',
+])
+
 export const fixtureCategoryEnum = pgEnum('fixture_category', [
   'lighting',
   'faucet',
@@ -109,6 +114,7 @@ export const properties = pgTable('properties', {
   hostId: uuid('host_id')
     .notNull()
     .references(() => profiles.id, { onDelete: 'cascade' }),
+  status: propertyStatusEnum('status').default('pending_activation').notNull(),
   airbnbListingId: text('airbnb_listing_id'),
   name: text('name').notNull(),
   address: text('address').notNull(),
@@ -123,6 +129,7 @@ export const properties = pgTable('properties', {
   wifiSsid: text('wifi_ssid'),
   wifiPassword: text('wifi_password'),
   qrToken: uuid('qr_token').defaultRandom().notNull(),
+  activatedAt: timestamp('activated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),

@@ -46,6 +46,7 @@ export default function CleaningDetailPage() {
 
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [currentTime] = useState(() => Date.now())
 
   async function handleCancel() {
     setCancelling(true)
@@ -87,7 +88,7 @@ export default function CleaningDetailPage() {
 
   // 취소 정책: pending 전액 환불, confirmed 24시간 전까지만
   const scheduledAt = new Date(`${cleaning.scheduledDate}T${cleaning.scheduledTime}:00+09:00`)
-  const hoursUntil = (scheduledAt.getTime() - Date.now()) / (1000 * 60 * 60)
+  const hoursUntil = (scheduledAt.getTime() - currentTime) / (1000 * 60 * 60)
   const canCancel = cleaning.status === 'pending' || (cleaning.status === 'confirmed' && hoursUntil >= 24)
   const isFullRefund = cleaning.status === 'pending'
 
