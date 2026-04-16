@@ -10,18 +10,15 @@ import { CalendarPicker } from '@/components/calendar-picker'
 import { PropertyCard } from '@/components/property-card'
 import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
+import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
 import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
+import { ProcessDrawer } from '@/components/process-drawer'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!
 
@@ -64,13 +61,6 @@ export default function CleaningPage() {
   const estimatedPrice = priceInfo
     ? (isFirstCleaning ? Math.max(priceInfo.total - FIRST_CLEANING_DISCOUNT, 0) : priceInfo.total)
     : 0
-
-  const registrationSteps = [
-    { num: 1, title: '숙소 등록 접수', desc: '호스트가 입력한 숙소 정보를 먼저 확인해요.' },
-    { num: 2, title: '현장 방문', desc: '48시간 이내에 직접 방문해 숙소 상태를 살펴봐요.' },
-    { num: 3, title: '숙소 정보 수집', desc: '숙소 및 시설 정보를 꼼꼼히 기록해 둘게요.' },
-    { num: 4, title: '등록 완료', desc: '등록이 끝나면 바로 청소를 요청할 수 있어요.' },
-  ]
 
   useEffect(() => {
     if (!propertiesLoading && activeProperties.length === 1 && !selectedPropertyId) {
@@ -186,7 +176,7 @@ export default function CleaningPage() {
 
         <div className="flex-1 flex flex-col items-center justify-center text-center">
           <h2 className="text-[18px] font-semibold text-[#222222] mb-2">
-            숙소 등록 후 청소를 요청할 수 있어요
+            숙소 등록 완료 후 청소를 요청할 수 있어요
           </h2>
           <p className="text-[14px] text-[#717171] leading-relaxed">
             48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
@@ -200,39 +190,12 @@ export default function CleaningPage() {
           </button>
         </div>
 
-        <Drawer open={registrationDrawerOpen} onOpenChange={setRegistrationDrawerOpen}>
-          <DrawerContent>
-            <div className="w-full px-5 pb-8 overflow-y-auto">
-              <DrawerHeader className="px-0">
-                <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                  숙소 등록 진행 과정
-                </DrawerTitle>
-              </DrawerHeader>
-              <div className="flex flex-col gap-0 mt-2">
-                {registrationSteps.map((step, i) => (
-                  <div key={step.num} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <div className="w-7 h-7 rounded-full bg-[#222222] text-white text-[13px] font-semibold flex items-center justify-center shrink-0">
-                        {step.num}
-                      </div>
-                      {i < registrationSteps.length - 1 && (
-                        <div className="w-px flex-1 bg-[#EBEBEB] my-1" />
-                      )}
-                    </div>
-                    <div className="pb-5">
-                      <p className="text-[15px] font-semibold text-[#222222]">
-                        {step.title}
-                      </p>
-                      <p className="text-[13px] text-[#717171] mt-0.5 leading-relaxed">
-                        {step.desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </DrawerContent>
-        </Drawer>
+        <ProcessDrawer
+          open={registrationDrawerOpen}
+          onOpenChange={setRegistrationDrawerOpen}
+          title="숙소 등록 진행 과정"
+          steps={PROPERTY_REGISTRATION_STEPS}
+        />
       </div>
     )
   }

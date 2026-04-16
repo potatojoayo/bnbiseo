@@ -15,6 +15,7 @@ type PendingActivationPanelProps = {
   description: string
   properties: PendingProperty[]
   className?: string
+  action?: React.ReactNode
 }
 
 export function PendingActivationPanel({
@@ -22,6 +23,7 @@ export function PendingActivationPanel({
   description,
   properties,
   className,
+  action,
 }: PendingActivationPanelProps) {
   return (
     <div className={className}>
@@ -40,6 +42,7 @@ export function PendingActivationPanel({
         <p className="mt-2 text-[14px] leading-relaxed text-[#717171]">
           {description}
         </p>
+        {action}
       </div>
 
       {properties.length > 0 && (

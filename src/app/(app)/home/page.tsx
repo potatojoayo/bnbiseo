@@ -10,14 +10,10 @@ import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { Logo } from '@/components/logo'
 import { BellIcon, CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { CLEANING_PROCESS_STEPS, PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { PropertyCard } from '@/components/property-card'
 import { PendingActivationPanel } from '@/components/pending-activation-panel'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
+import { ProcessDrawer } from '@/components/process-drawer'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: '매니저 배정 중', color: 'bg-[#FFF1F3] text-brand' },
@@ -48,20 +44,6 @@ export default function HomePage() {
   const activeProperties = properties.filter((property) => property.status === 'active')
   const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
   const showPendingOnlyState = activeProperties.length === 0 && pendingProperties.length > 0
-
-  const steps = [
-    { num: 1, title: '청소 요청 및 결제', desc: '숙소와 희망 일시를 선택하고 청소를 요청해요.' },
-    { num: 2, title: '매니저 배정', desc: '비앤비서 전문 매니저가 배정되면 알림을 보내드려요.' },
-    { num: 3, title: '호텔식 청소 + 시설 점검', desc: '호텔식 침구 세팅과 15항목 시설 점검을 진행해요.' },
-    { num: 4, title: '점검 리포트 수신', desc: '청소 완료 후 사진과 함께 시설 점검 리포트를 받아요.' },
-  ]
-
-  const registrationSteps = [
-    { num: 1, title: '숙소 등록 접수', desc: '호스트가 입력한 숙소 정보를 먼저 확인해요.' },
-    { num: 2, title: '현장 방문', desc: '48시간 이내에 직접 방문해 숙소 상태를 살펴봐요.' },
-    { num: 3, title: '숙소 정보 수집', desc: '숙소 및 시설 정보를 꼼꼼히 기록해 둘게요.' },
-    { num: 4, title: '등록 완료', desc: '등록이 끝나면 바로 청소를 요청할 수 있어요.' },
-  ]
 
   function renderPendingList() {
     return (
@@ -120,16 +102,16 @@ export default function HomePage() {
             title="숙소 등록을 진행하고 있어요"
             description="48시간 이내 직접 방문해 숙소 등록을 완료해드려요."
             properties={pendingProperties}
+            action={
+              <button
+                type="button"
+                onClick={() => setRegistrationProcessOpen(true)}
+                className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors mt-4"
+              >
+                숙소 등록은 어떻게 진행되나요?
+              </button>
+            }
           />
-          <div className="flex justify-center mt-4">
-            <button
-              type="button"
-              onClick={() => setRegistrationProcessOpen(true)}
-              className="text-[13px] text-[#717171] underline underline-offset-2 hover:text-[#222222] transition-colors"
-            >
-              숙소 등록은 어떻게 진행되나요?
-            </button>
-          </div>
         </div>
       ) : upcoming.length > 0 ? (
         /* ─── Upcoming Cleanings ─── */
@@ -220,75 +202,19 @@ export default function HomePage() {
       )}
 
       {/* Process Drawer */}
-      <Drawer open={registrationProcessOpen} onOpenChange={setRegistrationProcessOpen}>
-        <DrawerContent>
-          <div className="w-full px-5 pb-8 overflow-y-auto">
-            <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                숙소 등록 진행 과정
-              </DrawerTitle>
-            </DrawerHeader>
-            <div className="flex flex-col gap-0 mt-2">
-              {registrationSteps.map((step, i) => (
-                <div key={step.num} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className="w-7 h-7 rounded-full bg-[#222222] text-white text-[13px] font-semibold flex items-center justify-center shrink-0">
-                      {step.num}
-                    </div>
-                    {i < registrationSteps.length - 1 && (
-                      <div className="w-px flex-1 bg-[#EBEBEB] my-1" />
-                    )}
-                  </div>
-                  <div className="pb-5">
-                    <p className="text-[15px] font-semibold text-[#222222]">
-                      {step.title}
-                    </p>
-                    <p className="text-[13px] text-[#717171] mt-0.5 leading-relaxed">
-                      {step.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <ProcessDrawer
+        open={registrationProcessOpen}
+        onOpenChange={setRegistrationProcessOpen}
+        title="숙소 등록 진행 과정"
+        steps={PROPERTY_REGISTRATION_STEPS}
+      />
 
-      <Drawer open={processOpen} onOpenChange={setProcessOpen}>
-        <DrawerContent>
-          <div className="w-full px-5 pb-8 overflow-y-auto">
-            <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-[#222222]">
-                청소 진행 과정
-              </DrawerTitle>
-            </DrawerHeader>
-            <div className="flex flex-col gap-0 mt-2">
-              {steps.map((step, i) => (
-                <div key={step.num} className="flex gap-3">
-                  {/* Timeline */}
-                  <div className="flex flex-col items-center">
-                    <div className="w-7 h-7 rounded-full bg-[#222222] text-white text-[13px] font-semibold flex items-center justify-center shrink-0">
-                      {step.num}
-                    </div>
-                    {i < steps.length - 1 && (
-                      <div className="w-px flex-1 bg-[#EBEBEB] my-1" />
-                    )}
-                  </div>
-                  {/* Content */}
-                  <div className="pb-5">
-                    <p className="text-[15px] font-semibold text-[#222222]">
-                      {step.title}
-                    </p>
-                    <p className="text-[13px] text-[#717171] mt-0.5 leading-relaxed">
-                      {step.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <ProcessDrawer
+        open={processOpen}
+        onOpenChange={setProcessOpen}
+        title="청소 진행 과정"
+        steps={CLEANING_PROCESS_STEPS}
+      />
     </div>
   )
 }
