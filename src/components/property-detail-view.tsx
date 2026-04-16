@@ -25,6 +25,7 @@ type PropertyDetail = {
   address: string
   addressDetail: string | null
   pyeong: number | null
+  livingRooms: number | null
   bedrooms: number | null
   bathrooms: number | null
   airbnbListingId: string | null
@@ -109,7 +110,8 @@ export function PropertyDetailView({
 
   const details = [
     property.pyeong != null && `${property.pyeong}평`,
-    property.bedrooms != null && `방 ${property.bedrooms}`,
+    property.livingRooms != null && `거실 ${property.livingRooms}`,
+    property.bedrooms != null && `침실 ${property.bedrooms}`,
     property.bathrooms != null && `욕실 ${property.bathrooms}`,
   ].filter(Boolean)
 

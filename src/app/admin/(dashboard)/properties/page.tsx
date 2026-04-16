@@ -77,7 +77,8 @@ export default function AdminPropertiesPage() {
               const details = p.status === 'active'
                 ? [
                     p.pyeong && `${p.pyeong}평`,
-                    p.bedrooms != null && `방 ${p.bedrooms}`,
+                    p.livingRooms != null && `거실 ${p.livingRooms}`,
+                    p.bedrooms != null && `침실 ${p.bedrooms}`,
                     p.bathrooms != null && `욕실 ${p.bathrooms}`,
                   ].filter(Boolean)
                 : []
@@ -171,7 +172,7 @@ export default function AdminPropertiesPage() {
                     <TableCell>{p.status === 'active' && p.pyeong ? `${p.pyeong}평` : '-'}</TableCell>
                     <TableCell>
                       {p.status === 'active'
-                        ? [p.bedrooms != null && `방 ${p.bedrooms}`, p.bathrooms != null && `욕실 ${p.bathrooms}`].filter(Boolean).join(' · ') || '-'
+                        ? [p.livingRooms != null && `거실 ${p.livingRooms}`, p.bedrooms != null && `침실 ${p.bedrooms}`, p.bathrooms != null && `욕실 ${p.bathrooms}`].filter(Boolean).join(' · ') || '-'
                         : '-'}
                     </TableCell>
                     <TableCell>{p.hostName || p.hostEmail || '-'}</TableCell>

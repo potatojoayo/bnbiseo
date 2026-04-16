@@ -124,7 +124,7 @@ export default function CleaningDetailPage() {
               <span className="font-medium">{cleaning.propertyName}</span>
               {cleaning.propertyPyeong && (
                 <span className="text-ink-muted ml-1.5 text-[12px]">
-                  {cleaning.propertyPyeong}평 · 방 {cleaning.propertyBedrooms} · 욕실 {cleaning.propertyBathrooms}
+                  {cleaning.propertyPyeong}평 · 침실 {cleaning.propertyBedrooms} · 욕실 {cleaning.propertyBathrooms}
                 </span>
               )}
             </div>

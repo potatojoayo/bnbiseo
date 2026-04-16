@@ -1,17 +1,15 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
-import { properties, fixtures, repairRequests } from '@/db/schema'
+import { properties, fixtures, propertySpaces } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 
 const CreatePropertySchema = z.object({
   name: z.string().min(1, { message: '숙소 이름을 입력해주세요.' }).trim(),
   address: z.string().min(1, { message: '주소를 입력해주세요.' }).trim(),
   addressDetail: z.string().optional(),
-  pyeong: z.number().min(1, { message: '면적을 입력해주세요.' }).optional(),
-  bedrooms: z.number().min(0).optional(),
-  bathrooms: z.number().min(0).optional(),
   propertyType: z.enum(['apartment', 'house', 'studio', 'villa', 'other']).default('apartment'),
   description: z.string().optional(),
   nearbyInfo: z.string().optional(),
@@ -25,9 +23,6 @@ const UpdatePropertySchema = z.object({
   name: z.string().min(1, { message: '숙소 이름을 입력해주세요.' }).trim().optional(),
   address: z.string().min(1, { message: '주소를 입력해주세요.' }).trim().optional(),
   addressDetail: z.string().optional(),
-  pyeong: z.number().min(1, { message: '면적을 입력해주세요.' }).optional(),
-  bedrooms: z.number().min(0).optional(),
-  bathrooms: z.number().min(0).optional(),
   propertyType: z.enum(['apartment', 'house', 'studio', 'villa', 'other']).optional(),
   description: z.string().optional(),
   nearbyInfo: z.string().optional(),
@@ -50,7 +45,26 @@ propertiesRoutes.get('/', async (c) => {
     .from(properties)
     .where(and(eq(properties.hostId, profileId), isNull(properties.deletedAt)))
 
-  return c.json(result)
+  const propertyIds = result.map((property) => property.id)
+  const spaces = propertyIds.length > 0
+    ? await db
+      .select({
+        propertyId: propertySpaces.propertyId,
+        category: propertySpaces.category,
+        pyeong: propertySpaces.pyeong,
+      })
+      .from(propertySpaces)
+      .where(inArray(propertySpaces.propertyId, propertyIds))
+    : []
+
+  const summaries = summarizeSpacesByProperty(spaces)
+
+  return c.json(
+    result.map((property) => ({
+      ...property,
+      ...summaries.get(property.id),
+    })),
+  )
 })
 
 // Get single property with fixtures
@@ -73,7 +87,19 @@ propertiesRoutes.get('/:id', async (c) => {
     .from(fixtures)
     .where(eq(fixtures.propertyId, id))
 
-  return c.json({ ...property, fixtures: propertyFixtures })
+  const spaces = await db
+    .select({
+      category: propertySpaces.category,
+      pyeong: propertySpaces.pyeong,
+    })
+    .from(propertySpaces)
+    .where(eq(propertySpaces.propertyId, id))
+
+  return c.json({
+    ...property,
+    ...summarizeSpaces(spaces),
+    fixtures: propertyFixtures,
+  })
 })
 
 // Create property

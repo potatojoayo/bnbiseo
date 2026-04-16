@@ -2,9 +2,10 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { eq, and, desc } from 'drizzle-orm'
 import { db } from '@/db'
-import { cleaningRequests, properties } from '@/db/schema'
+import { cleaningRequests, properties, propertySpaces } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
+import { summarizeSpaces } from '@/lib/property-space-summary'
 
 const CleaningRequestSchema = z.object({
   propertyId: z.string().uuid(),
@@ -80,9 +81,6 @@ cleaningRoutes.get('/:id', async (c) => {
       propertyName: properties.name,
       propertyAddress: properties.address,
       propertyAddressDetail: properties.addressDetail,
-      propertyPyeong: properties.pyeong,
-      propertyBedrooms: properties.bedrooms,
-      propertyBathrooms: properties.bathrooms,
     })
     .from(cleaningRequests)
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
@@ -93,7 +91,22 @@ cleaningRoutes.get('/:id', async (c) => {
     return c.json({ error: '청소 요청을 찾을 수 없어요' }, 404)
   }
 
-  return c.json(request)
+  const spaces = await db
+    .select({
+      category: propertySpaces.category,
+      pyeong: propertySpaces.pyeong,
+    })
+    .from(propertySpaces)
+    .where(eq(propertySpaces.propertyId, request.propertyId))
+
+  const summary = summarizeSpaces(spaces)
+
+  return c.json({
+    ...request,
+    propertyPyeong: summary.pyeong,
+    propertyBedrooms: summary.bedrooms,
+    propertyBathrooms: summary.bathrooms,
+  })
 })
 
 // Create cleaning request (pending_payment)
@@ -123,15 +136,26 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ error: '등록 완료된 숙소만 청소를 요청할 수 있어요' }, 400)
   }
 
-  if (!property.pyeong) {
+  const spaces = await db
+    .select({
+      category: propertySpaces.category,
+      pyeong: propertySpaces.pyeong,
+    })
+    .from(propertySpaces)
+    .where(eq(propertySpaces.propertyId, propertyId))
+
+  const summary = summarizeSpaces(spaces)
+
+  if (!summary.pyeong) {
     return c.json({ error: '숙소 면적 정보가 필요해요' }, 400)
   }
 
   // Calculate price
   const priceResult = calculateCleaningPrice({
-    pyeong: property.pyeong,
-    bedrooms: property.bedrooms ?? 0,
-    bathrooms: property.bathrooms ?? 0,
+    pyeong: summary.pyeong,
+    livingRooms: summary.livingRooms ?? 0,
+    bedrooms: summary.bedrooms ?? 0,
+    bathrooms: summary.bathrooms ?? 0,
     isUrgent,
   })
 
@@ -252,15 +276,30 @@ cleaningRoutes.post('/confirm', async (c) => {
       name: properties.name,
       address: properties.address,
       addressDetail: properties.addressDetail,
-      pyeong: properties.pyeong,
-      bedrooms: properties.bedrooms,
-      bathrooms: properties.bathrooms,
     })
     .from(properties)
     .where(eq(properties.id, request.propertyId))
     .limit(1)
 
-  return c.json({ ...updated, property: property || null })
+  const spaces = property
+    ? await db
+      .select({
+        category: propertySpaces.category,
+        pyeong: propertySpaces.pyeong,
+      })
+      .from(propertySpaces)
+      .where(eq(propertySpaces.propertyId, request.propertyId))
+    : []
+
+  return c.json({
+    ...updated,
+    property: property
+      ? {
+          ...property,
+          ...summarizeSpaces(spaces),
+        }
+      : null,
+  })
 })
 
 // Cancel cleaning request

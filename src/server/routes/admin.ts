@@ -14,6 +14,7 @@ import {
   propertySpacePhotos,
 } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 
 export const adminRoutes = new Hono<AuthEnv>()
 
@@ -578,9 +579,6 @@ adminRoutes.get('/properties', async (c) => {
       status: properties.status,
       name: properties.name,
       address: properties.address,
-      pyeong: properties.pyeong,
-      bedrooms: properties.bedrooms,
-      bathrooms: properties.bathrooms,
       hostName: profiles.fullName,
       hostEmail: profiles.email,
       createdAt: properties.createdAt,
@@ -591,7 +589,25 @@ adminRoutes.get('/properties', async (c) => {
     .where(isNull(properties.deletedAt))
     .orderBy(desc(properties.createdAt))
 
-  return c.json(result)
+  const spaces = result.length > 0
+    ? await db
+      .select({
+        propertyId: propertySpaces.propertyId,
+        category: propertySpaces.category,
+        pyeong: propertySpaces.pyeong,
+      })
+      .from(propertySpaces)
+      .where(inArray(propertySpaces.propertyId, result.map((property) => property.id)))
+    : []
+
+  const summaries = summarizeSpacesByProperty(spaces)
+
+  return c.json(
+    result.map((property) => ({
+      ...property,
+      ...summaries.get(property.id),
+    })),
+  )
 })
 
 adminRoutes.get('/properties/:id/registration', async (c) => {
@@ -703,6 +719,7 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
 
   return c.json({
     ...property,
+    ...summarizeSpaces(spaces),
     spaces: spacesWithPhotos,
     fixtures: fixturesWithPhotos,
   })
@@ -1047,18 +1064,6 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
   }
 
   await db.transaction(async (tx) => {
-    const spaces = await tx
-      .select({
-        category: propertySpaces.category,
-        pyeong: propertySpaces.pyeong,
-      })
-      .from(propertySpaces)
-      .where(eq(propertySpaces.propertyId, id))
-
-    const totalPyeong = spaces.reduce((sum, space) => sum + (space.pyeong ?? 0), 0)
-    const bedroomCount = spaces.filter((space) => space.category === 'bedroom').length
-    const bathroomCount = spaces.filter((space) => space.category === 'bathroom').length
-
     await tx
       .update(properties)
       .set({
@@ -1066,9 +1071,6 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
         doorLockPassword: validated.data.doorLockPassword,
         wifiSsid: validated.data.wifiSsid || null,
         wifiPassword: validated.data.wifiPassword || null,
-        pyeong: totalPyeong > 0 ? totalPyeong : null,
-        bedrooms: bedroomCount > 0 ? bedroomCount : null,
-        bathrooms: bathroomCount > 0 ? bathroomCount : null,
         status: 'active',
         activatedAt: new Date(),
         updatedAt: new Date(),

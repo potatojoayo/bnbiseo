@@ -67,6 +67,7 @@ type Property = {
   name: string
   address: string
   pyeong: number | null
+  livingRooms: number | null
   bedrooms: number | null
   bathrooms: number | null
   hostName: string | null
@@ -107,6 +108,7 @@ type RegistrationDetail = {
   address: string
   addressDetail: string | null
   pyeong: number | null
+  livingRooms: number | null
   bedrooms: number | null
   bathrooms: number | null
   entrancePassword: string | null

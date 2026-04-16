@@ -20,22 +20,23 @@ export const CLEANING_PRICING = {
 
 export function calculateCleaningPrice(input: {
   pyeong: number
+  livingRooms: number
   bedrooms: number
   bathrooms: number
   isUrgent?: boolean
 }) {
-  const { pyeong, bedrooms, bathrooms, isUrgent = false } = input
+  const { pyeong, livingRooms, bedrooms, bathrooms, isUrgent = false } = input
   const tier = CLEANING_PRICING.areaTiers.find(
     (t) => pyeong >= t.min && pyeong <= t.max,
   )
   const pricePerPyeong = tier?.pricePerPyeong ?? 1600
 
   const areaCharge = pyeong * pricePerPyeong
-  const bedroomCharge = bedrooms * CLEANING_PRICING.perBedroom
+  const roomCharge = (livingRooms + bedrooms) * CLEANING_PRICING.perBedroom
   const bathroomCharge = bathrooms * CLEANING_PRICING.perBathroom
 
   const subtotal = Math.max(
-    areaCharge + bedroomCharge + bathroomCharge,
+    areaCharge + roomCharge + bathroomCharge,
     CLEANING_PRICING.minimumCharge,
   )
 

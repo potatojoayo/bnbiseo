@@ -23,6 +23,7 @@ type CleaningResult = {
     address: string
     addressDetail: string | null
     pyeong: number | null
+    livingRooms: number | null
     bedrooms: number | null
     bathrooms: number | null
   } | null
@@ -133,11 +134,12 @@ function SuccessContent() {
               <HomeIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
               <div className="text-[14px] text-ink">
                 <span className="font-medium">{cleaning.property.name}</span>
-                {(cleaning.property.pyeong || cleaning.property.bedrooms != null || cleaning.property.bathrooms != null) && (
+                {(cleaning.property.pyeong || cleaning.property.livingRooms != null || cleaning.property.bedrooms != null || cleaning.property.bathrooms != null) && (
                   <span className="text-ink-muted ml-1.5 text-[12px]">
                     {[
                       cleaning.property.pyeong && `${cleaning.property.pyeong}평`,
-                      cleaning.property.bedrooms != null && `방 ${cleaning.property.bedrooms}`,
+                      cleaning.property.livingRooms != null && `거실 ${cleaning.property.livingRooms}`,
+                      cleaning.property.bedrooms != null && `침실 ${cleaning.property.bedrooms}`,
                       cleaning.property.bathrooms != null && `욕실 ${cleaning.property.bathrooms}`,
                     ].filter(Boolean).join(' · ')}
                   </span>

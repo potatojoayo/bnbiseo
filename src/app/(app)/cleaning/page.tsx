@@ -53,6 +53,7 @@ export default function CleaningPage() {
   const priceInfo = selectedProperty?.pyeong
     ? calculateCleaningPrice({
         pyeong: selectedProperty.pyeong,
+        livingRooms: selectedProperty.livingRooms ?? 0,
         bedrooms: selectedProperty.bedrooms ?? 0,
         bathrooms: selectedProperty.bathrooms ?? 0,
         isUrgent,
@@ -364,7 +365,7 @@ export default function CleaningPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">추가 요금</p>
                   <div className="rounded-lg bg-surface-soft px-4 py-3 text-[14px] text-ink leading-relaxed">
                     방과 욕실 수에 따라 추가 비용이 발생해요.
-                    <span className="block text-[13px] text-ink-muted mt-1">방 1개당 8,000원 · 욕실 1개당 10,000원</span>
+                    <span className="block text-[13px] text-ink-muted mt-1">침실 1개당 8,000원 · 욕실 1개당 10,000원</span>
                   </div>
                 </div>
 

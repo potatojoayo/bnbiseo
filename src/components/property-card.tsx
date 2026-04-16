@@ -8,6 +8,7 @@ type Property = {
   address: string
   addressDetail?: string | null
   pyeong?: number | null
+  livingRooms?: number | null
   bedrooms?: number | null
   bathrooms?: number | null
 }
@@ -21,9 +22,10 @@ interface PropertyCardProps {
 export function PropertyCard({ property, selected, className }: PropertyCardProps) {
   const details = property.status === 'pending_activation'
     ? []
-    : [
+      : [
         property.pyeong && `${property.pyeong}평`,
-        property.bedrooms && `방 ${property.bedrooms}`,
+        property.livingRooms && `거실 ${property.livingRooms}`,
+        property.bedrooms && `침실 ${property.bedrooms}`,
         property.bathrooms && `욕실 ${property.bathrooms}`,
       ].filter(Boolean)
 
