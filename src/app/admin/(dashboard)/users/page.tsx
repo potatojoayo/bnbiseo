@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { useAdminUsers } from '@/lib/hooks/use-admin'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 
@@ -15,27 +14,27 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function AdminUsersPage() {
   const { data: users = [], isLoading } = useAdminUsers()
-  const isMobile = useIsMobile()
   const [page, setPage] = useState(1)
   const { paged, totalPages } = useTablePagination(users, page)
 
   return (
     <>
-      <SiteHeader title="회원 관리" />
-      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
+      {!isLoading && <SiteHeader title="회원 관리" />}
+      {isLoading ? (
+        <div className="flex min-h-[100dvh] items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+        </div>
+      ) : (
+      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
         <div className="flex items-center h-9">
           <p className="text-[14px] text-ink-muted">총 {users.length}명</p>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
-          </div>
-        ) : users.length === 0 ? (
+        {users.length === 0 ? (
           <p className="py-20 text-center text-[14px] text-ink-muted">회원이 없어요</p>
-        ) : isMobile ? (
-          /* ─── Mobile: Cards ─── */
-          <div className="flex flex-col gap-3">
+        ) : (
+          <>
+          <div className="flex flex-col gap-3 md:hidden">
             {users.map((u) => (
               <div key={u.id} className="rounded-xl border border-outline-dim px-4 py-4">
                 <div className="flex items-center justify-between mb-1">
@@ -51,10 +50,7 @@ export default function AdminUsersPage() {
               </div>
             ))}
           </div>
-        ) : (
-          /* ─── Desktop: Table ─── */
-          <>
-          <div className="overflow-hidden rounded-xl border border-outline-dim">
+          <div className="overflow-hidden rounded-xl border border-outline-dim max-md:hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -91,6 +87,7 @@ export default function AdminUsersPage() {
           </>
         )}
       </div>
+      )}
     </>
   )
 }

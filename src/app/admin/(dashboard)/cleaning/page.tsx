@@ -5,7 +5,6 @@ import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
 import { useAdminCleaning, useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 import {
@@ -42,10 +41,10 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function AdminCleaningPage() {
   const [tab, setTab] = useState('')
-  const { data: requests = [], isLoading } = useAdminCleaning(tab || undefined)
-  const { data: allManagers = [] } = useAdminManagers()
+  const { data: requests = [], isLoading: requestsLoading } = useAdminCleaning(tab || undefined)
+  const { data: allManagers = [], isLoading: managersLoading } = useAdminManagers()
   const invalidate = useInvalidateAdmin()
-  const isMobile = useIsMobile()
+  const isPageLoading = requestsLoading || managersLoading
 
   const activeManagers = allManagers.filter((m) => m.isActive)
 
@@ -79,8 +78,13 @@ export default function AdminCleaningPage() {
 
   return (
     <>
-      <SiteHeader title="청소 관리" />
-      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
+      {!isPageLoading && <SiteHeader title="청소 관리" />}
+      {isPageLoading ? (
+        <div className="flex min-h-[100dvh] items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+        </div>
+      ) : (
+      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
         {/* Tabs */}
         <div className="flex gap-2 overflow-x-auto">
           {TABS.map((t) => (
@@ -96,15 +100,11 @@ export default function AdminCleaningPage() {
           ))}
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
-          </div>
-        ) : requests.length === 0 ? (
+        {requests.length === 0 ? (
           <p className="py-20 text-center text-[14px] text-ink-muted">청소 요청이 없어요</p>
-        ) : isMobile ? (
-          /* ─── Mobile: Cards ─── */
-          <div className="flex flex-col gap-3">
+        ) : (
+          <>
+          <div className="flex flex-col gap-3 md:hidden">
             {requests.map((r) => (
               <div key={r.id} className="rounded-xl border border-outline-dim px-4 py-4">
                 <div className="flex items-center justify-between mb-2">
@@ -128,10 +128,7 @@ export default function AdminCleaningPage() {
               </div>
             ))}
           </div>
-        ) : (
-          /* ─── Desktop: Table ─── */
-          <>
-          <div className="overflow-hidden rounded-xl border border-outline-dim">
+          <div className="overflow-hidden rounded-xl border border-outline-dim max-md:hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -175,6 +172,7 @@ export default function AdminCleaningPage() {
           </>
         )}
       </div>
+      )}
 
       {/* Assign Manager Drawer */}
       <Drawer open={assignOpen} onOpenChange={setAssignOpen}>

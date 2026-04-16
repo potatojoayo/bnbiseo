@@ -8,7 +8,6 @@ import { ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, XIcon } from 'lucide-
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
 import { api, ApiError, supabase } from '@/lib/api-client'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
@@ -55,7 +54,6 @@ function getSuggestedName(
 
 export default function AdminSpaceCreatePage() {
   const { id } = useParams<{ id: string }>()
-  const isMobile = useIsMobile()
   const router = useRouter()
   const invalidate = useInvalidateAdmin()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -190,14 +188,8 @@ export default function AdminSpaceCreatePage() {
   if (loading) {
     return (
       <>
-        {!isMobile && <SiteHeader title="공간 추가" />}
-        {isMobile && (
-          <div className="mx-auto w-full max-w-[720px] px-6 pt-6 max-md:p-5">
-            <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-ink">공간 추가</h1>
-          </div>
-        )}
-        <div className="flex flex-1 items-center justify-center py-20">
+        <SiteHeader title="공간 추가" />
+        <div className="flex min-h-[100dvh] items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
         </div>
       </>
@@ -206,14 +198,12 @@ export default function AdminSpaceCreatePage() {
 
   return (
     <>
-      {!isMobile && <SiteHeader title="공간 추가" />}
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:p-5">
-        {isMobile && (
-          <div className="-mb-1">
-            <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-ink">공간 추가</h1>
-          </div>
-        )}
+      <SiteHeader title="공간 추가" />
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
+        <div className="-mb-1 md:hidden">
+          <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
+          <h1 className="mt-2 text-[22px] font-semibold text-ink">공간 추가</h1>
+        </div>
         <section className="space-y-4">
           <div>
             <p className="text-[16px] font-semibold text-ink">공간 정보</p>

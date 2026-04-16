@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { PlusIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
@@ -38,7 +37,6 @@ function formatPhoneNumber(value: string) {
 export default function AdminManagersPage() {
   const { data: managers = [], isLoading } = useAdminManagers()
   const invalidate = useInvalidateAdmin()
-  const isMobile = useIsMobile()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Manager | null>(null)
@@ -119,8 +117,13 @@ export default function AdminManagersPage() {
 
   return (
     <>
-      <SiteHeader title="매니저 관리" />
-      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
+      {!isLoading && <SiteHeader title="매니저 관리" />}
+      {isLoading ? (
+        <div className="flex min-h-[100dvh] items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+        </div>
+      ) : (
+      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
         <div className="flex items-center justify-between h-9">
           <p className="text-[14px] text-ink-muted">총 {managers.length}명</p>
           <button
@@ -132,15 +135,11 @@ export default function AdminManagersPage() {
           </button>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
-          </div>
-        ) : managers.length === 0 ? (
+        {managers.length === 0 ? (
           <p className="py-20 text-center text-[14px] text-ink-muted">등록된 매니저가 없어요</p>
-        ) : isMobile ? (
-          /* ─── Mobile: Cards ─── */
-          <div className="flex flex-col gap-3">
+        ) : (
+          <>
+          <div className="flex flex-col gap-3 md:hidden">
             {managers.map((m) => (
               <div key={m.id} className="rounded-xl border border-outline-dim px-4 py-4">
                 <div className="flex items-center gap-2 mb-1">
@@ -160,10 +159,7 @@ export default function AdminManagersPage() {
               </div>
             ))}
           </div>
-        ) : (
-          /* ─── Desktop: Table ─── */
-          <>
-          <div className="overflow-hidden rounded-xl border border-outline-dim">
+          <div className="overflow-hidden rounded-xl border border-outline-dim max-md:hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -203,6 +199,7 @@ export default function AdminManagersPage() {
           </>
         )}
       </div>
+      )}
 
       {/* Create/Edit Drawer */}
       <Drawer open={formOpen} onOpenChange={setFormOpen}>

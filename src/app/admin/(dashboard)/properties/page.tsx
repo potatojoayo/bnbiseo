@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
 import { useAdminProperties } from '@/lib/hooks/use-admin'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { MapPinIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
@@ -24,7 +23,6 @@ type PropertyFilter = 'all' | 'pending_activation' | 'active'
 
 export default function AdminPropertiesPage() {
   const { data: properties = [], isLoading } = useAdminProperties()
-  const isMobile = useIsMobile()
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState<PropertyFilter>('all')
   const pendingCount = properties.filter((property) => property.status === 'pending_activation').length
@@ -36,8 +34,13 @@ export default function AdminPropertiesPage() {
 
   return (
     <>
-      <SiteHeader title="숙소 관리" />
-      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3">
+      {!isLoading && <SiteHeader title="숙소 관리" />}
+      {isLoading ? (
+        <div className="flex min-h-[100dvh] items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+        </div>
+      ) : (
+      <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
         <div className="flex flex-col gap-3">
           <div className="flex items-center h-9">
             <p className="text-[14px] text-ink-muted">총 {filteredProperties.length}개</p>
@@ -64,15 +67,11 @@ export default function AdminPropertiesPage() {
           </Tabs>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
-          </div>
-        ) : filteredProperties.length === 0 ? (
+        {filteredProperties.length === 0 ? (
           <p className="text-center text-[14px] text-ink-muted py-20">등록된 숙소가 없어요</p>
-        ) : isMobile ? (
-          /* ─── Mobile: Cards ─── */
-          <div className="flex flex-col gap-3">
+        ) : (
+          <>
+          <div className="flex flex-col gap-3 md:hidden">
             {filteredProperties.map((p) => {
               const details = p.status === 'active'
                 ? [
@@ -135,10 +134,7 @@ export default function AdminPropertiesPage() {
               )
             })}
           </div>
-        ) : (
-          /* ─── Desktop: Table ─── */
-          <>
-          <div className="rounded-xl border border-outline-dim overflow-hidden">
+          <div className="rounded-xl border border-outline-dim overflow-hidden max-md:hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -202,6 +198,7 @@ export default function AdminPropertiesPage() {
           </>
         )}
       </div>
+      )}
     </>
   )
 }

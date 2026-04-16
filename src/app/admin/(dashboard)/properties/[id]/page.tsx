@@ -8,7 +8,6 @@ import { MapPinIcon, PlusIcon } from 'lucide-react'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
 import { api, ApiError } from '@/lib/api-client'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { CompoundInput, FloatingInput } from '@/components/ui/floating-input'
@@ -81,20 +80,13 @@ const CATEGORY_LABELS: Record<FixtureCategory, string> = {
 
 export default function AdminPropertyRegistrationPage() {
   const { id } = useParams<{ id: string }>()
-  const isMobile = useIsMobile()
   const { data, isLoading: loading, error } = useAdminPropertyRegistration(id)
 
   if (loading) {
     return (
       <>
-        {!isMobile && <SiteHeader title="등록 진행" />}
-        {isMobile && (
-          <div className="mx-auto w-full max-w-[720px] px-6 pt-6 max-md:p-5">
-            <MobileBackButton href="/admin/properties" mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-ink">등록 진행</h1>
-          </div>
-        )}
-        <div className="flex flex-1 items-center justify-center py-20">
+        <SiteHeader title="등록 진행" />
+        <div className="flex min-h-[100dvh] items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
         </div>
       </>
@@ -104,13 +96,7 @@ export default function AdminPropertyRegistrationPage() {
   if (!data) {
     return (
       <>
-        {!isMobile && <SiteHeader title="등록 진행" />}
-        {isMobile && (
-          <div className="mx-auto w-full max-w-[720px] px-6 pt-6 max-md:p-5">
-            <MobileBackButton href="/admin/properties" mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-ink">등록 진행</h1>
-          </div>
-        )}
+        <SiteHeader title="등록 진행" />
         <div className="flex flex-1 items-center justify-center px-6 py-20 text-center text-[14px] text-ink-muted">
           {error instanceof ApiError ? error.message : '숙소 정보를 불러오지 못했어요.'}
         </div>
@@ -155,7 +141,6 @@ function AdminPropertyRegistrationForm({
     fixtures: RegistrationDetail['fixtures']
   }
 }) {
-  const isMobile = useIsMobile()
   const router = useRouter()
   const invalidate = useInvalidateAdmin()
   const queryClient = useQueryClient()
@@ -266,14 +251,12 @@ function AdminPropertyRegistrationForm({
 
   return (
     <>
-      {!isMobile && <SiteHeader title="등록 진행" />}
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-7 p-6 max-md:gap-6 max-md:p-5">
-        {isMobile && (
-          <div className="-mb-2">
-            <MobileBackButton href="/admin/properties" mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-ink">등록 진행</h1>
-          </div>
-        )}
+      <SiteHeader title="등록 진행" />
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-7 p-6 max-md:animate-fade-up-fast max-md:gap-6 max-md:p-5">
+        <div className="-mb-2 md:hidden">
+          <MobileBackButton href="/admin/properties" mode="back" />
+          <h1 className="mt-2 text-[22px] font-semibold text-ink">등록 진행</h1>
+        </div>
         <section className="rounded-xl border border-outline-dim px-5 py-4">
           <p className="text-[20px] font-semibold text-ink">{initialData.name}</p>
           <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
@@ -489,8 +472,6 @@ function AdminPropertyDetailView({
     fixtures: RegistrationDetail['fixtures']
   }
 }) {
-  const isMobile = useIsMobile()
-
   const details = [
     property.pyeong != null && `${property.pyeong}평`,
     property.livingRooms != null && `거실 ${property.livingRooms}`,
@@ -500,14 +481,12 @@ function AdminPropertyDetailView({
 
   return (
     <>
-      {!isMobile && <SiteHeader title="숙소 상세" />}
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-7 p-6 max-md:gap-6 max-md:p-5">
-        {isMobile && (
-          <div className="-mb-2">
-            <MobileBackButton href="/admin/properties" mode="back" />
-            <h1 className="mt-2 text-[22px] font-semibold text-ink">숙소 상세</h1>
-          </div>
-        )}
+      <SiteHeader title="숙소 상세" />
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-7 p-6 max-md:animate-fade-up-fast max-md:gap-6 max-md:p-5">
+        <div className="-mb-2 md:hidden">
+          <MobileBackButton href="/admin/properties" mode="back" />
+          <h1 className="mt-2 text-[22px] font-semibold text-ink">숙소 상세</h1>
+        </div>
 
         <section className="rounded-xl border border-outline-dim px-5 py-4">
           <div className="flex items-start justify-between gap-3">

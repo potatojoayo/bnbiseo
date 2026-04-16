@@ -1,11 +1,18 @@
 'use client'
 
-import { useContext } from 'react'
+import { createContext, useContext } from 'react'
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger, SidebarContext } from "@/components/ui/sidebar"
 
+export const SiteHeaderVisibilityContext = createContext(true)
+
 export function SiteHeader({ title = "대시보드" }: { title?: string }) {
   const hasSidebar = useContext(SidebarContext) !== null
+  const isVisible = useContext(SiteHeaderVisibilityContext)
+
+  if (!isVisible) {
+    return null
+  }
 
   if (!hasSidebar) {
     return (

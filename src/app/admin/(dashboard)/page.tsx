@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
 import { useAdminStats, useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { api } from '@/lib/api-client'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import { useState } from 'react'
@@ -45,10 +44,10 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 }
 
 export default function AdminDashboardPage() {
-  const { data: stats } = useAdminStats()
-  const { data: allManagers = [] } = useAdminManagers()
+  const { data: stats, isLoading: statsLoading } = useAdminStats()
+  const { data: allManagers = [], isLoading: managersLoading } = useAdminManagers()
   const invalidate = useInvalidateAdmin()
-  const isMobile = useIsMobile()
+  const isPageLoading = statsLoading || managersLoading
 
   const activeManagers = allManagers.filter((m) => m.isActive)
 
@@ -71,8 +70,13 @@ export default function AdminDashboardPage() {
 
   return (
     <>
-      <SiteHeader title="대시보드" />
-      <div className="flex flex-1 flex-col gap-6 p-6 max-w-[960px] mx-auto w-full">
+      {!isPageLoading && <SiteHeader title="대시보드" />}
+      {isPageLoading ? (
+        <div className="flex min-h-[100dvh] items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+        </div>
+      ) : (
+      <div className="flex flex-1 flex-col gap-6 p-6 max-w-[960px] mx-auto w-full max-md:animate-fade-up-fast">
 
         {/* ─── Section Cards ─── */}
         <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2 @5xl:grid-cols-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -183,8 +187,9 @@ export default function AdminDashboardPage() {
                 <BrushCleaningIcon className="size-10 mb-3 opacity-30" />
                 <p className="text-sm">미배정 청소가 없어요</p>
               </div>
-            ) : isMobile ? (
-              <div className="flex flex-col divide-y">
+            ) : (
+              <>
+              <div className="flex flex-col divide-y md:hidden">
                 {stats.pendingAssignment.map((r) => (
                   <div key={r.id} className="px-4 py-3">
                     <div className="flex items-center justify-between mb-1">
@@ -205,7 +210,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ))}
               </div>
-            ) : (
+              <div className="max-md:hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -238,6 +243,8 @@ export default function AdminDashboardPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -262,8 +269,9 @@ export default function AdminDashboardPage() {
                 <CalendarIcon className="size-10 mb-3 opacity-30" />
                 <p className="text-sm">오늘 예정된 청소가 없어요</p>
               </div>
-            ) : isMobile ? (
-              <div className="flex flex-col divide-y">
+            ) : (
+              <>
+              <div className="flex flex-col divide-y md:hidden">
                 {stats.todaySchedule.map((s) => {
                   const statusInfo = STATUS_LABELS[s.status]
                   return (
@@ -282,7 +290,7 @@ export default function AdminDashboardPage() {
                   )
                 })}
               </div>
-            ) : (
+              <div className="max-md:hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -315,10 +323,13 @@ export default function AdminDashboardPage() {
                   })}
                 </TableBody>
               </Table>
+              </div>
+              </>
             )}
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Assign Manager Drawer */}
       <Drawer open={assignOpen} onOpenChange={setAssignOpen}>
