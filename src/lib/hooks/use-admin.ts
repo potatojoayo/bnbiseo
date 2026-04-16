@@ -52,6 +52,7 @@ type CleaningRequest = {
 
 type Manager = {
   id: string
+  profileId: string
   name: string
   phone: string
   memo: string | null

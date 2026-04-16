@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
-import { useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
+import { useAdminManagers, useAdminUsers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { PlusIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -19,19 +19,30 @@ import {
 
 type Manager = {
   id: string
+  profileId: string
   name: string
   phone: string
   memo: string | null
   isActive: boolean
 }
 
+type User = {
+  id: string
+  email: string | null
+  fullName: string | null
+  phone: string | null
+  role: string
+}
+
 export default function AdminManagersPage() {
   const { data: managers = [], isLoading } = useAdminManagers()
+  const { data: users = [] } = useAdminUsers()
   const invalidate = useInvalidateAdmin()
   const isMobile = useIsMobile()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Manager | null>(null)
+  const [profileId, setProfileId] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [memo, setMemo] = useState('')
@@ -42,9 +53,15 @@ export default function AdminManagersPage() {
   const [deleting, setDeleting] = useState(false)
   const [page, setPage] = useState(1)
   const { paged, totalPages } = useTablePagination(managers, page)
+  const managerUsers = (users as User[]).filter((user) => user.role === 'manager')
+  const linkedProfileIds = new Set(managers.map((manager) => manager.profileId))
+  const availableManagerUsers = managerUsers.filter((user) =>
+    !linkedProfileIds.has(user.id) || user.id === editTarget?.profileId
+  )
 
   function openCreate() {
     setEditTarget(null)
+    setProfileId('')
     setName('')
     setPhone('')
     setMemo('')
@@ -53,6 +70,7 @@ export default function AdminManagersPage() {
 
   function openEdit(m: Manager) {
     setEditTarget(m)
+    setProfileId(m.profileId)
     setName(m.name)
     setPhone(m.phone)
     setMemo(m.memo || '')
@@ -62,9 +80,9 @@ export default function AdminManagersPage() {
   async function handleSave() {
     setSaving(true)
     if (editTarget) {
-      await api.patch(`/admin/managers/${editTarget.id}`, { name, phone, memo: memo || undefined })
+      await api.patch(`/admin/managers/${editTarget.id}`, { profileId, name, phone, memo: memo || undefined })
     } else {
-      await api.post('/admin/managers', { name, phone, memo: memo || undefined })
+      await api.post('/admin/managers', { profileId, name, phone, memo: memo || undefined })
     }
     setSaving(false)
     setFormOpen(false)
@@ -181,13 +199,32 @@ export default function AdminManagersPage() {
             </DrawerHeader>
             <div className="flex flex-col gap-4">
               <CompoundInput>
+                <div className="relative rounded-[12px] border border-[#B0B0B0] px-4 pb-[10px] pt-[26px]">
+                  <label className="absolute left-4 top-[8px] text-[11px] font-semibold uppercase tracking-wider text-[#717171]">
+                    매니저 회원
+                  </label>
+                  <select
+                    value={profileId}
+                    onChange={(e) => setProfileId(e.target.value)}
+                    className="w-full bg-transparent text-[16px] text-[#222222] outline-none"
+                  >
+                    <option value="">매니저 회원 선택</option>
+                    {availableManagerUsers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.fullName || user.email || user.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </CompoundInput>
+              <CompoundInput>
                 <FloatingInput label="이름" value={name} onChange={(e) => setName(e.target.value)} borderRadius="12px 12px 0 0" />
                 <FloatingInput label="전화번호" value={phone} onChange={(e) => setPhone(e.target.value)} borderRadius="0 0 12px 12px" />
               </CompoundInput>
               <CompoundInput>
                 <FloatingInput label="메모 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} borderRadius="12px" />
               </CompoundInput>
-              <LoadingButton type="button" variant="primary" loading={saving} loadingText="저장 중..." disabled={!name || !phone} onClick={handleSave}>
+              <LoadingButton type="button" variant="primary" loading={saving} loadingText="저장 중..." disabled={!profileId || !name || !phone} onClick={handleSave}>
                 {editTarget ? '수정하기' : '추가하기'}
               </LoadingButton>
             </div>

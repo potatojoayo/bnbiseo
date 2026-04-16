@@ -17,7 +17,7 @@ type ProcessDrawerProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
-  steps: ProcessStep[]
+  steps: readonly ProcessStep[]
 }
 
 export function ProcessDrawer({

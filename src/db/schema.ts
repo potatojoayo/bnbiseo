@@ -135,17 +135,22 @@ export const properties = pgTable('properties', {
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 })
 
-export const managers = pgTable('managers', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  profileId: uuid('profile_id')
-    .references(() => profiles.id, { onDelete: 'set null' }), // nullable, 나중에 매니저 회원가입 시 연결
-  name: text('name').notNull(),
-  phone: text('phone').notNull(),
-  memo: text('memo'),
-  isActive: boolean('is_active').default(true).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-})
+export const managers = pgTable(
+  'managers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    phone: text('phone').notNull(),
+    memo: text('memo'),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('managers_profile_id_idx').on(t.profileId)],
+)
 
 export const cleaningRequests = pgTable('cleaning_requests', {
   id: uuid('id').primaryKey().defaultRandom(),

@@ -239,6 +239,7 @@ adminRoutes.post('/cleaning/:id/status', async (c) => {
 // ─── Manager Management ─────────────────────────────────────────────────────
 
 const ManagerSchema = z.object({
+  profileId: z.string().uuid(),
   name: z.string().min(1),
   phone: z.string().min(1),
   memo: z.string().optional(),
@@ -263,6 +264,29 @@ adminRoutes.post('/managers', async (c) => {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
   }
 
+  const [profile] = await db
+    .select({
+      id: profiles.id,
+      role: profiles.role,
+    })
+    .from(profiles)
+    .where(and(eq(profiles.id, validated.data.profileId), isNull(profiles.deletedAt)))
+    .limit(1)
+
+  if (!profile || profile.role !== 'manager') {
+    return c.json({ error: '매니저 회원 프로필만 연결할 수 있어요.' }, 400)
+  }
+
+  const [existingManager] = await db
+    .select({ id: managers.id })
+    .from(managers)
+    .where(eq(managers.profileId, validated.data.profileId))
+    .limit(1)
+
+  if (existingManager) {
+    return c.json({ error: '이미 연결된 매니저 회원이에요.' }, 400)
+  }
+
   const [created] = await db
     .insert(managers)
     .values(validated.data)
@@ -279,6 +303,31 @@ adminRoutes.patch('/managers/:id', async (c) => {
 
   if (!validated.success) {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  if (validated.data.profileId) {
+    const [profile] = await db
+      .select({
+        id: profiles.id,
+        role: profiles.role,
+      })
+      .from(profiles)
+      .where(and(eq(profiles.id, validated.data.profileId), isNull(profiles.deletedAt)))
+      .limit(1)
+
+    if (!profile || profile.role !== 'manager') {
+      return c.json({ error: '매니저 회원 프로필만 연결할 수 있어요.' }, 400)
+    }
+
+    const [existingManager] = await db
+      .select({ id: managers.id })
+      .from(managers)
+      .where(and(eq(managers.profileId, validated.data.profileId), ne(managers.id, id)))
+      .limit(1)
+
+    if (existingManager) {
+      return c.json({ error: '이미 연결된 매니저 회원이에요.' }, 400)
+    }
   }
 
   const [updated] = await db
