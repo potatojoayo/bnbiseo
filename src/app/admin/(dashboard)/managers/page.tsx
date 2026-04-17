@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
@@ -46,8 +47,6 @@ export default function AdminManagersPage() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Manager | null>(null)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [memo, setMemo] = useState('')
@@ -89,21 +88,8 @@ export default function AdminManagersPage() {
     }
   }, [filteredManagers.length, mobileVisibleCount])
 
-  function openCreate() {
-    setEditTarget(null)
-    setEmail('')
-    setPassword('')
-    setName('')
-    setPhone('')
-    setMemo('')
-    setMessage(null)
-    setFormOpen(true)
-  }
-
   function openEdit(m: Manager) {
     setEditTarget(m)
-    setEmail(m.email || '')
-    setPassword('')
     setName(m.name)
     setPhone(m.phone)
     setMemo(m.memo || '')
@@ -112,14 +98,11 @@ export default function AdminManagersPage() {
   }
 
   async function handleSave() {
+    if (!editTarget) return
     setSaving(true)
     setMessage(null)
     try {
-      if (editTarget) {
-        await api.patch(`/admin/managers/${editTarget.id}`, { name, phone, memo: memo || undefined })
-      } else {
-        await api.post('/admin/managers', { email, password, name, phone, memo: memo || undefined })
-      }
+      await api.patch(`/admin/managers/${editTarget.id}`, { name, phone, memo: memo || undefined })
       setFormOpen(false)
       invalidate.managers()
       invalidate.stats()
@@ -127,7 +110,7 @@ export default function AdminManagersPage() {
       if (error instanceof ApiError) {
         setMessage(error.message)
       } else {
-        setMessage(editTarget ? '매니저 수정에 실패했어요.' : '매니저 생성에 실패했어요.')
+        setMessage('매니저 수정에 실패했어요.')
       }
     } finally {
       setSaving(false)
@@ -180,12 +163,12 @@ export default function AdminManagersPage() {
                 비활성({inactiveCount})
               </TabsTrigger>
             </TabsList>
-            <button
-              onClick={openCreate}
+            <Link
+              href="/admin/managers/new"
               className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-ink px-4 text-[13px] font-medium text-white"
             >
               매니저 추가
-            </button>
+            </Link>
           </div>
         </Tabs>
 
@@ -262,24 +245,14 @@ export default function AdminManagersPage() {
       </div>
       )}
 
-      {/* Create/Edit Drawer */}
+      {/* Edit Drawer */}
       <Drawer open={formOpen} onOpenChange={setFormOpen}>
         <DrawerContent>
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-ink">{editTarget ? '매니저 수정' : '매니저 추가'}</DrawerTitle>
+              <DrawerTitle className="text-[18px] font-semibold text-ink">매니저 수정</DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-4">
-              {!editTarget ? (
-                <CompoundInput>
-                  <FloatingInput label="이메일" type="email" value={email} onChange={(e) => setEmail(e.target.value)} borderRadius="12px 12px 0 0" />
-                  <FloatingInput label="비밀번호" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} borderRadius="0 0 12px 12px" />
-                </CompoundInput>
-              ) : (
-                <CompoundInput>
-                  <FloatingInput label="이메일" type="email" value={email} onChange={() => {}} disabled borderRadius="12px" />
-                </CompoundInput>
-              )}
               <CompoundInput>
                 <FloatingInput label="이름" value={name} onChange={(e) => setName(e.target.value)} borderRadius="12px 12px 0 0" />
                 <FloatingInput label="전화번호" inputMode="numeric" placeholder="010-1234-5678" value={phone} onChange={(e) => setPhone(formatPhoneNumber(e.target.value))} borderRadius="0 0 12px 12px" />
@@ -292,8 +265,8 @@ export default function AdminManagersPage() {
                   {message}
                 </p>
               )}
-              <LoadingButton type="button" variant="primary" loading={saving} loadingText="저장 중..." disabled={!name || !phone || (!editTarget && (!email || !password))} onClick={handleSave}>
-                {editTarget ? '수정하기' : '추가하기'}
+              <LoadingButton type="button" variant="primary" loading={saving} loadingText="저장 중..." disabled={!name || !phone} onClick={handleSave}>
+                수정하기
               </LoadingButton>
             </div>
           </div>
