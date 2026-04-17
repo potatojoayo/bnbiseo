@@ -76,6 +76,8 @@ export function useProperties() {
     queryKey: ['properties'],
     queryFn: () => api.get<Property[]>('/properties'),
     enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

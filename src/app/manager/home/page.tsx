@@ -45,9 +45,6 @@ export default function ManagerHomePage() {
           <h2 className="text-[18px] font-semibold text-ink">
             아직 맡은 청소가 없어요
           </h2>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
-            청소 요청 페이지에서 새 요청을 확인하고 직접 맡을 수 있어요.
-          </p>
           <Link
             href="/manager/cleanings"
             className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-[14px] font-semibold text-white transition-all active:scale-[0.98]"
@@ -57,27 +54,23 @@ export default function ManagerHomePage() {
         </div>
       ) : (
         <div className="mt-6 flex flex-col gap-7">
-          <section className="flex flex-col gap-3">
-            <p className="px-1 text-[13px] font-medium text-ink-muted">오늘 청소</p>
-            {todayCleanings.length > 0 ? (
-              todayCleanings.map((cleaning) => (
+          {todayCleanings.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <p className="px-1 text-[13px] font-medium text-ink-muted">오늘 청소</p>
+              {todayCleanings.map((cleaning) => (
                 <ManagerCleaningCard key={cleaning.id} cleaning={cleaning} showStatus />
-              ))
-            ) : (
-              <p className="px-1 text-[14px] text-ink-faint">오늘 예정된 청소가 없어요.</p>
-            )}
-          </section>
+              ))}
+            </section>
+          )}
 
-          <section className="flex flex-col gap-3">
-            <p className="px-1 text-[13px] font-medium text-ink-muted">진행 중</p>
-            {inProgressCleanings.length > 0 ? (
-              inProgressCleanings.map((cleaning) => (
+          {inProgressCleanings.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <p className="px-1 text-[13px] font-medium text-ink-muted">진행 중</p>
+              {inProgressCleanings.map((cleaning) => (
                 <ManagerCleaningCard key={cleaning.id} cleaning={cleaning} showStatus />
-              ))
-            ) : (
-              <p className="px-1 text-[14px] text-ink-faint">현재 진행 중인 청소가 없어요.</p>
-            )}
-          </section>
+              ))}
+            </section>
+          )}
 
           <section className="flex flex-col gap-3">
             <p className="px-1 text-[13px] font-medium text-ink-muted">예정된 청소</p>

@@ -84,21 +84,7 @@ export const photoTypeEnum = pgEnum('photo_type', ['defect', 'before', 'after'])
 
 export const uploadedByEnum = pgEnum('uploaded_by', ['host', 'guest'])
 
-export const sessionTypeEnum = pgEnum('session_type', [
-  'host_repair',
-  'guest_guide',
-  'guest_defect',
-])
-
-export const chatSessionStatusEnum = pgEnum('chat_session_status', [
-  'active',
-  'completed',
-  'abandoned',
-])
-
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin', 'manager'])
-
-export const chatRoleEnum = pgEnum('chat_role', ['user', 'assistant', 'system'])
 
 // ─── Tables ──────────────────────────────────────────────────────────────────
 
@@ -183,17 +169,6 @@ export const cleaningRequests = pgTable('cleaning_requests', {
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
 })
 
-export const propertyPhotos = pgTable('property_photos', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  propertyId: uuid('property_id')
-    .notNull()
-    .references(() => properties.id, { onDelete: 'cascade' }),
-  storagePath: text('storage_path').notNull(),
-  caption: text('caption'),
-  sortOrder: smallint('sort_order').default(0).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-})
-
 export const propertyAssets = pgTable('property_assets', {
   id: uuid('id').primaryKey().defaultRandom(),
   propertyId: uuid('property_id')
@@ -253,21 +228,6 @@ export const propertySpacePhotos = pgTable('property_space_photos', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-export const guestSessions = pgTable(
-  'guest_sessions',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    propertyId: uuid('property_id')
-      .notNull()
-      .references(() => properties.id, { onDelete: 'cascade' }),
-    token: uuid('token').defaultRandom().notNull(),
-    language: text('language').default('ko').notNull(),
-    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  },
-  (t) => [uniqueIndex('guest_sessions_token_idx').on(t.token)],
-)
-
 export const repairRequests = pgTable('repair_requests', {
   id: uuid('id').primaryKey().defaultRandom(),
   propertyId: uuid('property_id')
@@ -277,12 +237,6 @@ export const repairRequests = pgTable('repair_requests', {
     onDelete: 'set null',
   }),
   source: repairSourceEnum('source').default('host').notNull(),
-  guestSessionId: uuid('guest_session_id').references(
-    () => guestSessions.id,
-    { onDelete: 'set null' },
-  ),
-  // chat_session_id reference added after chat_sessions table (circular) — handled via migration
-  chatSessionId: uuid('chat_session_id'),
   title: text('title').notNull(),
   description: text('description'),
   aiDiagnosis: text('ai_diagnosis'),
@@ -297,41 +251,6 @@ export const repairRequests = pgTable('repair_requests', {
   completedAt: timestamp('completed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-})
-
-export const chatSessions = pgTable('chat_sessions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  propertyId: uuid('property_id')
-    .notNull()
-    .references(() => properties.id, { onDelete: 'cascade' }),
-  sessionType: sessionTypeEnum('session_type').notNull(),
-  hostId: uuid('host_id').references(() => profiles.id, {
-    onDelete: 'cascade',
-  }),
-  guestSessionId: uuid('guest_session_id').references(
-    () => guestSessions.id,
-    { onDelete: 'cascade' },
-  ),
-  title: text('title'),
-  status: chatSessionStatusEnum('status').default('active').notNull(),
-  repairRequestId: uuid('repair_request_id').references(
-    () => repairRequests.id,
-    { onDelete: 'set null' },
-  ),
-  contextSnapshot: jsonb('context_snapshot'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-})
-
-export const chatMessages = pgTable('chat_messages', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  chatSessionId: uuid('chat_session_id')
-    .notNull()
-    .references(() => chatSessions.id, { onDelete: 'cascade' }),
-  role: chatRoleEnum('role').notNull(),
-  content: text('content').notNull(),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const repairPhotos = pgTable('repair_photos', {
@@ -366,18 +285,14 @@ export const repairParts = pgTable('repair_parts', {
 export const profilesRelations = relations(profiles, ({ many }) => ({
   properties: many(properties),
   cleaningRequests: many(cleaningRequests),
-  chatSessions: many(chatSessions),
 }))
 
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
   host: one(profiles, { fields: [properties.hostId], references: [profiles.id] }),
-  photos: many(propertyPhotos),
   spaces: many(propertySpaces),
   fixtures: many(propertyAssets),
   cleaningRequests: many(cleaningRequests),
   repairRequests: many(repairRequests),
-  guestSessions: many(guestSessions),
-  chatSessions: many(chatSessions),
 }))
 
 export const managersRelations = relations(managers, ({ one, many }) => ({
@@ -400,13 +315,6 @@ export const cleaningRequestsRelations = relations(cleaningRequests, ({ one }) =
   manager: one(managers, {
     fields: [cleaningRequests.managerId],
     references: [managers.id],
-  }),
-}))
-
-export const propertyPhotosRelations = relations(propertyPhotos, ({ one }) => ({
-  property: one(properties, {
-    fields: [propertyPhotos.propertyId],
-    references: [properties.id],
   }),
 }))
 
@@ -441,15 +349,6 @@ export const propertySpacePhotosRelations = relations(propertySpacePhotos, ({ on
   }),
 }))
 
-export const guestSessionsRelations = relations(guestSessions, ({ one, many }) => ({
-  property: one(properties, {
-    fields: [guestSessions.propertyId],
-    references: [properties.id],
-  }),
-  repairRequests: many(repairRequests),
-  chatSessions: many(chatSessions),
-}))
-
 export const repairRequestsRelations = relations(repairRequests, ({ one, many }) => ({
   property: one(properties, {
     fields: [repairRequests.propertyId],
@@ -459,43 +358,8 @@ export const repairRequestsRelations = relations(repairRequests, ({ one, many })
     fields: [repairRequests.fixtureId],
     references: [propertyAssets.id],
   }),
-  guestSession: one(guestSessions, {
-    fields: [repairRequests.guestSessionId],
-    references: [guestSessions.id],
-  }),
-  chatSession: one(chatSessions, {
-    fields: [repairRequests.chatSessionId],
-    references: [chatSessions.id],
-  }),
   photos: many(repairPhotos),
   parts: many(repairParts),
-}))
-
-export const chatSessionsRelations = relations(chatSessions, ({ one, many }) => ({
-  property: one(properties, {
-    fields: [chatSessions.propertyId],
-    references: [properties.id],
-  }),
-  host: one(profiles, {
-    fields: [chatSessions.hostId],
-    references: [profiles.id],
-  }),
-  guestSession: one(guestSessions, {
-    fields: [chatSessions.guestSessionId],
-    references: [guestSessions.id],
-  }),
-  repairRequest: one(repairRequests, {
-    fields: [chatSessions.repairRequestId],
-    references: [repairRequests.id],
-  }),
-  messages: many(chatMessages),
-}))
-
-export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
-  chatSession: one(chatSessions, {
-    fields: [chatMessages.chatSessionId],
-    references: [chatSessions.id],
-  }),
 }))
 
 export const repairPhotosRelations = relations(repairPhotos, ({ one }) => ({

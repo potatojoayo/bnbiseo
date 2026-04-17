@@ -157,6 +157,8 @@ export function useAdminStats() {
   return useQuery({
     queryKey: ['admin', 'stats'],
     queryFn: () => api.get<Stats>('/admin/stats'),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -164,6 +166,8 @@ export function useAdminCleaning(status?: string) {
   return useQuery({
     queryKey: ['admin', 'cleaning', status ?? 'all'],
     queryFn: () => api.get<CleaningRequest[]>(`/admin/cleaning${status ? `?status=${status}` : ''}`),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -171,6 +175,8 @@ export function useAdminManagers() {
   return useQuery({
     queryKey: ['admin', 'managers'],
     queryFn: () => api.get<Manager[]>('/admin/managers'),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -178,6 +184,8 @@ export function useAdminProperties() {
   return useQuery({
     queryKey: ['admin', 'properties'],
     queryFn: () => api.get<Property[]>('/admin/properties'),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -185,6 +193,8 @@ export function useAdminUsers() {
   return useQuery({
     queryKey: ['admin', 'users'],
     queryFn: () => api.get<User[]>('/admin/users'),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

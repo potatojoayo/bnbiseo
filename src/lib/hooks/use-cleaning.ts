@@ -36,6 +36,8 @@ export function useCleaningRequests() {
     queryKey: ['cleaning-requests'],
     queryFn: () => api.get<CleaningRequest[]>('/cleaning'),
     enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

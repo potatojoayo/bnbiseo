@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
-import { and, asc, desc, eq, isNull, ne } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, ne } from 'drizzle-orm'
 import { db } from '@/db'
-import { cleaningRequests, managers, profiles, properties } from '@/db/schema'
+import { cleaningRequests, managers, profiles, properties, propertySpaces } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { summarizeSpacesByProperty } from '@/lib/property-space-summary'
 
 type ManagerEnv = {
   Variables: AuthEnv['Variables'] & {
@@ -89,6 +90,20 @@ managerRoutes.get('/me', async (c) => {
 })
 
 managerRoutes.get('/cleanings/open', async (c) => {
+  const now = new Date()
+  const currentDate = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now)
+  const currentTime = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Seoul',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(now)
+
   const result = await db
     .select({
       id: cleaningRequests.id,
@@ -112,8 +127,47 @@ managerRoutes.get('/cleanings/open', async (c) => {
       isNull(properties.deletedAt),
     ))
     .orderBy(asc(cleaningRequests.scheduledDate), asc(cleaningRequests.scheduledTime), desc(cleaningRequests.createdAt))
+  const upcomingResult = result.filter((cleaning) =>
+    cleaning.scheduledDate > currentDate ||
+    (cleaning.scheduledDate === currentDate && cleaning.scheduledTime >= currentTime),
+  )
 
-  return c.json(result)
+  const propertyIds = Array.from(new Set(upcomingResult.map((cleaning) => cleaning.propertyId).filter((id): id is string => !!id)))
+  const spaces = propertyIds.length > 0
+    ? await db
+        .select({
+          propertyId: propertySpaces.propertyId,
+          name: propertySpaces.name,
+          category: propertySpaces.category,
+          pyeong: propertySpaces.pyeong,
+        })
+        .from(propertySpaces)
+        .where(inArray(propertySpaces.propertyId, propertyIds))
+    : []
+  const summaryByProperty = summarizeSpacesByProperty(spaces)
+  const spaceNamesByProperty = new Map<string, string[]>()
+
+  for (const space of spaces) {
+    const current = spaceNamesByProperty.get(space.propertyId) ?? []
+    current.push(space.name)
+    spaceNamesByProperty.set(space.propertyId, current)
+  }
+
+  return c.json(
+    upcomingResult.map((cleaning) => {
+      const summary = cleaning.propertyId ? summaryByProperty.get(cleaning.propertyId) : null
+      const spaceNames = cleaning.propertyId ? spaceNamesByProperty.get(cleaning.propertyId) ?? [] : []
+
+      return {
+        ...cleaning,
+        propertySpaceNames: spaceNames,
+        propertyPyeong: summary?.pyeong ?? null,
+        propertyLivingRooms: summary?.livingRooms ?? null,
+        propertyBedrooms: summary?.bedrooms ?? null,
+        propertyBathrooms: summary?.bathrooms ?? null,
+      }
+    }),
+  )
 })
 
 managerRoutes.get('/cleanings/me', async (c) => {
@@ -143,7 +197,42 @@ managerRoutes.get('/cleanings/me', async (c) => {
     ))
     .orderBy(asc(cleaningRequests.scheduledDate), asc(cleaningRequests.scheduledTime), desc(cleaningRequests.createdAt))
 
-  return c.json(result)
+  const propertyIds = Array.from(new Set(result.map((cleaning) => cleaning.propertyId).filter((id): id is string => !!id)))
+  const spaces = propertyIds.length > 0
+    ? await db
+        .select({
+          propertyId: propertySpaces.propertyId,
+          name: propertySpaces.name,
+          category: propertySpaces.category,
+          pyeong: propertySpaces.pyeong,
+        })
+        .from(propertySpaces)
+        .where(inArray(propertySpaces.propertyId, propertyIds))
+    : []
+  const summaryByProperty = summarizeSpacesByProperty(spaces)
+  const spaceNamesByProperty = new Map<string, string[]>()
+
+  for (const space of spaces) {
+    const current = spaceNamesByProperty.get(space.propertyId) ?? []
+    current.push(space.name)
+    spaceNamesByProperty.set(space.propertyId, current)
+  }
+
+  return c.json(
+    result.map((cleaning) => {
+      const summary = cleaning.propertyId ? summaryByProperty.get(cleaning.propertyId) : null
+      const spaceNames = cleaning.propertyId ? spaceNamesByProperty.get(cleaning.propertyId) ?? [] : []
+
+      return {
+        ...cleaning,
+        propertySpaceNames: spaceNames,
+        propertyPyeong: summary?.pyeong ?? null,
+        propertyLivingRooms: summary?.livingRooms ?? null,
+        propertyBedrooms: summary?.bedrooms ?? null,
+        propertyBathrooms: summary?.bathrooms ?? null,
+      }
+    }),
+  )
 })
 
 managerRoutes.post('/cleanings/:id/claim', async (c) => {

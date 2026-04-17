@@ -34,6 +34,11 @@ export type ManagerCleaning = {
   propertyName: string | null
   propertyAddress: string | null
   propertyAddressDetail: string | null
+  propertySpaceNames: string[]
+  propertyPyeong: number | null
+  propertyLivingRooms: number | null
+  propertyBedrooms: number | null
+  propertyBathrooms: number | null
 }
 
 export function useManagerMe() {
@@ -51,9 +56,11 @@ export function useManagerOpenCleanings() {
   const { user } = useAuth()
 
   return useQuery({
-    queryKey: ['manager', 'cleanings', 'open'],
+    queryKey: ['manager', 'cleanings', 'open', 'v2'],
     queryFn: () => api.get<ManagerCleaning[]>('/manager/cleanings/open'),
     enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -61,9 +68,11 @@ export function useManagerMyCleanings() {
   const { user } = useAuth()
 
   return useQuery({
-    queryKey: ['manager', 'cleanings', 'me'],
+    queryKey: ['manager', 'cleanings', 'me', 'v2'],
     queryFn: () => api.get<ManagerCleaning[]>('/manager/cleanings/me'),
     enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -73,7 +82,7 @@ export function useInvalidateManager() {
   return {
     all: () => queryClient.invalidateQueries({ queryKey: ['manager'] }),
     me: () => queryClient.invalidateQueries({ queryKey: ['manager', 'me'] }),
-    openCleanings: () => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'open'] }),
-    myCleanings: () => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'me'] }),
+    openCleanings: () => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'open', 'v2'] }),
+    myCleanings: () => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'me', 'v2'] }),
   }
 }

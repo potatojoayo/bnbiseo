@@ -23,6 +23,12 @@ export function ManagerCleaningCard({
   showStatus = false,
 }: ManagerCleaningCardProps) {
   const statusInfo = showStatus ? STATUS_LABELS[cleaning.status] : null
+  const spaceSummary = [
+    cleaning.propertyPyeong != null && `${cleaning.propertyPyeong}평`,
+    cleaning.propertyLivingRooms != null && `거실 ${cleaning.propertyLivingRooms}`,
+    cleaning.propertyBedrooms != null && `침실 ${cleaning.propertyBedrooms}`,
+    cleaning.propertyBathrooms != null && `욕실 ${cleaning.propertyBathrooms}`,
+  ].filter(Boolean)
 
   return (
     <div className={cn('rounded-xl border border-outline-dim px-4 py-4', className)}>
@@ -53,10 +59,13 @@ export function ManagerCleaningCard({
           <ClockIcon size={13} strokeWidth={1.5} />
           {formatTimeKorean(cleaning.scheduledTime)}
         </span>
-        <span className="font-medium text-ink">
-          {cleaning.finalPrice.toLocaleString()}원
-        </span>
       </div>
+
+      {spaceSummary.length > 0 && (
+        <p className="mt-2 text-[13px] text-ink-muted">
+          {spaceSummary.join(' · ')}
+        </p>
+      )}
 
       {cleaning.propertyAddress && (
         <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
@@ -67,10 +76,22 @@ export function ManagerCleaningCard({
       )}
 
       {cleaning.memo && (
-        <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
-          {cleaning.memo}
-        </p>
+        <>
+          <div className="mt-3 border-t border-outline-dim" />
+          <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">
+            {cleaning.memo}
+          </p>
+        </>
       )}
+
+      <div className="mt-3 border-t border-outline-dim" />
+
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-[13px] text-ink-muted">청소 금액</p>
+        <p className="text-[15px] font-semibold text-ink">
+          {cleaning.finalPrice.toLocaleString()}원
+        </p>
+      </div>
 
       {action && (
         <div className="mt-4">
