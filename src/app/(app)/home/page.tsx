@@ -14,6 +14,7 @@ import { CLEANING_PROCESS_STEPS, PROPERTY_REGISTRATION_STEPS } from '@/lib/proce
 import { PropertyCard } from '@/components/property-card'
 import { PendingActivationPanel } from '@/components/pending-activation-panel'
 import { ProcessDrawer } from '@/components/process-drawer'
+import { nowKST } from '@/lib/utils'
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -30,10 +31,19 @@ export default function HomePage() {
     weekday: 'long',
   }).format(new Date())
 
-  // pending_payment, cancelled 제외
-  const upcoming = cleaningRequests.filter(
-    (r) => r.status !== 'pending_payment' && r.status !== 'cancelled'
-  )
+  const now = nowKST()
+  const upcoming = cleaningRequests
+    .filter((r) => ['pending', 'confirmed', 'in_progress'].includes(r.status))
+    .filter((r) => {
+      const scheduledAt = new Date(`${r.scheduledDate}T${r.scheduledTime}:00+09:00`)
+      return scheduledAt >= now
+    })
+    .sort((a, b) => {
+      const aTime = new Date(`${a.scheduledDate}T${a.scheduledTime}:00+09:00`).getTime()
+      const bTime = new Date(`${b.scheduledDate}T${b.scheduledTime}:00+09:00`).getTime()
+      return aTime - bTime
+    })
+  const visibleUpcoming = upcoming.slice(0, 3)
   const activeProperties = properties.filter((property) => property.status === 'active')
   const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
   const allProperties = [...activeProperties, ...pendingProperties]
@@ -117,13 +127,23 @@ export default function HomePage() {
           {upcoming.length > 0 ? (
             <>
               <p className="px-1 text-[13px] font-medium text-ink-muted">청소 내역</p>
-              {upcoming.map((r) => (
+              {visibleUpcoming.map((r) => (
                 <HostCleaningRequestCard
                   key={r.id}
                   request={r}
                   href={`/cleaning/${r.id}`}
                 />
               ))}
+              {upcoming.length > 3 && (
+                <div className="flex justify-center pt-1">
+                  <Link
+                    href="/my/cleaning-history"
+                    className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+                  >
+                    더 보기
+                  </Link>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center text-center py-8">
