@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeftIcon } from 'lucide-react'
 import { useProfile, useInvalidateProfile } from '@/lib/hooks/use-profile'
@@ -17,11 +17,11 @@ import {
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { user } = useAuth()
-  const { data: profile } = useProfile()
+  const { user, loading: authLoading } = useAuth()
+  const { data: profile, isLoading: profileLoading } = useProfile()
   const invalidateProfile = useInvalidateProfile()
 
-  const [name, setName] = useState('')
+  const [nameDraft, setNameDraft] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -29,13 +29,7 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false)
 
   const email = profile?.email || user?.email || ''
-
-  useEffect(() => {
-    if (profile?.fullName) {
-      setName(profile.fullName)
-    }
-  }, [profile?.fullName])
-
+  const name = nameDraft ?? (profile?.fullName || '')
   const hasChanges = name !== (profile?.fullName || '')
 
   async function handleSave() {
@@ -64,8 +58,16 @@ export default function ProfilePage() {
     }
   }
 
+  if (authLoading || profileLoading) {
+    return (
+      <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+      </div>
+    )
+  }
+
   return (
-    <div className="animate-fade-up-fast min-h-[100dvh] flex flex-col px-6 pt-6 pb-6">
+    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-6">
       {/* Header */}
       <button
         type="button"
@@ -89,7 +91,7 @@ export default function ProfilePage() {
           <FloatingInput
             label="이름"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setNameDraft(e.target.value)}
             borderRadius="0 0 12px 12px"
           />
         </CompoundInput>

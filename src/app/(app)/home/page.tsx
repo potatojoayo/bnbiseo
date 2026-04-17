@@ -187,7 +187,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/cleaning"
-            className="px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center mt-6 active:scale-[0.98] transition-all"
+            className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] md:hover:-translate-y-0.5 md:hover:bg-brand/90 md:hover:shadow-[0_10px_24px_rgba(255,56,92,0.2)]"
           >
             청소 요청하기
           </Link>

@@ -45,17 +45,17 @@ export default function MyPage() {
       {/* Profile header */}
       <Link
         href="/my/profile"
-        className="flex items-center justify-between px-6 pt-8 pb-6 active:bg-surface-soft transition-colors"
+        className="mt-3 flex items-center justify-between rounded-xl px-6 pb-6 pt-5 transition-all active:bg-surface-soft md:hover:bg-surface-subtle md:hover:translate-x-0.5"
       >
         <div>
           <h1 className="text-[22px] font-semibold text-ink">
             {displayName || '마이페이지'}
           </h1>
           {email && (
-            <p className="text-[14px] text-ink-muted mt-1">{email}</p>
+            <p className="mt-1 text-[14px] text-ink-muted">{email}</p>
           )}
         </div>
-        <ChevronRightIcon size={20} className="text-ink-faint shrink-0" strokeWidth={1.5} />
+        <ChevronRightIcon size={20} className="shrink-0 text-ink-faint" strokeWidth={1.5} />
       </Link>
 
       {/* Menu list */}
@@ -64,7 +64,7 @@ export default function MyPage() {
           <Link
             key={href}
             href={href}
-            className="flex items-center justify-between px-6 py-4 active:bg-surface-soft transition-colors"
+            className="flex items-center justify-between rounded-xl px-6 py-4 transition-all active:bg-surface-soft md:hover:bg-surface-subtle md:hover:translate-x-0.5"
           >
             <div className="flex items-center gap-3">
               <Icon size={20} className="text-ink-muted" strokeWidth={1.5} />
@@ -77,11 +77,11 @@ export default function MyPage() {
 
       {/* Legal links */}
       <div className="mt-auto flex items-center justify-center gap-2.5 mb-4">
-        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint hover:text-ink-muted transition-colors">
+        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint transition-colors hover:text-ink-muted">
           이용약관
         </a>
         <div className="h-3 w-px bg-outline-strong" />
-        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint hover:text-ink-muted transition-colors">
+        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint transition-colors hover:text-ink-muted">
           개인정보처리방침
         </a>
       </div>
@@ -91,7 +91,7 @@ export default function MyPage() {
         <button
           type="button"
           onClick={() => setLogoutOpen(true)}
-          className="text-[12px] text-ink-faint underline underline-offset-2 hover:text-ink-muted transition-colors"
+          className="text-[12px] text-ink-faint underline underline-offset-2 transition-colors hover:text-ink-muted"
         >
           로그아웃
         </button>
@@ -122,7 +122,7 @@ export default function MyPage() {
               <button
                 type="button"
                 onClick={() => setLogoutOpen(false)}
-                className="h-12 rounded-lg text-[15px] font-semibold text-ink-muted active:bg-surface-soft transition-colors"
+                className="h-12 rounded-lg text-[15px] font-semibold text-ink-muted transition-colors active:bg-surface-soft md:hover:bg-surface-soft"
               >
                 닫기
               </button>

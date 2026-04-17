@@ -32,8 +32,8 @@ export function PropertyCard({ property, selected, className }: PropertyCardProp
   return (
     <div
       className={cn(
-        'rounded-2xl border border-outline-dim bg-white px-4 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.04)] transition-all',
-        selected !== undefined && (selected ? 'border-ink bg-surface-soft' : 'hover:border-outline-strong'),
+        'rounded-2xl border border-outline-dim bg-white px-4 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.04)] transition-all md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_14px_32px_rgba(0,0,0,0.08)]',
+        selected !== undefined && (selected ? 'border-ink bg-surface-soft md:hover:border-ink' : 'md:hover:border-outline-strong'),
         className
       )}
     >
