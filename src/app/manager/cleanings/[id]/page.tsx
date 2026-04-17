@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { MapPinIcon } from 'lucide-react'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { CompoundField, CompoundInput } from '@/components/ui/floating-input'
+import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
   Drawer,
@@ -233,7 +234,7 @@ export default function ManagerCleaningDetailPage() {
               >
                 <div className="relative aspect-[16/10] w-full bg-surface-soft">
                   {space.photos[0]?.signedUrl ? (
-                    <Image
+                    <ImageWithSkeleton
                       src={space.photos[0].signedUrl}
                       alt=""
                       fill
@@ -278,7 +279,7 @@ export default function ManagerCleaningDetailPage() {
                 <div className="flex items-stretch">
                   <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                     {asset.photos[0]?.signedUrl ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={asset.photos[0].signedUrl}
                         alt=""
                         fill

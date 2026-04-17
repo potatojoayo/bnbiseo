@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { MobileBackButton } from '@/components/mobile-back-button'
+import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import {
   Carousel,
   CarouselContent,
@@ -103,7 +104,7 @@ export default function MyPropertySpaceDetailPage() {
             space.photos.map((photo) => (
               <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
                 {photo.signedUrl ? (
-                  <Image
+                  <ImageWithSkeleton
                     src={photo.signedUrl}
                     alt=""
                     fill
@@ -131,7 +132,7 @@ export default function MyPropertySpaceDetailPage() {
                 <CarouselItem key={photo.id} className="pl-0">
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-soft">
                     {photo.signedUrl ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={photo.signedUrl}
                         alt=""
                         fill
@@ -197,7 +198,7 @@ export default function MyPropertySpaceDetailPage() {
                 <div className="flex items-stretch">
                   <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                     {asset.photos[0]?.signedUrl ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={asset.photos[0].signedUrl}
                         alt=""
                         fill

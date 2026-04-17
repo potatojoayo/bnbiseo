@@ -17,6 +17,7 @@ import { useCleaningRequest, useInvalidateCleaning } from '@/lib/hooks/use-clean
 import { formatDateLabel, formatTimeKorean, cn } from '@/lib/utils'
 import { api } from '@/lib/api-client'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import {
   Drawer,
   DrawerContent,
@@ -186,12 +187,15 @@ export default function CleaningDetailPage() {
             <div className="flex items-start">
               <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden bg-surface-soft">
                 {cleaning.managerAvatarThumbnailSignedUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={cleaning.managerAvatarThumbnailSignedUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
+                  <div className="relative h-full w-full">
+                    <ImageWithSkeleton
+                      src={cleaning.managerAvatarThumbnailSignedUrl}
+                      alt=""
+                      fill
+                      sizes="112px"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <UserIcon size={18} strokeWidth={1.75} />
                 )}

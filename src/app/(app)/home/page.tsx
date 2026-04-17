@@ -32,9 +32,10 @@ export default function HomePage() {
   }).format(new Date())
 
   const now = nowKST()
-  const upcoming = cleaningRequests
-    .filter((r) => ['pending', 'confirmed', 'in_progress'].includes(r.status))
+  const homeCleanings = cleaningRequests
+    .filter((r) => ['pending', 'confirmed', 'in_progress', 'completed'].includes(r.status))
     .filter((r) => {
+      if (r.status === 'completed') return true
       const scheduledAt = new Date(`${r.scheduledDate}T${r.scheduledTime}:00+09:00`)
       return scheduledAt >= now
     })
@@ -43,7 +44,7 @@ export default function HomePage() {
       const bTime = new Date(`${b.scheduledDate}T${b.scheduledTime}:00+09:00`).getTime()
       return aTime - bTime
     })
-  const visibleUpcoming = upcoming.slice(0, 3)
+  const visibleHomeCleanings = homeCleanings.slice(0, 3)
   const activeProperties = properties.filter((property) => property.status === 'active')
   const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
   const allProperties = [...activeProperties, ...pendingProperties]
@@ -128,17 +129,17 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="px-6 pt-6 pb-8 flex flex-col gap-3">
-          {upcoming.length > 0 ? (
+          {homeCleanings.length > 0 ? (
             <>
               <p className="px-1 text-[13px] font-medium text-ink-muted">청소 내역</p>
-              {visibleUpcoming.map((r) => (
+              {visibleHomeCleanings.map((r) => (
                 <HostCleaningRequestCard
                   key={r.id}
                   request={r}
                   href={`/cleaning/${r.id}`}
                 />
               ))}
-              {upcoming.length > 3 && (
+              {homeCleanings.length > 3 && (
                 <div className="flex justify-center pt-1">
                   <Link
                     href="/my/cleaning-history"

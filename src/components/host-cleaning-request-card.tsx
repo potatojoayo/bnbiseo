@@ -6,7 +6,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: '매니저 배정 중', color: 'bg-brand/8 text-brand' },
   confirmed: { label: '매니저 배정 완료', color: 'bg-success-soft text-success' },
   in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
-  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink' },
+  completed: { label: '청소 완료', color: 'border border-outline-dim bg-surface-subtle text-ink-muted' },
   cancelled: { label: '취소됨', color: 'bg-surface-soft text-ink-faint' },
 }
 

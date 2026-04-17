@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LoadingButton } from '@/components/ui/loading-button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { AvatarWithSkeleton } from '@/components/ui/avatar-with-skeleton'
 import {
   Drawer,
   DrawerContent,
@@ -134,12 +134,12 @@ export default function AdminManagersPage() {
             {mobileManagers.map((m) => (
               <div key={m.id} className="rounded-xl border border-outline-dim px-4 py-4">
                 <div className="mb-2 flex items-start gap-4">
-                  <Avatar className="size-14 shrink-0">
-                    {m.avatarThumbnailSignedUrl && <AvatarImage src={m.avatarThumbnailSignedUrl} alt="" />}
-                    <AvatarFallback className="bg-surface-soft text-ink-muted">
-                      <CameraIcon size={20} strokeWidth={1.75} />
-                    </AvatarFallback>
-                  </Avatar>
+                  <AvatarWithSkeleton
+                    src={m.avatarThumbnailSignedUrl}
+                    className="size-14"
+                    fallback={<CameraIcon size={20} strokeWidth={1.75} />}
+                    fallbackClassName="bg-surface-soft text-ink-muted"
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[15px] font-semibold text-ink">{m.name}</span>
@@ -182,12 +182,12 @@ export default function AdminManagersPage() {
                 {paged.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>
-                      <Avatar className="size-10">
-                        {m.avatarThumbnailSignedUrl && <AvatarImage src={m.avatarThumbnailSignedUrl} alt="" />}
-                        <AvatarFallback className="bg-surface-soft text-ink-muted">
-                          <CameraIcon size={16} strokeWidth={1.75} />
-                        </AvatarFallback>
-                      </Avatar>
+                      <AvatarWithSkeleton
+                        src={m.avatarThumbnailSignedUrl}
+                        className="size-10"
+                        fallback={<CameraIcon size={16} strokeWidth={1.75} />}
+                        fallbackClassName="bg-surface-soft text-ink-muted"
+                      />
                     </TableCell>
                     <TableCell>{m.name}</TableCell>
                     <TableCell className="text-ink-muted">{m.email || '-'}</TableCell>

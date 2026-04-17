@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { MobileBackButton } from '@/components/mobile-back-button'
+import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import {
   Carousel,
   CarouselContent,
@@ -102,7 +103,7 @@ export default function ManagerCleaningSpaceDetailPage() {
             space.photos.map((photo) => (
               <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
                 {photo.signedUrl ? (
-                  <Image src={photo.signedUrl} alt="" fill sizes="720px" className="object-cover" />
+                  <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="720px" className="object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
                 )}
@@ -122,7 +123,7 @@ export default function ManagerCleaningSpaceDetailPage() {
                 <CarouselItem key={photo.id} className="pl-0">
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-soft">
                     {photo.signedUrl ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={photo.signedUrl}
                         alt=""
                         fill
@@ -186,7 +187,7 @@ export default function ManagerCleaningSpaceDetailPage() {
                 <div className="flex items-stretch">
                   <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                     {asset.photos[0]?.signedUrl ? (
-                      <Image src={asset.photos[0].signedUrl} alt="" fill sizes="104px" className="object-cover" />
+                      <ImageWithSkeleton src={asset.photos[0].signedUrl} alt="" fill sizes="104px" className="object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">사진 없음</div>
                     )}

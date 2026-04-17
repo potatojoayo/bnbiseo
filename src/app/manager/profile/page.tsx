@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation'
 import { ClipboardListIcon, ChevronRightIcon, FileTextIcon, ShieldCheckIcon } from 'lucide-react'
 import { supabase } from '@/lib/api-client'
 import { useManagerMe } from '@/lib/hooks/use-manager'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { AvatarWithSkeleton } from '@/components/ui/avatar-with-skeleton'
 import { LoadingButton } from '@/components/ui/loading-button'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Drawer,
   DrawerContent,
@@ -18,29 +17,6 @@ import {
 
 const MANAGER_PLACEHOLDER_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none'%3E%3Crect width='120' height='120' rx='60' fill='%23F4F4F4'/%3E%3Ccircle cx='60' cy='46' r='18' fill='%23C8C8C8'/%3E%3Cpath d='M28 94c4-16 18-26 32-26s28 10 32 26' fill='%23C8C8C8'/%3E%3C/svg%3E"
-
-function ManagerAvatar({ src, fallback }: { src: string; fallback: string }) {
-  const [avatarLoading, setAvatarLoading] = useState(true)
-
-  return (
-    <div className="relative size-16 shrink-0">
-      {avatarLoading && (
-        <Skeleton className="absolute inset-0 rounded-full bg-outline-strong" />
-      )}
-      <Avatar className="size-16">
-        <AvatarImage
-          src={src}
-          alt=""
-          onLoad={() => setAvatarLoading(false)}
-          onError={() => setAvatarLoading(false)}
-        />
-        <AvatarFallback className="bg-surface-soft text-[20px] font-semibold text-ink-muted">
-          {fallback}
-        </AvatarFallback>
-      </Avatar>
-    </div>
-  )
-}
 
 export default function ManagerProfilePage() {
   const router = useRouter()
@@ -73,10 +49,11 @@ export default function ManagerProfilePage() {
         href="/manager/profile/edit"
         className="mt-3 flex items-center gap-4 rounded-xl px-6 pb-6 pt-5 transition-all active:bg-surface-soft md:hover:bg-surface-subtle md:hover:translate-x-0.5"
       >
-        <ManagerAvatar
-          key={avatarSrc}
+        <AvatarWithSkeleton
           src={avatarSrc}
+          className="size-16"
           fallback={(managerMe?.manager.name || managerMe?.profile.fullName || 'M').trim().charAt(0)}
+          fallbackClassName="bg-surface-soft text-[20px] font-semibold text-ink-muted"
         />
 
         <div className="min-w-0 flex-1">

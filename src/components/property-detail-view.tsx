@@ -16,6 +16,7 @@ import {
 } from '@/lib/hooks/use-properties'
 import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { CompoundField, CompoundInput } from '@/components/ui/floating-input'
 import {
   Drawer,
@@ -189,7 +190,7 @@ export function PropertyDetailView({
             >
               {airbnbPreview.imageUrl && (
                 <div className="relative h-40 w-full">
-                  <Image
+                  <ImageWithSkeleton
                     src={airbnbPreview.imageUrl}
                     alt={airbnbPreview.name}
                     fill
@@ -303,7 +304,7 @@ export function PropertyDetailView({
                   >
                     <div className="relative aspect-[16/10] w-full bg-surface-soft">
                       {space.photos[0]?.signedUrl ? (
-                        <Image
+                        <ImageWithSkeleton
                           src={space.photos[0].signedUrl}
                           alt=""
                           fill
@@ -348,7 +349,7 @@ export function PropertyDetailView({
                     <div className="flex items-stretch">
                       <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                         {asset.photos[0]?.signedUrl ? (
-                          <Image
+                          <ImageWithSkeleton
                             src={asset.photos[0].signedUrl}
                             alt=""
                             fill

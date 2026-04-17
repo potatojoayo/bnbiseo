@@ -8,6 +8,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { MapPinIcon, PlusIcon } from 'lucide-react'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
+import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -390,7 +391,7 @@ function AdminPropertyRegistrationForm({
                   <div>
                     <div className="relative aspect-[16/10] w-full bg-surface-soft">
                       {space.photos[0]?.signedUrl ? (
-                        <Image
+                        <ImageWithSkeleton
                           src={space.photos[0].signedUrl}
                           alt=""
                           fill
@@ -453,10 +454,10 @@ function AdminPropertyRegistrationForm({
                   <div className="flex items-stretch">
                     <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                       {fixture.photos[0]?.signedUrl ? (
-                        <Image
-                          src={fixture.photos[0].signedUrl}
-                          alt=""
-                          fill
+                          <ImageWithSkeleton
+                            src={fixture.photos[0].signedUrl}
+                            alt=""
+                            fill
                           sizes="104px"
                           className="object-cover"
                         />
@@ -638,7 +639,7 @@ function AdminPropertyDetailView({
                 >
                   <div className="relative aspect-[16/10] w-full bg-surface-soft">
                     {space.photos[0]?.signedUrl ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={space.photos[0].signedUrl}
                         alt=""
                         fill
@@ -685,7 +686,7 @@ function AdminPropertyDetailView({
                   <div className="flex items-stretch">
                     <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                       {fixture.photos[0]?.signedUrl ? (
-                        <Image
+                        <ImageWithSkeleton
                           src={fixture.photos[0].signedUrl}
                           alt=""
                           fill

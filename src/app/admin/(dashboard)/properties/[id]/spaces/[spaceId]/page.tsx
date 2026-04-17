@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
+import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import {
@@ -187,7 +188,7 @@ export default function AdminSpaceDetailPage() {
               space.photos.map((photo) => (
                 <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
                   {photo.signedUrl ? (
-                    <Image
+                    <ImageWithSkeleton
                       src={photo.signedUrl}
                       alt=""
                       fill
@@ -219,7 +220,7 @@ export default function AdminSpaceDetailPage() {
                   <CarouselItem key={photo.id} className="pl-0">
                     <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-soft">
                       {photo.signedUrl ? (
-                        <Image
+                        <ImageWithSkeleton
                           src={photo.signedUrl}
                           alt=""
                           fill
@@ -287,10 +288,10 @@ export default function AdminSpaceDetailPage() {
                   <div className="flex items-stretch">
                     <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                       {fixture.photos[0]?.signedUrl ? (
-                        <Image
-                          src={fixture.photos[0].signedUrl}
-                          alt=""
-                          fill
+                          <ImageWithSkeleton
+                            src={fixture.photos[0].signedUrl}
+                            alt=""
+                            fill
                           sizes="104px"
                           className="object-cover"
                         />

@@ -9,7 +9,7 @@ import { api, ApiError, supabase } from '@/lib/api-client'
 import { useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { CompoundInput, FloatingInput } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { AvatarWithSkeleton } from '@/components/ui/avatar-with-skeleton'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const MANAGER_PLACEHOLDER_IMAGE =
@@ -178,12 +178,13 @@ export default function AdminManagerCreatePage() {
               {uploadingAvatar ? (
                 <Skeleton className="size-32 rounded-full bg-outline-strong" />
               ) : (
-                <Avatar className="size-32">
-                  <AvatarImage src={avatarPreviewUrl || MANAGER_PLACEHOLDER_IMAGE} alt="" />
-                  <AvatarFallback className="bg-surface-soft text-ink-muted text-[18px] font-semibold">
-                    {name.trim().charAt(0) || 'M'}
-                  </AvatarFallback>
-                </Avatar>
+                <AvatarWithSkeleton
+                  key={avatarPreviewUrl || MANAGER_PLACEHOLDER_IMAGE}
+                  src={avatarPreviewUrl || MANAGER_PLACEHOLDER_IMAGE}
+                  className="size-32"
+                  fallback={name.trim().charAt(0) || 'M'}
+                  fallbackClassName="bg-surface-soft text-[18px] font-semibold text-ink-muted"
+                />
               )}
               <span className="absolute inset-0 hidden items-center justify-center rounded-full bg-black/35 text-white transition-opacity md:flex md:opacity-0 md:group-hover:opacity-100">
                 <CameraIcon size={18} />
