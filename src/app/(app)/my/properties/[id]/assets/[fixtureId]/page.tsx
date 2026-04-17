@@ -99,7 +99,17 @@ export default function MyPropertyAssetDetailPage() {
 
       <section className="space-y-2">
         <p className="text-[14px] text-ink-muted">
-          {ASSET_CATEGORY_LABELS[asset.category]} · {locationParts.spaceName || asset.location}
+          {ASSET_CATEGORY_LABELS[asset.category]} ·{' '}
+          {linkedSpace ? (
+            <Link
+              href={`/my/properties/${id}/spaces/${linkedSpace.id}`}
+              className="underline underline-offset-2 transition-colors hover:text-ink"
+            >
+              {locationParts.spaceName}
+            </Link>
+          ) : (
+            <span>{locationParts.spaceName || asset.location}</span>
+          )}
           {locationParts.detailLocation ? ` · ${locationParts.detailLocation}` : ''}
         </p>
         {(asset.brand || asset.modelNumber) && (
@@ -112,15 +122,6 @@ export default function MyPropertyAssetDetailPage() {
         )}
         {asset.notes && (
           <p className="text-[14px] leading-relaxed text-ink-muted">{asset.notes}</p>
-        )}
-
-        {linkedSpace && (
-          <Link
-            href={`/my/properties/${id}/spaces/${linkedSpace.id}`}
-            className="inline-flex items-center pt-1 text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-          >
-            연결된 공간 보기
-          </Link>
         )}
       </section>
 

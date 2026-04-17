@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import { cleaningRequests, properties, propertySpaces } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
@@ -125,7 +125,7 @@ cleaningRoutes.post('/', async (c) => {
   const [property] = await db
     .select()
     .from(properties)
-    .where(and(eq(properties.id, propertyId), eq(properties.hostId, profileId)))
+    .where(and(eq(properties.id, propertyId), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
     .limit(1)
 
   if (!property) {

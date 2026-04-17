@@ -122,7 +122,7 @@ adminRoutes.get('/stats', async (c) => {
     .from(cleaningRequests)
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
     .leftJoin(profiles, eq(cleaningRequests.hostId, profiles.id))
-    .where(eq(cleaningRequests.status, 'pending'))
+    .where(and(eq(cleaningRequests.status, 'pending'), isNull(properties.deletedAt)))
     .orderBy(cleaningRequests.scheduledDate, cleaningRequests.scheduledTime)
     .limit(5)
 

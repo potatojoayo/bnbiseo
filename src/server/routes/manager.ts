@@ -106,7 +106,11 @@ managerRoutes.get('/cleanings/open', async (c) => {
     })
     .from(cleaningRequests)
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
-    .where(and(eq(cleaningRequests.status, 'pending'), isNull(cleaningRequests.managerId)))
+    .where(and(
+      eq(cleaningRequests.status, 'pending'),
+      isNull(cleaningRequests.managerId),
+      isNull(properties.deletedAt),
+    ))
     .orderBy(asc(cleaningRequests.scheduledDate), asc(cleaningRequests.scheduledTime), desc(cleaningRequests.createdAt))
 
   return c.json(result)
@@ -145,6 +149,22 @@ managerRoutes.get('/cleanings/me', async (c) => {
 managerRoutes.post('/cleanings/:id/claim', async (c) => {
   const id = c.req.param('id')
   const managerId = c.get('managerId')
+
+  const [claimable] = await db
+    .select({ id: cleaningRequests.id })
+    .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .where(and(
+      eq(cleaningRequests.id, id),
+      eq(cleaningRequests.status, 'pending'),
+      isNull(cleaningRequests.managerId),
+      isNull(properties.deletedAt),
+    ))
+    .limit(1)
+
+  if (!claimable) {
+    return c.json({ error: '다른 매니저가 먼저 배정했어요.' }, 409)
+  }
 
   const [claimed] = await db
     .update(cleaningRequests)

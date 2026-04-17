@@ -182,7 +182,17 @@ export default function AdminFixtureDetailPage() {
         <section className="space-y-4">
           <div className="space-y-2">
             <p className="text-[14px] text-ink-muted">
-              {CATEGORY_LABELS[fixture.category]} · {locationParts.spaceName || fixture.location}
+              {CATEGORY_LABELS[fixture.category]} ·{' '}
+              {linkedSpace ? (
+                <Link
+                  href={`/admin/properties/${id}/spaces/${linkedSpace.id}`}
+                  className="underline underline-offset-2 transition-colors hover:text-ink"
+                >
+                  {locationParts.spaceName}
+                </Link>
+              ) : (
+                <span>{locationParts.spaceName || fixture.location}</span>
+              )}
               {locationParts.detailLocation ? ` · ${locationParts.detailLocation}` : ''}
             </p>
             {(fixture.brand || fixture.modelNumber) && (
@@ -197,15 +207,6 @@ export default function AdminFixtureDetailPage() {
               <p className="text-[14px] leading-relaxed text-ink-muted">{fixture.notes}</p>
             )}
           </div>
-
-          {linkedSpace && (
-            <Link
-              href={`/admin/properties/${id}/spaces/${linkedSpace.id}`}
-              className="inline-flex items-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-            >
-              연결된 공간 보기
-            </Link>
-          )}
         </section>
 
         <section className="-mx-5 space-y-4 md:mx-0">

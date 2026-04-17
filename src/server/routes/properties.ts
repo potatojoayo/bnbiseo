@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { eq, and, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import {
+  cleaningRequests,
   properties,
   propertyAssets,
   propertyAssetPhotos,
@@ -255,16 +256,30 @@ propertiesRoutes.patch('/:id', async (c) => {
 propertiesRoutes.delete('/:id', async (c) => {
   const profileId = c.get('profileId')
   const id = c.req.param('id')
+  const deletedAt = new Date()
 
   const [deleted] = await db
     .update(properties)
-    .set({ deletedAt: new Date() })
+    .set({ deletedAt })
     .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
     .returning({ id: properties.id })
 
   if (!deleted) {
     return c.json({ error: '숙소를 찾을 수 없거나 권한이 없습니다.' }, 404)
   }
+
+  await db
+    .update(cleaningRequests)
+    .set({
+      status: 'cancelled',
+      cancelledAt: deletedAt,
+      updatedAt: deletedAt,
+    })
+    .where(and(
+      eq(cleaningRequests.propertyId, id),
+      eq(cleaningRequests.hostId, profileId),
+      eq(cleaningRequests.status, 'pending'),
+    ))
 
   return c.json({ success: true })
 })

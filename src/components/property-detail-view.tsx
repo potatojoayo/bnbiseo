@@ -76,7 +76,7 @@ export function PropertyDetailView({
     setMessage(undefined)
 
     try {
-      await api.delete(`/properties/${propertyId}/permanent`)
+      await api.delete(`/properties/${propertyId}`)
       await invalidateProperties()
 
       if (backHref === '/my/properties') {
@@ -262,6 +262,13 @@ export function PropertyDetailView({
             )}
           </section>
 
+          {message && (
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm text-brand">
+              <span>!</span>
+              {message}
+            </div>
+          )}
+
           <section className="mt-7 space-y-4">
             <p className="text-[16px] font-semibold text-ink">출입 및 와이파이 정보</p>
             <CompoundInput>
@@ -376,6 +383,15 @@ export function PropertyDetailView({
               </div>
             )}
           </section>
+
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            disabled={deleting}
+            className="mt-7 w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
+          >
+            숙소 삭제
+          </button>
         </>
       )}
 
@@ -388,7 +404,7 @@ export function PropertyDetailView({
               </DrawerTitle>
             </DrawerHeader>
             <p className="mb-6 text-[14px] text-ink-muted">
-              삭제하면 되돌릴 수 없어요.
+              삭제한 숙소는 목록에서 숨겨져요.
             </p>
             <div className="flex flex-col gap-3">
               <LoadingButton
