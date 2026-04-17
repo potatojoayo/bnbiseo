@@ -1,15 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChevronLeftIcon, CalendarIcon, ClockIcon } from 'lucide-react'
+import Link from 'next/link'
+import { ChevronLeftIcon } from 'lucide-react'
+import { ManagerCleaningCard } from '@/components/manager-cleaning-card'
 import { useManagerMyCleanings } from '@/lib/hooks/use-manager'
-import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
-  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
-  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink' },
-}
 
 export default function ManagerCleaningHistoryPage() {
   const router = useRouter()
@@ -42,45 +37,11 @@ export default function ManagerCleaningHistoryPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {requests.map((request) => {
-            const statusInfo = STATUS_LABELS[request.status]
-
-            return (
-              <div
-                key={request.id}
-                className="flex flex-col gap-2 rounded-xl border border-outline-dim px-4 py-4"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[15px] font-semibold text-ink">
-                    {request.propertyName || '숙소'}
-                  </span>
-                  {statusInfo && (
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusInfo.color}`}>
-                      {statusInfo.label}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-4 text-[13px] text-ink-muted">
-                  <span className="flex items-center gap-1">
-                    <CalendarIcon size={13} strokeWidth={1.5} />
-                    {formatDateLabel(request.scheduledDate)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <ClockIcon size={13} strokeWidth={1.5} />
-                    {formatTimeKorean(request.scheduledTime)}
-                  </span>
-                </div>
-
-                <p className="text-[13px] text-ink-muted">
-                  {request.finalPrice.toLocaleString()}원
-                  {request.cleaningType === 'urgent' && (
-                    <span className="ml-1 text-[11px] text-brand">긴급</span>
-                  )}
-                </p>
-              </div>
-            )
-          })}
+          {requests.map((request) => (
+            <Link key={request.id} href={`/manager/cleanings/${request.id}`} className="block">
+              <ManagerCleaningCard cleaning={request} showStatus />
+            </Link>
+          ))}
         </div>
       )}
     </div>
