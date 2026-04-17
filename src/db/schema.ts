@@ -176,6 +176,17 @@ export const cleaningRequests = pgTable('cleaning_requests', {
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
 })
 
+export const cleaningRequestPhotos = pgTable('cleaning_request_photos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  cleaningRequestId: uuid('cleaning_request_id')
+    .notNull()
+    .references(() => cleaningRequests.id, { onDelete: 'cascade' }),
+  storagePath: text('storage_path').notNull(),
+  thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
+  sortOrder: smallint('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 export const propertyAssets = pgTable('property_assets', {
   id: uuid('id').primaryKey().defaultRandom(),
   propertyId: uuid('property_id')
@@ -319,6 +330,17 @@ export const cleaningInspectionAssetReports = pgTable(
   (t) => [uniqueIndex('cleaning_inspection_asset_reports_report_asset_idx').on(t.reportId, t.assetId)],
 )
 
+export const cleaningInspectionAssetPhotos = pgTable('cleaning_inspection_asset_photos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  assetReportId: uuid('asset_report_id')
+    .notNull()
+    .references(() => cleaningInspectionAssetReports.id, { onDelete: 'cascade' }),
+  storagePath: text('storage_path').notNull(),
+  thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
+  sortOrder: smallint('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 // ─── Relations ───────────────────────────────────────────────────────────────
 
 export const profilesRelations = relations(profiles, ({ many }) => ({
@@ -342,7 +364,7 @@ export const managersRelations = relations(managers, ({ one, many }) => ({
   cleaningRequests: many(cleaningRequests),
 }))
 
-export const cleaningRequestsRelations = relations(cleaningRequests, ({ one }) => ({
+export const cleaningRequestsRelations = relations(cleaningRequests, ({ one, many }) => ({
   property: one(properties, {
     fields: [cleaningRequests.propertyId],
     references: [properties.id],
@@ -358,6 +380,14 @@ export const cleaningRequestsRelations = relations(cleaningRequests, ({ one }) =
   inspectionReport: one(cleaningInspectionReports, {
     fields: [cleaningRequests.id],
     references: [cleaningInspectionReports.cleaningRequestId],
+  }),
+  photos: many(cleaningRequestPhotos),
+}))
+
+export const cleaningRequestPhotosRelations = relations(cleaningRequestPhotos, ({ one }) => ({
+  cleaningRequest: one(cleaningRequests, {
+    fields: [cleaningRequestPhotos.cleaningRequestId],
+    references: [cleaningRequests.id],
   }),
 }))
 
@@ -428,7 +458,7 @@ export const cleaningInspectionReportsRelations = relations(cleaningInspectionRe
   assetReports: many(cleaningInspectionAssetReports),
 }))
 
-export const cleaningInspectionAssetReportsRelations = relations(cleaningInspectionAssetReports, ({ one }) => ({
+export const cleaningInspectionAssetReportsRelations = relations(cleaningInspectionAssetReports, ({ one, many }) => ({
   report: one(cleaningInspectionReports, {
     fields: [cleaningInspectionAssetReports.reportId],
     references: [cleaningInspectionReports.id],
@@ -436,5 +466,13 @@ export const cleaningInspectionAssetReportsRelations = relations(cleaningInspect
   asset: one(propertyAssets, {
     fields: [cleaningInspectionAssetReports.assetId],
     references: [propertyAssets.id],
+  }),
+  photos: many(cleaningInspectionAssetPhotos),
+}))
+
+export const cleaningInspectionAssetPhotosRelations = relations(cleaningInspectionAssetPhotos, ({ one }) => ({
+  assetReport: one(cleaningInspectionAssetReports, {
+    fields: [cleaningInspectionAssetPhotos.assetReportId],
+    references: [cleaningInspectionAssetReports.id],
   }),
 }))

@@ -52,7 +52,7 @@ export default function ManagerCleaningsPage() {
         청소 요청
       </h1>
       <p className="mt-1 text-[14px] text-ink-muted">
-        아직 배정되지 않은 요청을 직접 선택해서 맡을 수 있어요.
+        호스트들이 요청한 청소를 확인해보세요.
       </p>
 
       {cleanings.length === 0 ? (
@@ -79,7 +79,7 @@ export default function ManagerCleaningsPage() {
                   loadingText="배정 중..."
                   onClick={() => setClaimTargetId(cleaning.id)}
                 >
-                  내가 맡기
+                  배정받기
                 </LoadingButton>
               )}
             />
@@ -92,12 +92,12 @@ export default function ManagerCleaningsPage() {
           <div className="w-full px-5 pb-8">
             <DrawerHeader className="px-0">
               <DrawerTitle className="text-[18px] font-semibold text-ink">
-                이 요청을 맡을까요?
+                이 요청을 배정받을까요?
               </DrawerTitle>
             </DrawerHeader>
             <div className="space-y-4">
               <p className="text-[14px] leading-relaxed text-ink-muted">
-                한 번 배정된 요청은 취소할 수 없어요. 일정을 다시 확인한 뒤 맡아주세요.
+                한 번 배정받은 요청은 취소할 수 없어요. 일정을 다시 확인한 뒤 배정받아주세요.
               </p>
 
               {claimTarget && (
@@ -127,7 +127,7 @@ export default function ManagerCleaningsPage() {
                   disabled={!claimTargetId}
                   onClick={() => claimTargetId && handleClaim(claimTargetId)}
                 >
-                  최종 배정하기
+                  배정받기
                 </LoadingButton>
               </div>
             </div>

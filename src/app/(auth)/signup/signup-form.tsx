@@ -112,7 +112,7 @@ export function SignupForm() {
             placeholder="홍길동"
             onFocus={() => setFocused('fullName')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
+            className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
           {errors.fullName && (
@@ -143,7 +143,7 @@ export function SignupForm() {
             placeholder="you@example.com"
             onFocus={() => setFocused('email')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
+            className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
           {errors.email && (
@@ -175,7 +175,7 @@ export function SignupForm() {
             placeholder="영문·숫자 포함 8자 이상"
             onFocus={() => setFocused('password')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
+            className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
           {errors.password && (

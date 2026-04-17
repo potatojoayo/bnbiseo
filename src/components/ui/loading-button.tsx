@@ -10,10 +10,10 @@ interface LoadingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const variants = {
-  primary: 'bg-ink hover:opacity-90 text-white',
-  brand: 'bg-brand hover:opacity-90 text-white',
-  outline: 'bg-white border border-input text-ink hover:bg-surface-soft',
-  destructive: 'bg-ink hover:opacity-90 text-white',
+  primary: 'bg-ink enabled:hover:opacity-90 text-white',
+  brand: 'bg-brand enabled:hover:opacity-90 text-white',
+  outline: 'bg-white border border-input text-ink enabled:hover:bg-surface-soft',
+  destructive: 'bg-ink enabled:hover:opacity-90 text-white',
 }
 
 export function LoadingButton({

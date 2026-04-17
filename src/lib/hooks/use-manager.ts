@@ -65,6 +65,13 @@ export type ManagerCleaningDetail = ManagerCleaning & {
   doorLockPassword: string | null
   wifiSsid: string | null
   wifiPassword: string | null
+  cleaningPhotos: Array<{
+    id: string
+    storagePath: string
+    thumbnailStoragePath: string
+    signedUrl: string | null
+    thumbnailSignedUrl: string | null
+  }>
   spaces: Array<{
     id: string
     category: SpaceCategory
@@ -106,6 +113,13 @@ export type ManagerCleaningReport = ManagerCleaningDetail & {
       assetId: string
       status: InspectionStatus | null
       memo: string | null
+      photos: Array<{
+        id: string
+        storagePath: string
+        thumbnailStoragePath: string
+        signedUrl: string | null
+        thumbnailSignedUrl: string | null
+      }>
     }>
   }
 }

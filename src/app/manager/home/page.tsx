@@ -17,9 +17,10 @@ export default function ManagerHomePage() {
   const { data: managerMe, isLoading: managerMeLoading } = useManagerMe()
   const { data: cleanings = [], isLoading } = useManagerMyCleanings()
   const todayDate = getTodayKst()
-  const todayCleanings = cleanings.filter((cleaning) => cleaning.scheduledDate === todayDate)
-  const inProgressCleanings = cleanings.filter((cleaning) => cleaning.status === 'in_progress')
-  const upcomingCleanings = cleanings.filter((cleaning) => cleaning.status === 'confirmed')
+  const visibleCleanings = cleanings.filter((cleaning) =>
+    cleaning.scheduledDate >= todayDate &&
+    ['confirmed', 'in_progress', 'completed'].includes(cleaning.status),
+  )
 
   if (managerMeLoading || isLoading) {
     return (
@@ -36,11 +37,11 @@ export default function ManagerHomePage() {
           안녕하세요, {managerMe?.manager.name || managerMe?.profile.fullName || '매니저'}님
         </h1>
         <p className="mt-1 text-[14px] text-ink-muted">
-          오늘 맡은 청소와 진행 중인 요청을 확인해보세요.
+          예정된 청소를 확인해보세요.
         </p>
       </div>
 
-      {cleanings.length === 0 ? (
+      {visibleCleanings.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center text-center">
           <h2 className="text-[18px] font-semibold text-ink">
             아직 맡은 청소가 없어요
@@ -54,39 +55,13 @@ export default function ManagerHomePage() {
         </div>
       ) : (
         <div className="mt-6 flex flex-col gap-7">
-          {todayCleanings.length > 0 && (
-            <section className="flex flex-col gap-3">
-              <p className="px-1 text-[13px] font-medium text-ink-muted">오늘 청소</p>
-              {todayCleanings.map((cleaning) => (
-                <Link key={cleaning.id} href={`/manager/cleanings/${cleaning.id}`} className="block">
-                  <ManagerCleaningCard cleaning={cleaning} showStatus />
-                </Link>
-              ))}
-            </section>
-          )}
-
-          {inProgressCleanings.length > 0 && (
-            <section className="flex flex-col gap-3">
-              <p className="px-1 text-[13px] font-medium text-ink-muted">진행 중</p>
-              {inProgressCleanings.map((cleaning) => (
-                <Link key={cleaning.id} href={`/manager/cleanings/${cleaning.id}`} className="block">
-                  <ManagerCleaningCard cleaning={cleaning} showStatus />
-                </Link>
-              ))}
-            </section>
-          )}
-
           <section className="flex flex-col gap-3">
-            <p className="px-1 text-[13px] font-medium text-ink-muted">예정된 청소</p>
-            {upcomingCleanings.length > 0 ? (
-              upcomingCleanings.map((cleaning) => (
-                <Link key={cleaning.id} href={`/manager/cleanings/${cleaning.id}`} className="block">
-                  <ManagerCleaningCard cleaning={cleaning} showStatus />
-                </Link>
-              ))
-            ) : (
-              <p className="px-1 text-[14px] text-ink-faint">예정된 청소가 없어요.</p>
-            )}
+            <p className="px-1 text-[13px] font-medium text-ink-muted">청소 내역</p>
+            {visibleCleanings.map((cleaning) => (
+              <Link key={cleaning.id} href={`/manager/cleanings/${cleaning.id}`} className="block">
+                <ManagerCleaningCard cleaning={cleaning} showStatus />
+              </Link>
+            ))}
           </section>
         </div>
       )}

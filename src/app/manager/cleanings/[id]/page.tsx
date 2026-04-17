@@ -3,8 +3,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { MapPinIcon } from 'lucide-react'
+import { ManagerCleaningPhotoField } from '@/components/manager-cleaning-photo-field'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { CompoundField, CompoundInput } from '@/components/ui/floating-input'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
@@ -17,8 +19,9 @@ import {
 } from '@/components/ui/drawer'
 import { api, ApiError } from '@/lib/api-client'
 import { useManagerCleaning, useManagerCleaningReport, useInvalidateManager, type ManagerCleaningDetail } from '@/lib/hooks/use-manager'
+import type { UploadedManagerCleaningImage } from '@/lib/manager-cleaning-image-upload'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const SPACE_CATEGORY_LABELS: Record<ManagerCleaningDetail['spaces'][number]['category'], string> = {
   living_room: '거실',
@@ -54,11 +57,23 @@ const STATUS_LABELS: Record<ManagerCleaningDetail['status'], string> = {
 
 export default function ManagerCleaningDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const queryClient = useQueryClient()
   const invalidateManager = useInvalidateManager()
   const { data: cleaning, isLoading } = useManagerCleaning(id)
   const { data: report, isLoading: reportLoading } = useManagerCleaningReport(id)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isActionDrawerOpen, setIsActionDrawerOpen] = useState(false)
+  const [isSavingPhotos, setIsSavingPhotos] = useState(false)
+  const [cleaningPhotos, setCleaningPhotos] = useState<UploadedManagerCleaningImage[]>([])
+  const serverCleaningPhotos = (cleaning?.cleaningPhotos ?? []).map((photo) => ({
+    storagePath: photo.storagePath,
+    thumbnailStoragePath: photo.thumbnailStoragePath,
+    previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+  }))
+
+  useEffect(() => {
+    setCleaningPhotos(serverCleaningPhotos)
+  }, [cleaning?.cleaningPhotos])
 
   if (isLoading || reportLoading) {
     return (
@@ -92,11 +107,59 @@ export default function ManagerCleaningDetailPage() {
     : actionStatus === 'completed'
       ? '청소 완료'
       : null
-  const canWriteReport = ['confirmed', 'in_progress', 'completed'].includes(cleaning.status)
-  const reportActionLabel = cleaning.status === 'completed' ? '시설물 점검 리포트' : '시설물 점검 리포트 작성'
+  const canWriteReport = cleaning.status === 'in_progress'
+  const canViewReport = cleaning.status === 'completed'
+  const canEditPhotos = cleaning.status === 'in_progress'
+  const canViewPhotos = canEditPhotos || cleaning.status === 'completed'
   const allAssetsInspected = cleaning.assets.every((asset) =>
     report?.report.assets.some((item) => item.assetId === asset.id && item.status),
   )
+  const hasCleaningPhotos = cleaningPhotos.length > 0
+  const canCompleteCleaning = allAssetsInspected && hasCleaningPhotos
+
+  async function saveCleaningPhotos(nextImages: UploadedManagerCleaningImage[]) {
+    setIsSavingPhotos(true)
+    setCleaningPhotos(nextImages)
+
+    try {
+      const saved = await api.post<{
+        success: true
+        photos: ManagerCleaningDetail['cleaningPhotos']
+      }>(`/manager/cleanings/${id}/photos`, {
+        photos: nextImages.map((image) => ({
+          storagePath: image.storagePath,
+          thumbnailStoragePath: image.thumbnailStoragePath,
+        })),
+      })
+
+      queryClient.setQueryData<ManagerCleaningDetail>(
+        ['manager', 'cleanings', 'detail', id],
+        (previous) => previous
+          ? {
+              ...previous,
+              cleaningPhotos: saved.photos.map((photo) => {
+                const localPhoto = nextImages.find((image) => image.storagePath === photo.storagePath)
+
+                return {
+                  ...photo,
+                  signedUrl: photo.signedUrl ?? localPhoto?.previewUrl ?? null,
+                  thumbnailSignedUrl: photo.thumbnailSignedUrl ?? localPhoto?.previewUrl ?? null,
+                }
+              }),
+            }
+          : previous,
+      )
+    } catch (error) {
+      setCleaningPhotos(serverCleaningPhotos)
+      if (error instanceof ApiError) {
+        toast.error(error.message)
+      } else {
+        toast.error('청소 사진을 저장하지 못했어요.')
+      }
+    } finally {
+      setIsSavingPhotos(false)
+    }
+  }
 
   async function handleStatusUpdate() {
     if (!actionStatus || isSubmitting) return
@@ -166,14 +229,36 @@ export default function ManagerCleaningDetailPage() {
         </div>
       </section>
 
-      {(actionLabel || canWriteReport) && (
+      {(actionLabel || canWriteReport || canViewReport || canViewPhotos) && (
         <div className="mt-5 flex flex-col gap-3">
+          {canViewPhotos && (
+            <ManagerCleaningPhotoField
+              cleaningId={id}
+              images={cleaningPhotos}
+              readOnly={!canEditPhotos}
+              onError={(message) => {
+                if (message) toast.error(message)
+              }}
+              onChange={(images) => {
+                if (!canEditPhotos || isSavingPhotos) return
+                void saveCleaningPhotos(images)
+              }}
+            />
+          )}
           {canWriteReport && (
             <Link
               href={`/manager/cleanings/${id}/report`}
               className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-outline-dim text-[14px] font-medium text-ink transition-colors active:bg-surface-soft"
             >
-              {reportActionLabel}
+              시설물 점검 리포트 작성
+            </Link>
+          )}
+          {canViewReport && (
+            <Link
+              href={`/manager/cleanings/${id}/report`}
+              className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-outline-dim text-[14px] font-medium text-ink transition-colors active:bg-surface-soft"
+            >
+              시설물 점검 리포트
             </Link>
           )}
           {actionLabel && (
@@ -182,17 +267,23 @@ export default function ManagerCleaningDetailPage() {
               variant="primary"
               loading={false}
               onClick={() => {
-                if (actionStatus === 'completed' && !allAssetsInspected) {
-                  toast.info('모든 시설물의 점검 상태를 선택한 뒤 청소를 완료할 수 있어요.')
+                if (actionStatus === 'completed' && !canCompleteCleaning) {
+                  if (!allAssetsInspected && !hasCleaningPhotos) {
+                    toast.info('모든 시설물의 점검 상태를 선택하고 청소 사진을 1장 이상 등록한 뒤 청소를 완료할 수 있어요.')
+                  } else if (!allAssetsInspected) {
+                    toast.info('모든 시설물의 점검 상태를 선택한 뒤 청소를 완료할 수 있어요.')
+                  } else {
+                    toast.info('청소 사진을 1장 이상 등록한 뒤 청소를 완료할 수 있어요.')
+                  }
                   return
                 }
                 setIsActionDrawerOpen(true)
               }}
               className={cn(
                 'h-12 w-full rounded-xl text-[15px] font-semibold',
-                actionStatus === 'completed' && !allAssetsInspected && 'opacity-50',
+                actionStatus === 'completed' && !canCompleteCleaning && 'opacity-50',
               )}
-              aria-disabled={actionStatus === 'completed' && !allAssetsInspected}
+              aria-disabled={actionStatus === 'completed' && !canCompleteCleaning}
             >
               {actionLabel}
             </LoadingButton>

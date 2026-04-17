@@ -76,7 +76,7 @@ export function LoginForm() {
             placeholder="you@example.com"
             onFocus={() => setFocused('email')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
+            className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
         </div>
@@ -105,7 +105,7 @@ export function LoginForm() {
             placeholder="••••••••"
             onFocus={() => setFocused('password')}
             onBlur={() => setFocused(null)}
-            className="w-full bg-transparent text-[15px] text-ink placeholder:text-ink-faint outline-none"
+            className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
             style={{ fontFamily: 'var(--font-body)' }}
           />
         </div>

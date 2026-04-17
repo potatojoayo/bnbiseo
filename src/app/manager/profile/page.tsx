@@ -15,9 +15,6 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 
-const MANAGER_PLACEHOLDER_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none'%3E%3Crect width='120' height='120' rx='60' fill='%23F4F4F4'/%3E%3Ccircle cx='60' cy='46' r='18' fill='%23C8C8C8'/%3E%3Cpath d='M28 94c4-16 18-26 32-26s28 10 32 26' fill='%23C8C8C8'/%3E%3C/svg%3E"
-
 export default function ManagerProfilePage() {
   const router = useRouter()
   const { data: managerMe, isLoading } = useManagerMe()
@@ -27,7 +24,7 @@ export default function ManagerProfilePage() {
   const avatarSrc =
     managerMe?.profile.avatarThumbnailSignedUrl
     || managerMe?.profile.avatarSignedUrl
-    || MANAGER_PLACEHOLDER_IMAGE
+    || null
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -61,7 +58,7 @@ export default function ManagerProfilePage() {
             {managerMe?.manager.name || managerMe?.profile.fullName || '마이페이지'}
           </h1>
           {(managerMe?.profile.email || managerMe?.manager.phone) && (
-            <div className="mt-1 flex flex-col gap-0.5">
+            <div className="mt-0.5 flex flex-col gap-0">
               {managerMe?.profile.email && (
                 <p className="truncate text-[14px] text-ink-muted">
                   {managerMe.profile.email}

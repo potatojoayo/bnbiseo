@@ -4,6 +4,8 @@ import { and, asc, desc, eq, inArray, isNull, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
 import {
+  cleaningRequestPhotos,
+  cleaningInspectionAssetPhotos,
   cleaningInspectionAssetReports,
   cleaningInspectionReports,
   cleaningRequests,
@@ -37,10 +39,29 @@ const UpdateManagerMeSchema = z.object({
 const ManagerAvatarUploadSchema = z.object({
   fileName: z.string().min(1),
 })
+const ReportPhotoUploadSchema = z.object({
+  assetId: z.string().uuid(),
+  fileName: z.string().min(1),
+})
+const CleaningPhotoUploadSchema = z.object({
+  fileName: z.string().min(1),
+})
+const ReportPhotoSchema = z.object({
+  storagePath: z.string().min(1),
+  thumbnailStoragePath: z.string().min(1),
+})
+const CleaningPhotoSchema = z.object({
+  storagePath: z.string().min(1),
+  thumbnailStoragePath: z.string().min(1),
+})
+const CleaningPhotosDraftSchema = z.object({
+  photos: z.array(CleaningPhotoSchema).default([]),
+})
 const InspectionAssetDraftSchema = z.object({
   assetId: z.string().uuid(),
   status: z.enum(['normal', 'caution', 'defective']).nullable().optional(),
   memo: z.string().nullable().optional(),
+  photos: z.array(ReportPhotoSchema).default([]),
 })
 const ManagerCleaningReportDraftSchema = z.object({
   summaryMemo: z.string().nullable().optional(),
@@ -160,14 +181,26 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
         .from(propertyAssetPhotos)
         .where(inArray(propertyAssetPhotos.fixtureId, assetIds))
     : []
+  const requestPhotos = await db
+    .select({
+      id: cleaningRequestPhotos.id,
+      cleaningRequestId: cleaningRequestPhotos.cleaningRequestId,
+      storagePath: cleaningRequestPhotos.storagePath,
+      thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
+      sortOrder: cleaningRequestPhotos.sortOrder,
+    })
+    .from(cleaningRequestPhotos)
+    .where(eq(cleaningRequestPhotos.cleaningRequestId, request.id))
   const summary = summarizeSpaces(spaces)
   const propertySpaceNames = spaces.map((space) => space.name)
 
   const signedUrlMap = await createSignedUrlMap([
+    ...requestPhotos.map((photo) => photo.storagePath),
     ...spacePhotos.map((photo) => photo.storagePath),
     ...assetPhotos.map((photo) => photo.storagePath),
   ])
   const thumbnailSignedUrlMap = await createSignedUrlMap([
+    ...requestPhotos.map((photo) => photo.thumbnailStoragePath),
     ...spacePhotos.map((photo) => photo.thumbnailStoragePath),
     ...assetPhotos.map((photo) => photo.thumbnailStoragePath),
   ])
@@ -179,6 +212,13 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     propertyLivingRooms: summary.livingRooms,
     propertyBedrooms: summary.bedrooms,
     propertyBathrooms: summary.bathrooms,
+    cleaningPhotos: requestPhotos
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((photo) => ({
+        ...photo,
+        signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+        thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+      })),
     spaces: spaces.map((space) => ({
       ...space,
       photos: spacePhotos
@@ -380,6 +420,167 @@ managerRoutes.patch('/me', async (c) => {
   return c.json(updated)
 })
 
+managerRoutes.post('/cleanings/:id/report/upload-url', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+  const body = await c.req.json().catch(() => null)
+  const validated = ReportPhotoUploadSchema.safeParse(body)
+
+  if (!validated.success) {
+    return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [request] = await db
+    .select({ id: cleaningRequests.id })
+    .from(cleaningRequests)
+    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.managerId, managerId)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '청소 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  const extension = validated.data.fileName.includes('.')
+    ? validated.data.fileName.slice(validated.data.fileName.lastIndexOf('.')).toLowerCase()
+    : '.jpg'
+  const safeExtension = extension.match(/^\.[a-z0-9]+$/) ? extension : '.jpg'
+  const fileId = crypto.randomUUID()
+  const storagePath = `cleanings/${id}/inspection-reports/${validated.data.assetId}/original/${fileId}${safeExtension}`
+  const thumbnailStoragePath = `cleanings/${id}/inspection-reports/${validated.data.assetId}/thumb/${fileId}.jpg`
+  const supabaseAdmin = getSupabaseAdmin()
+  const [{ data: originalData, error: originalError }, { data: thumbnailData, error: thumbnailError }] = await Promise.all([
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(storagePath),
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(thumbnailStoragePath),
+  ])
+
+  if (originalError || thumbnailError || !originalData || !thumbnailData) {
+    return c.json({ error: originalError?.message || thumbnailError?.message || '업로드 URL을 만들 수 없어요.' }, 400)
+  }
+
+  return c.json({
+    original: {
+      path: storagePath,
+      token: originalData.token,
+    },
+    thumbnail: {
+      path: thumbnailStoragePath,
+      token: thumbnailData.token,
+    },
+  })
+})
+
+managerRoutes.post('/cleanings/:id/photos/upload-url', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+  const body = await c.req.json().catch(() => null)
+  const validated = CleaningPhotoUploadSchema.safeParse(body)
+
+  if (!validated.success) {
+    return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [request] = await db
+    .select({ id: cleaningRequests.id, status: cleaningRequests.status })
+    .from(cleaningRequests)
+    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.managerId, managerId)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '청소 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  if (request.status !== 'in_progress') {
+    return c.json({ error: '청소 진행 중일 때만 사진을 첨부할 수 있어요.' }, 400)
+  }
+
+  const extension = validated.data.fileName.includes('.')
+    ? validated.data.fileName.slice(validated.data.fileName.lastIndexOf('.')).toLowerCase()
+    : '.jpg'
+  const safeExtension = extension.match(/^\.[a-z0-9]+$/) ? extension : '.jpg'
+  const fileId = crypto.randomUUID()
+  const storagePath = `cleanings/${id}/photos/original/${fileId}${safeExtension}`
+  const thumbnailStoragePath = `cleanings/${id}/photos/thumb/${fileId}.jpg`
+  const supabaseAdmin = getSupabaseAdmin()
+  const [{ data: originalData, error: originalError }, { data: thumbnailData, error: thumbnailError }] = await Promise.all([
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(storagePath),
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(thumbnailStoragePath),
+  ])
+
+  if (originalError || thumbnailError || !originalData || !thumbnailData) {
+    return c.json({ error: originalError?.message || thumbnailError?.message || '업로드 URL을 만들 수 없어요.' }, 400)
+  }
+
+  return c.json({
+    original: {
+      path: storagePath,
+      token: originalData.token,
+    },
+    thumbnail: {
+      path: thumbnailStoragePath,
+      token: thumbnailData.token,
+    },
+  })
+})
+
+managerRoutes.post('/cleanings/:id/photos', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+  const body = await c.req.json().catch(() => null)
+  const parsed = CleaningPhotosDraftSchema.safeParse(body)
+
+  if (!parsed.success) {
+    return c.json({ error: '청소 사진 정보가 올바르지 않아요.' }, 400)
+  }
+
+  const [request] = await db
+    .select({ id: cleaningRequests.id, status: cleaningRequests.status })
+    .from(cleaningRequests)
+    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.managerId, managerId)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '청소 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  if (request.status !== 'in_progress') {
+    return c.json({ error: '청소 진행 중일 때만 사진을 저장할 수 있어요.' }, 400)
+  }
+
+  await db.delete(cleaningRequestPhotos).where(eq(cleaningRequestPhotos.cleaningRequestId, id))
+
+  if (parsed.data.photos.length > 0) {
+    await db.insert(cleaningRequestPhotos).values(
+      parsed.data.photos.map((photo, index) => ({
+        cleaningRequestId: id,
+        storagePath: photo.storagePath,
+        thumbnailStoragePath: photo.thumbnailStoragePath,
+        sortOrder: index,
+      })),
+    )
+  }
+
+  const savedPhotos = await db
+    .select({
+      id: cleaningRequestPhotos.id,
+      storagePath: cleaningRequestPhotos.storagePath,
+      thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
+      sortOrder: cleaningRequestPhotos.sortOrder,
+    })
+    .from(cleaningRequestPhotos)
+    .where(eq(cleaningRequestPhotos.cleaningRequestId, id))
+
+  return c.json({
+    success: true,
+    photos: savedPhotos
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((photo) => ({
+        ...photo,
+        signedUrl: null,
+        thumbnailSignedUrl: null,
+      })),
+  })
+})
+
 managerRoutes.get('/cleanings/open', async (c) => {
   const now = new Date()
   const currentDate = new Intl.DateTimeFormat('sv-SE', {
@@ -559,6 +760,7 @@ managerRoutes.get('/cleanings/:id/report', async (c) => {
   const assetReports = report
     ? await db
         .select({
+          id: cleaningInspectionAssetReports.id,
           assetId: cleaningInspectionAssetReports.assetId,
           status: cleaningInspectionAssetReports.status,
           memo: cleaningInspectionAssetReports.memo,
@@ -567,11 +769,42 @@ managerRoutes.get('/cleanings/:id/report', async (c) => {
         .where(eq(cleaningInspectionAssetReports.reportId, report.id))
     : []
 
+  const reportPhotos = assetReports.length > 0
+    ? await db
+        .select({
+          id: cleaningInspectionAssetPhotos.id,
+          assetReportId: cleaningInspectionAssetPhotos.assetReportId,
+          storagePath: cleaningInspectionAssetPhotos.storagePath,
+          thumbnailStoragePath: cleaningInspectionAssetPhotos.thumbnailStoragePath,
+          sortOrder: cleaningInspectionAssetPhotos.sortOrder,
+        })
+        .from(cleaningInspectionAssetPhotos)
+        .where(inArray(cleaningInspectionAssetPhotos.assetReportId, assetReports.map((item) => item.id)))
+    : []
+  const reportSignedUrlMap = await createSignedUrlMap([
+    ...reportPhotos.map((photo) => photo.storagePath),
+    ...reportPhotos.map((photo) => photo.thumbnailStoragePath),
+  ])
+
   return c.json({
     ...detail,
     report: {
       summaryMemo: report?.summaryMemo ?? '',
-      assets: assetReports,
+      assets: assetReports.map((item) => ({
+        assetId: item.assetId,
+        status: item.status,
+        memo: item.memo,
+        photos: reportPhotos
+          .filter((photo) => photo.assetReportId === item.id)
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((photo) => ({
+            id: photo.id,
+            storagePath: photo.storagePath,
+            thumbnailStoragePath: photo.thumbnailStoragePath,
+            signedUrl: reportSignedUrlMap.get(photo.storagePath) ?? null,
+            thumbnailSignedUrl: reportSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+          })),
+      })),
     },
   })
 })
@@ -600,8 +833,9 @@ managerRoutes.post('/cleanings/:id/report/draft', async (c) => {
       assetId: asset.assetId,
       status: asset.status ?? null,
       memo: asset.memo?.trim() || null,
+      photos: asset.photos,
     }))
-  const hasAnyAssetDraft = normalizedAssets.some((asset) => asset.status || asset.memo)
+  const hasAnyAssetDraft = normalizedAssets.some((asset) => asset.status || asset.memo || asset.photos.length > 0)
 
   const [existingReport] = await db
     .select({
@@ -656,8 +890,11 @@ managerRoutes.post('/cleanings/:id/report/draft', async (c) => {
   for (const asset of normalizedAssets) {
     const existingAssetReportId = existingAssetReportMap.get(asset.assetId)
 
-    if (!asset.status && !asset.memo) {
+    if (!asset.status && !asset.memo && asset.photos.length === 0) {
       if (existingAssetReportId) {
+        await db
+          .delete(cleaningInspectionAssetPhotos)
+          .where(eq(cleaningInspectionAssetPhotos.assetReportId, existingAssetReportId))
         await db
           .delete(cleaningInspectionAssetReports)
           .where(eq(cleaningInspectionAssetReports.id, existingAssetReportId))
@@ -667,6 +904,9 @@ managerRoutes.post('/cleanings/:id/report/draft', async (c) => {
 
     if (existingAssetReportId) {
       await db
+        .delete(cleaningInspectionAssetPhotos)
+        .where(eq(cleaningInspectionAssetPhotos.assetReportId, existingAssetReportId))
+      await db
         .update(cleaningInspectionAssetReports)
         .set({
           status: asset.status,
@@ -674,19 +914,44 @@ managerRoutes.post('/cleanings/:id/report/draft', async (c) => {
           updatedAt: new Date(),
         })
         .where(eq(cleaningInspectionAssetReports.id, existingAssetReportId))
+      if (asset.photos.length > 0) {
+        await db.insert(cleaningInspectionAssetPhotos).values(
+          asset.photos.map((photo, index) => ({
+            assetReportId: existingAssetReportId,
+            storagePath: photo.storagePath,
+            thumbnailStoragePath: photo.thumbnailStoragePath,
+            sortOrder: index,
+          })),
+        )
+      }
       continue
     }
 
-    await db.insert(cleaningInspectionAssetReports).values({
-      reportId: report.id,
-      assetId: asset.assetId,
-      status: asset.status,
-      memo: asset.memo,
-    })
+    const [inserted] = await db
+      .insert(cleaningInspectionAssetReports)
+      .values({
+        reportId: report.id,
+        assetId: asset.assetId,
+        status: asset.status,
+        memo: asset.memo,
+      })
+      .returning({ id: cleaningInspectionAssetReports.id })
+
+    if (asset.photos.length > 0) {
+      await db.insert(cleaningInspectionAssetPhotos).values(
+        asset.photos.map((photo, index) => ({
+          assetReportId: inserted.id,
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
+          sortOrder: index,
+        })),
+      )
+    }
   }
 
   const savedAssetReports = await db
     .select({
+      id: cleaningInspectionAssetReports.id,
       assetId: cleaningInspectionAssetReports.assetId,
       status: cleaningInspectionAssetReports.status,
       memo: cleaningInspectionAssetReports.memo,
@@ -694,11 +959,38 @@ managerRoutes.post('/cleanings/:id/report/draft', async (c) => {
     .from(cleaningInspectionAssetReports)
     .where(eq(cleaningInspectionAssetReports.reportId, report.id))
 
+  const savedPhotos = savedAssetReports.length > 0
+    ? await db
+        .select({
+          id: cleaningInspectionAssetPhotos.id,
+          assetReportId: cleaningInspectionAssetPhotos.assetReportId,
+          storagePath: cleaningInspectionAssetPhotos.storagePath,
+          thumbnailStoragePath: cleaningInspectionAssetPhotos.thumbnailStoragePath,
+          sortOrder: cleaningInspectionAssetPhotos.sortOrder,
+        })
+        .from(cleaningInspectionAssetPhotos)
+        .where(inArray(cleaningInspectionAssetPhotos.assetReportId, savedAssetReports.map((item) => item.id)))
+    : []
+
   return c.json({
     success: true,
     report: {
       summaryMemo: report.summaryMemo ?? '',
-      assets: savedAssetReports,
+      assets: savedAssetReports.map((item) => ({
+        assetId: item.assetId,
+        status: item.status,
+        memo: item.memo,
+        photos: savedPhotos
+          .filter((photo) => photo.assetReportId === item.id)
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((photo) => ({
+            id: photo.id,
+            storagePath: photo.storagePath,
+            thumbnailStoragePath: photo.thumbnailStoragePath,
+            signedUrl: null,
+            thumbnailSignedUrl: null,
+          })),
+      })),
     },
   })
 })

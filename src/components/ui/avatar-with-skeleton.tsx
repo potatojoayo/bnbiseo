@@ -21,6 +21,7 @@ export function AvatarWithSkeleton({
   skeletonClassName,
 }: AvatarWithSkeletonProps) {
   const [loading, setLoading] = useState(!!src)
+  const showFallback = !src || !loading
 
   return (
     <div className={cn('relative shrink-0', className)}>
@@ -36,7 +37,9 @@ export function AvatarWithSkeleton({
             onError={() => setLoading(false)}
           />
         )}
-        <AvatarFallback className={fallbackClassName}>{fallback}</AvatarFallback>
+        <AvatarFallback className={cn(fallbackClassName, !showFallback && 'opacity-0')}>
+          {fallback}
+        </AvatarFallback>
       </Avatar>
     </div>
   )

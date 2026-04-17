@@ -5,9 +5,11 @@ import { useParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { MobileBackButton } from '@/components/mobile-back-button'
+import { ManagerReportPhotoField } from '@/components/manager-report-photo-field'
 import { api, ApiError } from '@/lib/api-client'
 import { useManagerCleaningReport, type ManagerCleaningReport } from '@/lib/hooks/use-manager'
 import { cn } from '@/lib/utils'
+import { type UploadedManagerReportImage } from '@/lib/manager-report-image-upload'
 
 type InspectionStatus = 'normal' | 'caution' | 'defective'
 
@@ -44,6 +46,7 @@ const STATUS_OPTIONS: Array<{
 type AssetDraft = {
   status: InspectionStatus | null
   memo: string
+  photos: UploadedManagerReportImage[]
 }
 
 function parseSpaceName(location: string) {
@@ -91,6 +94,11 @@ function ManagerCleaningReportEditor({
       acc[asset.id] = {
         status: saved?.status ?? null,
         memo: saved?.memo ?? '',
+        photos: (saved?.photos ?? []).map((photo) => ({
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
+          previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+        })),
       }
       return acc
     }, {}),
@@ -141,6 +149,10 @@ function ManagerCleaningReportEditor({
           assetId: asset.id,
           status: nextAssetDrafts[asset.id]?.status ?? null,
           memo: nextAssetDrafts[asset.id]?.memo?.trim() || null,
+          photos: nextAssetDrafts[asset.id]?.photos.map((photo) => ({
+            storagePath: photo.storagePath,
+            thumbnailStoragePath: photo.thumbnailStoragePath,
+          })) ?? [],
         })),
       })
       queryClient.setQueryData<ManagerCleaningReport>(
@@ -150,7 +162,20 @@ function ManagerCleaningReportEditor({
               ...previous,
               report: {
                 summaryMemo: saved.report?.summaryMemo ?? '',
-                assets: saved.report?.assets ?? [],
+                assets: (saved.report?.assets ?? []).map((asset) => ({
+                  ...asset,
+                  photos: asset.photos.map((photo) => {
+                    const localPhoto = nextAssetDrafts[asset.assetId]?.photos.find(
+                      (item) => item.storagePath === photo.storagePath,
+                    )
+
+                    return {
+                      ...photo,
+                      signedUrl: photo.signedUrl ?? localPhoto?.previewUrl ?? null,
+                      thumbnailSignedUrl: photo.thumbnailSignedUrl ?? localPhoto?.previewUrl ?? null,
+                    }
+                  }),
+                })),
               },
             }
           : previous,
@@ -189,6 +214,7 @@ function ManagerCleaningReportEditor({
       [assetId]: {
         status: assetDrafts[assetId]?.status ?? null,
         memo: assetDrafts[assetId]?.memo ?? '',
+        photos: assetDrafts[assetId]?.photos ?? [],
         ...next,
       },
     }
@@ -245,7 +271,7 @@ function ManagerCleaningReportEditor({
           readOnly={isReadOnly}
           placeholder={isReadOnly ? '' : '청소 중 확인한 전반적인 특이사항을 남겨주세요'}
           className={cn(
-            'min-h-28 w-full rounded-xl border border-outline-dim px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-faint',
+            'min-h-28 w-full rounded-xl border border-outline-dim px-4 py-3 text-[16px] text-ink outline-none placeholder:text-ink-faint',
             isReadOnly && 'bg-surface-soft',
           )}
         />
@@ -268,7 +294,8 @@ function ManagerCleaningReportEditor({
             ) : (
               <div className="flex flex-col gap-3">
                 {space.assets.map((asset) => {
-                  const draft = assetDrafts[asset.id] ?? { status: null, memo: '' }
+                  const draft = assetDrafts[asset.id] ?? { status: null, memo: '', photos: [] }
+                  const showPhotoField = draft.status === 'caution' || draft.status === 'defective' || draft.photos.length > 0
 
                   return (
                     <div key={asset.id} className="rounded-xl border border-outline-dim px-4 py-4">
@@ -310,10 +337,25 @@ function ManagerCleaningReportEditor({
                         readOnly={isReadOnly}
                         placeholder={isReadOnly ? '' : '이상 사항이 있으면 메모를 남겨주세요'}
                         className={cn(
-                          'mt-3 min-h-24 w-full rounded-xl border border-outline-dim px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-faint',
+                          'mt-3 min-h-24 w-full rounded-xl border border-outline-dim px-4 py-3 text-[16px] text-ink outline-none placeholder:text-ink-faint',
                           isReadOnly && 'bg-surface-soft',
                         )}
                       />
+
+                      {showPhotoField && (
+                        <ManagerReportPhotoField
+                          cleaningId={id}
+                          assetId={asset.id}
+                          images={draft.photos}
+                          readOnly={isReadOnly}
+                          onError={(message) => {
+                            if (message) {
+                              toast.error(message)
+                            }
+                          }}
+                          onChange={(images) => updateAssetDraft(asset.id, { photos: images }, { immediate: true })}
+                        />
+                      )}
                     </div>
                   )
                 })}
@@ -372,7 +414,7 @@ function ManagerCleaningReportEditor({
                       readOnly={isReadOnly}
                       placeholder={isReadOnly ? '' : '이상 사항이 있으면 메모를 남겨주세요'}
                       className={cn(
-                        'mt-3 min-h-24 w-full rounded-xl border border-outline-dim px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-faint',
+                        'mt-3 min-h-24 w-full rounded-xl border border-outline-dim px-4 py-3 text-[16px] text-ink outline-none placeholder:text-ink-faint',
                         isReadOnly && 'bg-surface-soft',
                       )}
                     />

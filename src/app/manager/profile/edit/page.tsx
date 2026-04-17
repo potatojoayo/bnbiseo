@@ -170,13 +170,16 @@ export default function ManagerProfileEditPage() {
 
   return (
     <>
-      <SiteHeader title="프로필 수정" />
+      <div className="hidden md:block">
+        <SiteHeader title="프로필 수정" />
+      </div>
       <div className="mx-auto flex min-h-[calc(100dvh-80px)] w-full max-w-[720px] flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
-        <div className="-mb-1 md:hidden">
-          <MobileBackButton href="/manager/profile" mode="back" />
+        <div className="md:hidden">
+          <div className="-mb-1">
+            <MobileBackButton href="/manager/profile" mode="back" />
+          </div>
+          <h1 className="mt-2 text-[22px] font-semibold text-ink">프로필 수정</h1>
         </div>
-
-        <h1 className="text-[22px] font-semibold text-ink">프로필 수정</h1>
 
         <div className="space-y-4">
           <section className="flex justify-center pb-2">
