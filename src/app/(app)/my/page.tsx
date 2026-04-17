@@ -7,8 +7,9 @@ import { useAuth } from '@/lib/auth-provider'
 import { useProfile } from '@/lib/hooks/use-profile'
 import { supabase } from '@/lib/api-client'
 import {
-  HomeIcon,
   ClipboardListIcon,
+  FileTextIcon,
+  ShieldCheckIcon,
   ChevronRightIcon,
 } from 'lucide-react'
 import {
@@ -20,8 +21,9 @@ import {
 import { LoadingButton } from '@/components/ui/loading-button'
 
 const menuItems = [
-  { label: '내 숙소 관리', href: '/my/properties', icon: HomeIcon },
   { label: '청소 내역', href: '/my/cleaning-history', icon: ClipboardListIcon },
+  { label: '이용약관', href: '/legal/terms', icon: FileTextIcon, external: true },
+  { label: '개인정보처리방침', href: '/legal/privacy', icon: ShieldCheckIcon, external: true },
 ]
 
 export default function MyPage() {
@@ -60,10 +62,12 @@ export default function MyPage() {
 
       {/* Menu list */}
       <div className="flex flex-col">
-        {menuItems.map(({ label, href, icon: Icon }) => (
+        {menuItems.map(({ label, href, icon: Icon, external }) => (
           <Link
             key={href}
             href={href}
+            target={external ? '_blank' : undefined}
+            rel={external ? 'noopener noreferrer' : undefined}
             className="flex items-center justify-between rounded-xl px-6 py-4 transition-all active:bg-surface-soft md:hover:bg-surface-subtle md:hover:translate-x-0.5"
           >
             <div className="flex items-center gap-3">
@@ -75,19 +79,8 @@ export default function MyPage() {
         ))}
       </div>
 
-      {/* Legal links */}
-      <div className="mt-auto flex items-center justify-center gap-2.5 mb-4">
-        <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint transition-colors hover:text-ink-muted">
-          이용약관
-        </a>
-        <div className="h-3 w-px bg-outline-strong" />
-        <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[12px] text-ink-faint transition-colors hover:text-ink-muted">
-          개인정보처리방침
-        </a>
-      </div>
-
       {/* Logout */}
-      <div className="flex justify-center">
+      <div className="mt-auto flex justify-center">
         <button
           type="button"
           onClick={() => setLogoutOpen(true)}

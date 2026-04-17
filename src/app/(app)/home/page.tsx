@@ -36,34 +36,35 @@ export default function HomePage() {
   )
   const activeProperties = properties.filter((property) => property.status === 'active')
   const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
+  const allProperties = [...activeProperties, ...pendingProperties]
   const showPendingOnlyState = activeProperties.length === 0 && pendingProperties.length > 0
 
-  function renderPendingList() {
+  function renderPropertyList() {
     return (
       <div className="mt-5">
         <div className="flex flex-col gap-3">
-          <p className="px-1 text-left text-[13px] font-medium text-ink-muted">등록 대기 숙소</p>
-          {pendingProperties.map((property) => (
+          <p className="px-1 text-left text-[13px] font-medium text-ink-muted">내 숙소</p>
+          {allProperties.map((property) => (
             <Link
               key={property.id}
               href={`/my/properties/${property.id}?from=home`}
               className="block transition-transform active:scale-[0.99]"
             >
-              <PropertyCard
-                property={{ ...property, status: 'pending_activation' }}
-              />
+              <PropertyCard property={property} />
             </Link>
           ))}
         </div>
-        <div className="flex justify-center mt-4">
-          <button
-            type="button"
-            onClick={() => setRegistrationProcessOpen(true)}
-            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors"
-          >
-            숙소 등록은 어떻게 진행되나요?
-          </button>
-        </div>
+        {pendingProperties.length > 0 && (
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setRegistrationProcessOpen(true)}
+              className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+            >
+              숙소 등록은 어떻게 진행되나요?
+            </button>
+          </div>
+        )}
       </div>
     )
   }
@@ -111,55 +112,53 @@ export default function HomePage() {
             }
           />
         </div>
-      ) : upcoming.length > 0 ? (
-        /* ─── Upcoming Cleanings ─── */
-        <div className="px-6 pt-6 pb-8 flex flex-col gap-3">
-          <p className="text-[13px] font-medium text-ink-muted px-1">청소 내역</p>
-          {upcoming.map((r) => (
-            <HostCleaningRequestCard
-              key={r.id}
-              request={r}
-              href={`/cleaning/${r.id}`}
-            />
-          ))}
-          {pendingProperties.length > 0 && (
-            renderPendingList()
-          )}
-        </div>
       ) : (
-        /* ─── Empty State ─── */
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-8">
-          <Image
-            src="/images/cleaning-white.png"
-            alt="청소 서비스"
-            width={240}
-            height={120}
-            priority
-            className="mb-5 object-contain"
-          />
-          <h2 className="text-[18px] font-semibold text-ink mb-2">
-            처음 오셨나요?
-          </h2>
-          <p className="text-[14px] text-ink-muted leading-relaxed">
-            10,000원 할인을 받고 첫 청소를 요청해보세요!
-          </p>
-          <Link
-            href="/cleaning"
-            className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] md:hover:-translate-y-0.5 md:hover:bg-brand/90 md:hover:shadow-[0_10px_24px_rgba(255,56,92,0.2)]"
-          >
-            청소 요청하기
-          </Link>
-          <button
-            type="button"
-            onClick={() => setProcessOpen(true)}
-            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
-          >
-            청소는 어떻게 진행되나요?
-          </button>
-          {pendingProperties.length > 0 && (
-            <div className="w-full mt-10 text-left">
-              {renderPendingList()}
+        <div className="px-6 pt-6 pb-8 flex flex-col gap-3">
+          {upcoming.length > 0 ? (
+            <>
+              <p className="px-1 text-[13px] font-medium text-ink-muted">청소 내역</p>
+              {upcoming.map((r) => (
+                <HostCleaningRequestCard
+                  key={r.id}
+                  request={r}
+                  href={`/cleaning/${r.id}`}
+                />
+              ))}
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center py-8">
+              <Image
+                src="/images/cleaning-white.png"
+                alt="청소 서비스"
+                width={240}
+                height={120}
+                priority
+                className="mb-5 object-contain"
+              />
+              <h2 className="mb-2 text-[18px] font-semibold text-ink">
+                처음 오셨나요?
+              </h2>
+              <p className="text-[14px] leading-relaxed text-ink-muted">
+                10,000원 할인을 받고 첫 청소를 요청해보세요!
+              </p>
+              <Link
+                href="/cleaning"
+                className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] md:hover:-translate-y-0.5 md:hover:bg-brand/90 md:hover:shadow-[0_10px_24px_rgba(255,56,92,0.2)]"
+              >
+                청소 요청하기
+              </Link>
+              <button
+                type="button"
+                onClick={() => setProcessOpen(true)}
+                className="mt-4 text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                청소는 어떻게 진행되나요?
+              </button>
             </div>
+          )}
+
+          {allProperties.length > 0 && (
+            renderPropertyList()
           )}
         </div>
       )}
