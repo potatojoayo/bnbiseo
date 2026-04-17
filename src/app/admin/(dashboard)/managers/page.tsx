@@ -2,30 +2,21 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { CameraIcon } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
-import { api, ApiError } from '@/lib/api-client'
+import { api } from '@/lib/api-client'
 import { useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FloatingInput, CompoundInput } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
-
-type Manager = {
-  id: string
-  profileId: string
-  email: string | null
-  name: string
-  phone: string
-  memo: string | null
-  isActive: boolean
-}
 
 type ManagerFilter = 'all' | 'active' | 'inactive'
 
@@ -45,16 +36,8 @@ export default function AdminManagersPage() {
   const [mobileVisibleCount, setMobileVisibleCount] = useState(10)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
-  const [formOpen, setFormOpen] = useState(false)
-  const [editTarget, setEditTarget] = useState<Manager | null>(null)
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [memo, setMemo] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<Manager | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<(typeof managers)[number] | null>(null)
   const [deleting, setDeleting] = useState(false)
   const activeCount = managers.filter((manager) => manager.isActive).length
   const inactiveCount = managers.length - activeCount
@@ -88,36 +71,7 @@ export default function AdminManagersPage() {
     }
   }, [filteredManagers.length, mobileVisibleCount])
 
-  function openEdit(m: Manager) {
-    setEditTarget(m)
-    setName(m.name)
-    setPhone(m.phone)
-    setMemo(m.memo || '')
-    setMessage(null)
-    setFormOpen(true)
-  }
-
-  async function handleSave() {
-    if (!editTarget) return
-    setSaving(true)
-    setMessage(null)
-    try {
-      await api.patch(`/admin/managers/${editTarget.id}`, { name, phone, memo: memo || undefined })
-      setFormOpen(false)
-      invalidate.managers()
-      invalidate.stats()
-    } catch (error) {
-      if (error instanceof ApiError) {
-        setMessage(error.message)
-      } else {
-        setMessage('매니저 수정에 실패했어요.')
-      }
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleToggle(m: Manager) {
+  async function handleToggle(m: (typeof managers)[number]) {
     await api.post(`/admin/managers/${m.id}/toggle`)
     invalidate.managers()
     invalidate.stats()
@@ -179,17 +133,27 @@ export default function AdminManagersPage() {
           <div className="flex flex-col gap-3 md:hidden">
             {mobileManagers.map((m) => (
               <div key={m.id} className="rounded-xl border border-outline-dim px-4 py-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[15px] font-semibold text-ink">{m.name}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${m.isActive ? 'bg-success-soft text-success' : 'bg-surface-soft text-ink-faint'}`}>
-                    {m.isActive ? '활성' : '비활성'}
-                  </span>
+                <div className="mb-2 flex items-start gap-4">
+                  <Avatar className="size-14 shrink-0">
+                    {m.avatarThumbnailSignedUrl && <AvatarImage src={m.avatarThumbnailSignedUrl} alt="" />}
+                    <AvatarFallback className="bg-surface-soft text-ink-muted">
+                      <CameraIcon size={20} strokeWidth={1.75} />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[15px] font-semibold text-ink">{m.name}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${m.isActive ? 'bg-success-soft text-success' : 'bg-surface-soft text-ink-faint'}`}>
+                        {m.isActive ? '활성' : '비활성'}
+                      </span>
+                    </div>
+                    {m.email && <p className="text-[13px] text-ink-muted">{m.email}</p>}
+                    <p className="text-[13px] text-ink-muted">{m.phone}</p>
+                    {m.memo && <p className="mt-1 text-[12px] text-ink-faint">{m.memo}</p>}
+                  </div>
                 </div>
-                {m.email && <p className="text-[13px] text-ink-muted">{m.email}</p>}
-                <p className="text-[13px] text-ink-muted">{m.phone}</p>
-                {m.memo && <p className="mt-1 text-[12px] text-ink-faint">{m.memo}</p>}
                 <div className="flex gap-2 mt-3">
-                  <button onClick={() => openEdit(m)} className="flex-1 rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">수정</button>
+                  <Link href={`/admin/managers/${m.id}/edit`} className="flex-1 rounded-lg border border-outline-dim px-3 py-1.5 text-center text-[12px] font-medium text-ink-muted">수정</Link>
                   <button onClick={() => handleToggle(m)} className="flex-1 rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">{m.isActive ? '비활성화' : '활성화'}</button>
                   <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="flex-1 rounded-lg border border-danger-border bg-danger-soft px-3 py-1.5 text-[12px] font-medium text-danger">삭제</button>
                 </div>
@@ -205,6 +169,7 @@ export default function AdminManagersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[72px]">사진</TableHead>
                   <TableHead>이름</TableHead>
                   <TableHead>이메일</TableHead>
                   <TableHead>전화번호</TableHead>
@@ -216,6 +181,14 @@ export default function AdminManagersPage() {
               <TableBody>
                 {paged.map((m) => (
                   <TableRow key={m.id}>
+                    <TableCell>
+                      <Avatar className="size-10">
+                        {m.avatarThumbnailSignedUrl && <AvatarImage src={m.avatarThumbnailSignedUrl} alt="" />}
+                        <AvatarFallback className="bg-surface-soft text-ink-muted">
+                          <CameraIcon size={16} strokeWidth={1.75} />
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
                     <TableCell>{m.name}</TableCell>
                     <TableCell className="text-ink-muted">{m.email || '-'}</TableCell>
                     <TableCell>{m.phone}</TableCell>
@@ -227,7 +200,7 @@ export default function AdminManagersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1.5">
-                        <button onClick={() => openEdit(m)} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-muted">수정</button>
+                        <Link href={`/admin/managers/${m.id}/edit`} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-muted">수정</Link>
                         <button onClick={() => handleToggle(m)} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-muted">{m.isActive ? '비활성화' : '활성화'}</button>
                         <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-faint">삭제</button>
                       </div>
@@ -244,34 +217,6 @@ export default function AdminManagersPage() {
         )}
       </div>
       )}
-
-      {/* Edit Drawer */}
-      <Drawer open={formOpen} onOpenChange={setFormOpen}>
-        <DrawerContent>
-          <div className="w-full px-5 pb-8">
-            <DrawerHeader className="px-0">
-              <DrawerTitle className="text-[18px] font-semibold text-ink">매니저 수정</DrawerTitle>
-            </DrawerHeader>
-            <div className="flex flex-col gap-4">
-              <CompoundInput>
-                <FloatingInput label="이름" value={name} onChange={(e) => setName(e.target.value)} borderRadius="12px 12px 0 0" />
-                <FloatingInput label="전화번호" inputMode="numeric" placeholder="010-1234-5678" value={phone} onChange={(e) => setPhone(formatPhoneNumber(e.target.value))} borderRadius="0 0 12px 12px" />
-              </CompoundInput>
-              <CompoundInput>
-                <FloatingInput label="메모 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} borderRadius="12px" />
-              </CompoundInput>
-              {message && (
-                <p className="text-[13px] text-destructive">
-                  {message}
-                </p>
-              )}
-              <LoadingButton type="button" variant="primary" loading={saving} loadingText="저장 중..." disabled={!name || !phone} onClick={handleSave}>
-                수정하기
-              </LoadingButton>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
 
       {/* Delete Drawer */}
       <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>

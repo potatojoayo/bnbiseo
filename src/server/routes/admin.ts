@@ -276,12 +276,16 @@ const CreateManagerSchema = z.object({
   name: z.string().min(1),
   phone: z.string().min(1),
   memo: z.string().optional(),
+  avatarStoragePath: z.string().min(1),
+  avatarThumbnailStoragePath: z.string().min(1),
 })
 
 const UpdateManagerSchema = z.object({
   name: z.string().min(1).optional(),
   phone: z.string().min(1).optional(),
   memo: z.string().optional(),
+  avatarStoragePath: z.string().min(1).optional(),
+  avatarThumbnailStoragePath: z.string().min(1).optional(),
 })
 
 const PhotoUploadSchema = z.object({
@@ -357,6 +361,10 @@ const SignedUploadSchema = z.object({
   kind: z.enum(['assets', 'spaces']).optional(),
 })
 
+const ManagerAvatarUploadSchema = z.object({
+  fileName: z.string().min(1),
+})
+
 const PropertySpaceSchema = z.object({
   category: z.enum(['living_room', 'bedroom', 'bathroom']),
   floor: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(1),
@@ -394,12 +402,24 @@ adminRoutes.get('/managers', async (c) => {
       isActive: managers.isActive,
       createdAt: managers.createdAt,
       email: profiles.email,
+      avatarStoragePath: profiles.avatarStoragePath,
+      avatarThumbnailStoragePath: profiles.avatarThumbnailStoragePath,
     })
     .from(managers)
     .leftJoin(profiles, eq(managers.profileId, profiles.id))
     .orderBy(desc(managers.createdAt))
 
-  return c.json(result)
+  const signedUrlMap = await createSignedUrlMap(
+    result
+      .flatMap((manager) => [manager.avatarStoragePath, manager.avatarThumbnailStoragePath])
+      .filter((path): path is string => !!path),
+  )
+
+  return c.json(result.map((manager) => ({
+    ...manager,
+    avatarSignedUrl: manager.avatarStoragePath ? signedUrlMap.get(manager.avatarStoragePath) ?? null : null,
+    avatarThumbnailSignedUrl: manager.avatarThumbnailStoragePath ? signedUrlMap.get(manager.avatarThumbnailStoragePath) ?? null : null,
+  })))
 })
 
 // Create manager
@@ -444,6 +464,8 @@ adminRoutes.post('/managers', async (c) => {
           email: validated.data.email,
           fullName: validated.data.name,
           phone: validated.data.phone,
+          avatarStoragePath: validated.data.avatarStoragePath,
+          avatarThumbnailStoragePath: validated.data.avatarThumbnailStoragePath,
           role: 'manager',
           onboardingCompleted: true,
         })
@@ -470,6 +492,43 @@ adminRoutes.post('/managers', async (c) => {
     await supabaseAdmin.auth.admin.deleteUser(authUserData.user.id)
     return warnJson(c, { error: '매니저 정보를 저장하지 못했어요.' }, 500)
   }
+})
+
+adminRoutes.post('/managers/upload-url', async (c) => {
+  const body = await c.req.json()
+  const validated = ManagerAvatarUploadSchema.safeParse(body)
+
+  if (!validated.success) {
+    return warnJson(c, { errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const extension = validated.data.fileName.includes('.')
+    ? validated.data.fileName.slice(validated.data.fileName.lastIndexOf('.')).toLowerCase()
+    : '.jpg'
+  const safeExtension = extension.match(/^\.[a-z0-9]+$/) ? extension : '.jpg'
+  const fileId = crypto.randomUUID()
+  const storagePath = `managers/profiles/original/${fileId}${safeExtension}`
+  const thumbnailStoragePath = `managers/profiles/thumb/${fileId}.jpg`
+  const supabaseAdmin = getSupabaseAdmin()
+  const [{ data: originalData, error: originalError }, { data: thumbnailData, error: thumbnailError }] = await Promise.all([
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(storagePath),
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(thumbnailStoragePath),
+  ])
+
+  if (originalError || thumbnailError || !originalData || !thumbnailData) {
+    return warnJson(c, { error: originalError?.message || thumbnailError?.message || '업로드 URL을 만들 수 없어요.' }, 400)
+  }
+
+  return c.json({
+    original: {
+      path: storagePath,
+      token: originalData.token,
+    },
+    thumbnail: {
+      path: thumbnailStoragePath,
+      token: thumbnailData.token,
+    },
+  })
 })
 
 // Update manager
@@ -508,6 +567,8 @@ adminRoutes.patch('/managers/:id', async (c) => {
         .set({
           ...(validated.data.name !== undefined ? { fullName: validated.data.name } : {}),
           ...(validated.data.phone !== undefined ? { phone: validated.data.phone } : {}),
+          ...(validated.data.avatarStoragePath !== undefined ? { avatarStoragePath: validated.data.avatarStoragePath } : {}),
+          ...(validated.data.avatarThumbnailStoragePath !== undefined ? { avatarThumbnailStoragePath: validated.data.avatarThumbnailStoragePath } : {}),
           updatedAt: new Date(),
         })
         .where(eq(profiles.id, current.profileId))

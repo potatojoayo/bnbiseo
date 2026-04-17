@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
+import { createClient } from '@supabase/supabase-js'
 import { eq, and, desc, isNull } from 'drizzle-orm'
 import { db } from '@/db'
-import { cleaningRequests, properties, propertySpaces } from '@/db/schema'
+import { cleaningRequests, managers, profiles, properties, propertySpaces } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
 import { summarizeSpaces } from '@/lib/property-space-summary'
@@ -22,6 +23,29 @@ const ConfirmPaymentSchema = z.object({
 })
 
 export const cleaningRoutes = new Hono<AuthEnv>()
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!,
+  )
+}
+
+async function createSignedUrlMap(paths: string[]) {
+  const signedUrlMap = new Map<string, string | null>()
+  if (paths.length === 0) return signedUrlMap
+
+  const supabaseAdmin = getSupabaseAdmin()
+  const { data } = await supabaseAdmin.storage
+    .from('images')
+    .createSignedUrls(paths, 60 * 60)
+
+  data?.forEach((item, index) => {
+    signedUrlMap.set(paths[index], item.signedUrl ?? null)
+  })
+
+  return signedUrlMap
+}
 
 cleaningRoutes.use('*', authMiddleware)
 
@@ -81,9 +105,15 @@ cleaningRoutes.get('/:id', async (c) => {
       propertyName: properties.name,
       propertyAddress: properties.address,
       propertyAddressDetail: properties.addressDetail,
+      managerName: managers.name,
+      managerPhone: managers.phone,
+      managerAvatarStoragePath: profiles.avatarStoragePath,
+      managerAvatarThumbnailStoragePath: profiles.avatarThumbnailStoragePath,
     })
     .from(cleaningRequests)
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
+    .leftJoin(profiles, eq(managers.profileId, profiles.id))
     .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.hostId, profileId)))
     .limit(1)
 
@@ -100,12 +130,21 @@ cleaningRoutes.get('/:id', async (c) => {
     .where(eq(propertySpaces.propertyId, request.propertyId))
 
   const summary = summarizeSpaces(spaces)
+  const signedUrlMap = await createSignedUrlMap(
+    [request.managerAvatarStoragePath, request.managerAvatarThumbnailStoragePath].filter((path): path is string => !!path),
+  )
 
   return c.json({
     ...request,
     propertyPyeong: summary.pyeong,
     propertyBedrooms: summary.bedrooms,
     propertyBathrooms: summary.bathrooms,
+    managerAvatarSignedUrl: request.managerAvatarStoragePath
+      ? signedUrlMap.get(request.managerAvatarStoragePath) ?? null
+      : null,
+    managerAvatarThumbnailSignedUrl: request.managerAvatarThumbnailStoragePath
+      ? signedUrlMap.get(request.managerAvatarThumbnailStoragePath) ?? null
+      : null,
   })
 })
 

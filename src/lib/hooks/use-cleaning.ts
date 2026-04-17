@@ -27,6 +27,10 @@ type CleaningRequestDetail = CleaningRequest & {
   propertyPyeong: number | null
   propertyBedrooms: number | null
   propertyBathrooms: number | null
+  managerName: string | null
+  managerPhone: string | null
+  managerAvatarSignedUrl: string | null
+  managerAvatarThumbnailSignedUrl: string | null
 }
 
 export function useCleaningRequests() {

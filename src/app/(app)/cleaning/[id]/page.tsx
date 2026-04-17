@@ -10,6 +10,8 @@ import {
   MapPinIcon,
   CreditCardIcon,
   HomeIcon,
+  PhoneIcon,
+  UserIcon,
 } from 'lucide-react'
 import { useCleaningRequest, useInvalidateCleaning } from '@/lib/hooks/use-cleaning'
 import { formatDateLabel, formatTimeKorean, cn } from '@/lib/utils'
@@ -85,6 +87,7 @@ export default function CleaningDetailPage() {
 
   const statusConfig = STATUS_CONFIG[cleaning.status]
   const currentStep = statusConfig?.step ?? 0
+  const showManagerSection = ['confirmed', 'in_progress', 'completed'].includes(cleaning.status)
 
   // 취소 정책: pending 전액 환불, confirmed 24시간 전까지만
   const scheduledAt = new Date(`${cleaning.scheduledDate}T${cleaning.scheduledTime}:00+09:00`)
@@ -175,6 +178,47 @@ export default function CleaningDetailPage() {
           </div>
         )}
       </div>
+
+      {showManagerSection && (
+        <section className="mb-6 space-y-3">
+          <p className="px-1 text-[13px] font-medium text-ink-muted">배정 매니저</p>
+          <div className="overflow-hidden rounded-xl border border-outline-dim">
+            <div className="flex items-start">
+              <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden bg-surface-soft">
+                {cleaning.managerAvatarThumbnailSignedUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cleaning.managerAvatarThumbnailSignedUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserIcon size={18} strokeWidth={1.75} />
+                )}
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-2.5 px-4 py-4">
+                <div className="flex items-center gap-2.5">
+                  <UserIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
+                  <p className="text-[14px] text-ink">{cleaning.managerName || '-'}</p>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <PhoneIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
+                  {cleaning.managerPhone ? (
+                    <a
+                      href={`tel:${cleaning.managerPhone.replaceAll('-', '')}`}
+                      className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+                    >
+                      {cleaning.managerPhone}
+                    </a>
+                  ) : (
+                    <p className="text-[13px] text-ink-muted">-</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Process timeline */}
       {cleaning.status !== 'cancelled' && (

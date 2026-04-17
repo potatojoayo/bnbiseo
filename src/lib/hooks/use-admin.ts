@@ -57,6 +57,10 @@ type Manager = {
   name: string
   phone: string
   memo: string | null
+  avatarStoragePath: string | null
+  avatarThumbnailStoragePath: string | null
+  avatarSignedUrl: string | null
+  avatarThumbnailSignedUrl: string | null
   isActive: boolean
   createdAt: string
 }

@@ -58,7 +58,8 @@ profilesRoutes.delete('/me', async (c) => {
       fullName: '탈퇴회원',
       email: null,
       phone: null,
-      avatarUrl: null,
+      avatarStoragePath: null,
+      avatarThumbnailStoragePath: null,
       deletedAt: new Date(),
       updatedAt: new Date(),
     })
