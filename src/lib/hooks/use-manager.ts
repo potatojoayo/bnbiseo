@@ -41,6 +41,59 @@ export type ManagerCleaning = {
   propertyBathrooms: number | null
 }
 
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type AssetCategory =
+  | 'lighting'
+  | 'furniture'
+  | 'faucet'
+  | 'boiler'
+  | 'appliance'
+  | 'lock'
+  | 'ac'
+  | 'washer'
+  | 'dryer'
+  | 'vent'
+  | 'other'
+
+export type ManagerCleaningDetail = ManagerCleaning & {
+  entrancePassword: string | null
+  doorLockPassword: string | null
+  wifiSsid: string | null
+  wifiPassword: string | null
+  spaces: Array<{
+    id: string
+    category: SpaceCategory
+    floor: number
+    name: string
+    pyeong: number
+    notes: string | null
+    photos: Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>
+  }>
+  assets: Array<{
+    id: string
+    category: AssetCategory
+    name: string
+    location: string
+    brand: string | null
+    modelNumber: string | null
+    specNotes: string | null
+    notes: string | null
+    photos: Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>
+  }>
+}
+
 export function useManagerMe() {
   const { user } = useAuth()
 
@@ -76,6 +129,16 @@ export function useManagerMyCleanings() {
   })
 }
 
+export function useManagerCleaning(id: string) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['manager', 'cleanings', 'detail', id],
+    queryFn: () => api.get<ManagerCleaningDetail>(`/manager/cleanings/${id}`),
+    enabled: !!user && !!id,
+  })
+}
+
 export function useInvalidateManager() {
   const queryClient = useQueryClient()
 
@@ -84,5 +147,6 @@ export function useInvalidateManager() {
     me: () => queryClient.invalidateQueries({ queryKey: ['manager', 'me'] }),
     openCleanings: () => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'open', 'v2'] }),
     myCleanings: () => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'me', 'v2'] }),
+    cleaningDetail: (id: string) => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'detail', id] }),
   }
 }

@@ -1,9 +1,20 @@
 import { Hono } from 'hono'
+import { createClient } from '@supabase/supabase-js'
 import { and, asc, desc, eq, inArray, isNull, ne } from 'drizzle-orm'
+import { z } from 'zod'
 import { db } from '@/db'
-import { cleaningRequests, managers, profiles, properties, propertySpaces } from '@/db/schema'
+import {
+  cleaningRequests,
+  managers,
+  profiles,
+  properties,
+  propertyAssets,
+  propertyAssetPhotos,
+  propertySpaces,
+  propertySpacePhotos,
+} from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
-import { summarizeSpacesByProperty } from '@/lib/property-space-summary'
+import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 
 type ManagerEnv = {
   Variables: AuthEnv['Variables'] & {
@@ -12,8 +23,34 @@ type ManagerEnv = {
 }
 
 export const managerRoutes = new Hono<ManagerEnv>()
+const ManagerCleaningStatusUpdateSchema = z.object({
+  status: z.enum(['in_progress', 'completed']),
+})
 
 managerRoutes.use('*', authMiddleware)
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!,
+  )
+}
+
+async function createSignedUrlMap(paths: string[]) {
+  const signedUrlMap = new Map<string, string | null>()
+  if (paths.length === 0) return signedUrlMap
+
+  const supabaseAdmin = getSupabaseAdmin()
+  const { data } = await supabaseAdmin.storage
+    .from('images')
+    .createSignedUrls(paths, 60 * 60)
+
+  data?.forEach((item, index) => {
+    signedUrlMap.set(paths[index], item.signedUrl ?? null)
+  })
+
+  return signedUrlMap
+}
 
 managerRoutes.use('*', async (c, next) => {
   const profileId = c.get('profileId')
@@ -233,6 +270,187 @@ managerRoutes.get('/cleanings/me', async (c) => {
       }
     }),
   )
+})
+
+managerRoutes.get('/cleanings/:id', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+
+  const [request] = await db
+    .select({
+      id: cleaningRequests.id,
+      status: cleaningRequests.status,
+      scheduledDate: cleaningRequests.scheduledDate,
+      scheduledTime: cleaningRequests.scheduledTime,
+      cleaningType: cleaningRequests.cleaningType,
+      memo: cleaningRequests.memo,
+      finalPrice: cleaningRequests.finalPrice,
+      createdAt: cleaningRequests.createdAt,
+      propertyId: properties.id,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+      entrancePassword: properties.entrancePassword,
+      doorLockPassword: properties.doorLockPassword,
+      wifiSsid: properties.wifiSsid,
+      wifiPassword: properties.wifiPassword,
+    })
+    .from(cleaningRequests)
+    .innerJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .where(and(
+      eq(cleaningRequests.id, id),
+      eq(cleaningRequests.managerId, managerId),
+      isNull(properties.deletedAt),
+    ))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '청소 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  const spaces = await db
+    .select({
+      id: propertySpaces.id,
+      propertyId: propertySpaces.propertyId,
+      category: propertySpaces.category,
+      floor: propertySpaces.floor,
+      name: propertySpaces.name,
+      pyeong: propertySpaces.pyeong,
+      notes: propertySpaces.notes,
+    })
+    .from(propertySpaces)
+    .where(eq(propertySpaces.propertyId, request.propertyId))
+
+  const assets = await db
+    .select({
+      id: propertyAssets.id,
+      propertyId: propertyAssets.propertyId,
+      category: propertyAssets.category,
+      name: propertyAssets.name,
+      location: propertyAssets.location,
+      brand: propertyAssets.brand,
+      modelNumber: propertyAssets.modelNumber,
+      specNotes: propertyAssets.specNotes,
+      notes: propertyAssets.notes,
+    })
+    .from(propertyAssets)
+    .where(eq(propertyAssets.propertyId, request.propertyId))
+
+  const spaceIds = spaces.map((space) => space.id)
+  const spacePhotos = spaceIds.length > 0
+    ? await db
+        .select({
+          id: propertySpacePhotos.id,
+          propertySpaceId: propertySpacePhotos.propertySpaceId,
+          storagePath: propertySpacePhotos.storagePath,
+          thumbnailStoragePath: propertySpacePhotos.thumbnailStoragePath,
+          sortOrder: propertySpacePhotos.sortOrder,
+        })
+        .from(propertySpacePhotos)
+        .where(inArray(propertySpacePhotos.propertySpaceId, spaceIds))
+    : []
+
+  const assetIds = assets.map((asset) => asset.id)
+  const assetPhotos = assetIds.length > 0
+    ? await db
+        .select({
+          id: propertyAssetPhotos.id,
+          fixtureId: propertyAssetPhotos.fixtureId,
+          storagePath: propertyAssetPhotos.storagePath,
+          thumbnailStoragePath: propertyAssetPhotos.thumbnailStoragePath,
+          sortOrder: propertyAssetPhotos.sortOrder,
+        })
+        .from(propertyAssetPhotos)
+        .where(inArray(propertyAssetPhotos.fixtureId, assetIds))
+    : []
+  const summary = summarizeSpaces(spaces)
+  const propertySpaceNames = spaces.map((space) => space.name)
+
+  const signedUrlMap = await createSignedUrlMap([
+    ...spacePhotos.map((photo) => photo.storagePath),
+    ...assetPhotos.map((photo) => photo.storagePath),
+  ])
+  const thumbnailSignedUrlMap = await createSignedUrlMap([
+    ...spacePhotos.map((photo) => photo.thumbnailStoragePath),
+    ...assetPhotos.map((photo) => photo.thumbnailStoragePath),
+  ])
+
+  return c.json({
+    ...request,
+    propertySpaceNames,
+    propertyPyeong: summary.pyeong,
+    propertyLivingRooms: summary.livingRooms,
+    propertyBedrooms: summary.bedrooms,
+    propertyBathrooms: summary.bathrooms,
+    spaces: spaces.map((space) => ({
+      ...space,
+      photos: spacePhotos
+        .filter((photo) => photo.propertySpaceId === space.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((photo) => ({
+          ...photo,
+          signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+          thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+        })),
+    })),
+    assets: assets.map((asset) => ({
+      ...asset,
+      photos: assetPhotos
+        .filter((photo) => photo.fixtureId === asset.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((photo) => ({
+          ...photo,
+          signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+          thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+        })),
+    })),
+  })
+})
+
+managerRoutes.post('/cleanings/:id/status', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+  const body = await c.req.json().catch(() => null)
+  const parsed = ManagerCleaningStatusUpdateSchema.safeParse(body)
+
+  if (!parsed.success) {
+    return c.json({ error: '변경할 상태가 올바르지 않아요.' }, 400)
+  }
+
+  const [request] = await db
+    .select({
+      id: cleaningRequests.id,
+      status: cleaningRequests.status,
+    })
+    .from(cleaningRequests)
+    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.managerId, managerId)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '청소 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  if (parsed.data.status === 'in_progress' && request.status !== 'confirmed') {
+    return c.json({ error: '배정 완료된 요청만 시작할 수 있어요.' }, 400)
+  }
+
+  if (parsed.data.status === 'completed' && request.status !== 'in_progress') {
+    return c.json({ error: '진행 중인 요청만 완료할 수 있어요.' }, 400)
+  }
+
+  const [updated] = await db
+    .update(cleaningRequests)
+    .set({
+      status: parsed.data.status,
+      updatedAt: new Date(),
+    })
+    .where(eq(cleaningRequests.id, id))
+    .returning({
+      id: cleaningRequests.id,
+      status: cleaningRequests.status,
+    })
+
+  return c.json(updated)
 })
 
 managerRoutes.post('/cleanings/:id/claim', async (c) => {

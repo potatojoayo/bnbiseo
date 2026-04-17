@@ -58,7 +58,9 @@ export default function ManagerHomePage() {
             <section className="flex flex-col gap-3">
               <p className="px-1 text-[13px] font-medium text-ink-muted">오늘 청소</p>
               {todayCleanings.map((cleaning) => (
-                <ManagerCleaningCard key={cleaning.id} cleaning={cleaning} showStatus />
+                <Link key={cleaning.id} href={`/manager/cleanings/${cleaning.id}`} className="block">
+                  <ManagerCleaningCard cleaning={cleaning} showStatus />
+                </Link>
               ))}
             </section>
           )}
@@ -67,7 +69,9 @@ export default function ManagerHomePage() {
             <section className="flex flex-col gap-3">
               <p className="px-1 text-[13px] font-medium text-ink-muted">진행 중</p>
               {inProgressCleanings.map((cleaning) => (
-                <ManagerCleaningCard key={cleaning.id} cleaning={cleaning} showStatus />
+                <Link key={cleaning.id} href={`/manager/cleanings/${cleaning.id}`} className="block">
+                  <ManagerCleaningCard cleaning={cleaning} showStatus />
+                </Link>
               ))}
             </section>
           )}
@@ -76,7 +80,9 @@ export default function ManagerHomePage() {
             <p className="px-1 text-[13px] font-medium text-ink-muted">예정된 청소</p>
             {upcomingCleanings.length > 0 ? (
               upcomingCleanings.map((cleaning) => (
-                <ManagerCleaningCard key={cleaning.id} cleaning={cleaning} showStatus />
+                <Link key={cleaning.id} href={`/manager/cleanings/${cleaning.id}`} className="block">
+                  <ManagerCleaningCard cleaning={cleaning} showStatus />
+                </Link>
               ))
             ) : (
               <p className="px-1 text-[14px] text-ink-faint">예정된 청소가 없어요.</p>
