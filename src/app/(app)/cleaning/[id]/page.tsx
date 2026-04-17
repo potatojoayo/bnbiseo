@@ -18,19 +18,22 @@ import { formatDateLabel, formatTimeKorean, cn } from '@/lib/utils'
 import { api } from '@/lib/api-client'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
+import { ReadOnlyPhotoGallery } from '@/components/read-only-photo-gallery'
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
+import { CleaningStatusBadge, getCleaningStatusLabel, type CleaningStatus } from '@/components/cleaning-status-badge'
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; step: number }> = {
-  pending: { label: '매니저 배정 중', color: 'bg-brand/8 text-brand', step: 1 },
-  confirmed: { label: '매니저 배정 완료', color: 'bg-success-soft text-success', step: 2 },
-  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info', step: 3 },
-  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink', step: 4 },
-  cancelled: { label: '취소됨', color: 'bg-surface-soft text-ink-faint', step: 0 },
+const STATUS_CONFIG: Record<CleaningStatus, { label: string; step: number }> = {
+  pending_payment: { label: getCleaningStatusLabel('pending_payment'), step: 0 },
+  pending: { label: getCleaningStatusLabel('pending'), step: 1 },
+  confirmed: { label: getCleaningStatusLabel('confirmed'), step: 2 },
+  in_progress: { label: getCleaningStatusLabel('in_progress'), step: 3 },
+  completed: { label: getCleaningStatusLabel('completed'), step: 4 },
+  cancelled: { label: getCleaningStatusLabel('cancelled'), step: 0 },
 }
 
 const PROCESS_STEPS = [
@@ -86,7 +89,7 @@ export default function CleaningDetailPage() {
     )
   }
 
-  const statusConfig = STATUS_CONFIG[cleaning.status]
+  const statusConfig = STATUS_CONFIG[cleaning.status as CleaningStatus]
   const currentStep = statusConfig?.step ?? 0
   const showManagerSection = ['confirmed', 'in_progress', 'completed'].includes(cleaning.status)
 
@@ -95,6 +98,10 @@ export default function CleaningDetailPage() {
   const hoursUntil = (scheduledAt.getTime() - currentTime) / (1000 * 60 * 60)
   const canCancel = cleaning.status === 'pending' || (cleaning.status === 'confirmed' && hoursUntil >= 24)
   const isFullRefund = cleaning.status === 'pending'
+  const cleaningPhotos = cleaning.cleaningPhotos.map((photo) => ({
+    id: photo.id,
+    signedUrl: photo.signedUrl ?? photo.thumbnailSignedUrl,
+  }))
 
   return (
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
@@ -113,9 +120,7 @@ export default function CleaningDetailPage() {
       {/* Status badge */}
       {statusConfig && (
         <div className="mb-5">
-          <span className={`text-[12px] font-medium px-2.5 py-1 rounded-full ${statusConfig.color}`}>
-            {statusConfig.label}
-          </span>
+          <CleaningStatusBadge status={cleaning.status as CleaningStatus} className="text-[12px]" />
         </div>
       )}
 
@@ -224,6 +229,24 @@ export default function CleaningDetailPage() {
         </section>
       )}
 
+      {cleaning.status === 'completed' && (
+        <div className="mb-6 flex flex-col gap-5">
+          <ReadOnlyPhotoGallery
+            title="청소 사진"
+            photos={cleaningPhotos}
+            emptyMessage="등록된 청소 사진이 없어요."
+            titleClassName="mx-0"
+            contentClassName="-mx-6"
+          />
+          <Link
+            href={`/cleaning/${id}/report`}
+            className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-outline-dim text-[14px] font-medium text-ink transition-colors active:bg-surface-soft"
+          >
+            시설물 점검 리포트
+          </Link>
+        </div>
+      )}
+
       {/* Process timeline */}
       {cleaning.status !== 'cancelled' && (
         <>
@@ -231,7 +254,6 @@ export default function CleaningDetailPage() {
           <div className="flex flex-col gap-0 mb-6">
             {PROCESS_STEPS.map((step, i) => {
               const isDone = step.num <= currentStep
-              const isCurrent = step.num === currentStep
               return (
                 <div key={step.num} className="flex gap-3">
                   <div className="flex flex-col items-center">

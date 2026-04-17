@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
@@ -8,6 +7,8 @@ import { toast } from 'sonner'
 import { MapPinIcon } from 'lucide-react'
 import { ManagerCleaningPhotoField } from '@/components/manager-cleaning-photo-field'
 import { MobileBackButton } from '@/components/mobile-back-button'
+import { CleaningStatusBadge } from '@/components/cleaning-status-badge'
+import { ReadOnlyPhotoGallery } from '@/components/read-only-photo-gallery'
 import { CompoundField, CompoundInput } from '@/components/ui/floating-input'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -21,7 +22,7 @@ import { api, ApiError } from '@/lib/api-client'
 import { useManagerCleaning, useManagerCleaningReport, useInvalidateManager, type ManagerCleaningDetail } from '@/lib/hooks/use-manager'
 import type { UploadedManagerCleaningImage } from '@/lib/manager-cleaning-image-upload'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const SPACE_CATEGORY_LABELS: Record<ManagerCleaningDetail['spaces'][number]['category'], string> = {
   living_room: '거실',
@@ -48,13 +49,6 @@ const CLEANING_TYPE_LABELS: Record<ManagerCleaningDetail['cleaningType'], string
   urgent: '긴급 청소',
 }
 
-const STATUS_LABELS: Record<ManagerCleaningDetail['status'], string> = {
-  pending: '배정 대기',
-  confirmed: '배정 완료',
-  in_progress: '청소 진행 중',
-  completed: '청소 완료',
-}
-
 export default function ManagerCleaningDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
@@ -65,15 +59,18 @@ export default function ManagerCleaningDetailPage() {
   const [isActionDrawerOpen, setIsActionDrawerOpen] = useState(false)
   const [isSavingPhotos, setIsSavingPhotos] = useState(false)
   const [cleaningPhotos, setCleaningPhotos] = useState<UploadedManagerCleaningImage[]>([])
-  const serverCleaningPhotos = (cleaning?.cleaningPhotos ?? []).map((photo) => ({
-    storagePath: photo.storagePath,
-    thumbnailStoragePath: photo.thumbnailStoragePath,
-    previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
-  }))
+  const serverCleaningPhotos = useMemo(
+    () => (cleaning?.cleaningPhotos ?? []).map((photo) => ({
+      storagePath: photo.storagePath,
+      thumbnailStoragePath: photo.thumbnailStoragePath,
+      previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+    })),
+    [cleaning?.cleaningPhotos],
+  )
 
   useEffect(() => {
     setCleaningPhotos(serverCleaningPhotos)
-  }, [cleaning?.cleaningPhotos])
+  }, [serverCleaningPhotos])
 
   if (isLoading || reportLoading) {
     return (
@@ -214,7 +211,10 @@ export default function ManagerCleaningDetailPage() {
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-[13px] text-ink-muted">요청 상태</p>
-            <p className="text-[14px] font-medium text-ink">{STATUS_LABELS[cleaning.status]}</p>
+            <CleaningStatusBadge
+              status={cleaning.status}
+              label={cleaning.status === 'pending' ? '배정 대기' : cleaning.status === 'confirmed' ? '배정 완료' : undefined}
+            />
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-[13px] text-ink-muted">청소 금액</p>
@@ -232,18 +232,30 @@ export default function ManagerCleaningDetailPage() {
       {(actionLabel || canWriteReport || canViewReport || canViewPhotos) && (
         <div className="mt-5 flex flex-col gap-3">
           {canViewPhotos && (
-            <ManagerCleaningPhotoField
-              cleaningId={id}
-              images={cleaningPhotos}
-              readOnly={!canEditPhotos}
-              onError={(message) => {
-                if (message) toast.error(message)
-              }}
-              onChange={(images) => {
-                if (!canEditPhotos || isSavingPhotos) return
-                void saveCleaningPhotos(images)
-              }}
-            />
+            canEditPhotos ? (
+              <ManagerCleaningPhotoField
+                cleaningId={id}
+                images={cleaningPhotos}
+                readOnly={false}
+                onError={(message) => {
+                  if (message) toast.error(message)
+                }}
+                onChange={(images) => {
+                  if (isSavingPhotos) return
+                  void saveCleaningPhotos(images)
+                }}
+              />
+            ) : (
+              <ReadOnlyPhotoGallery
+                title="청소 사진"
+                photos={cleaning.cleaningPhotos.map((photo) => ({
+                  id: photo.id,
+                  signedUrl: photo.signedUrl,
+                }))}
+                emptyMessage="등록된 청소 사진이 없어요."
+                className="-mx-6 md:mx-0"
+              />
+            )
           )}
           {canWriteReport && (
             <Link

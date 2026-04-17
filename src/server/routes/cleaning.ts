@@ -1,9 +1,20 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
-import { eq, and, desc, isNull } from 'drizzle-orm'
+import { eq, and, desc, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
-import { cleaningRequests, managers, profiles, properties, propertySpaces } from '@/db/schema'
+import {
+  cleaningInspectionAssetPhotos,
+  cleaningInspectionAssetReports,
+  cleaningInspectionReports,
+  cleaningRequestPhotos,
+  cleaningRequests,
+  managers,
+  profiles,
+  properties,
+  propertyAssets,
+  propertySpaces,
+} from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
 import { summarizeSpaces } from '@/lib/property-space-summary'
@@ -130,8 +141,22 @@ cleaningRoutes.get('/:id', async (c) => {
     .where(eq(propertySpaces.propertyId, request.propertyId))
 
   const summary = summarizeSpaces(spaces)
+  const cleaningPhotos = await db
+    .select({
+      id: cleaningRequestPhotos.id,
+      storagePath: cleaningRequestPhotos.storagePath,
+      thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
+      sortOrder: cleaningRequestPhotos.sortOrder,
+    })
+    .from(cleaningRequestPhotos)
+    .where(eq(cleaningRequestPhotos.cleaningRequestId, request.id))
   const signedUrlMap = await createSignedUrlMap(
-    [request.managerAvatarStoragePath, request.managerAvatarThumbnailStoragePath].filter((path): path is string => !!path),
+    [
+      request.managerAvatarStoragePath,
+      request.managerAvatarThumbnailStoragePath,
+      ...cleaningPhotos.map((photo) => photo.storagePath),
+      ...cleaningPhotos.map((photo) => photo.thumbnailStoragePath),
+    ].filter((path): path is string => !!path),
   )
 
   return c.json({
@@ -145,6 +170,123 @@ cleaningRoutes.get('/:id', async (c) => {
     managerAvatarThumbnailSignedUrl: request.managerAvatarThumbnailStoragePath
       ? signedUrlMap.get(request.managerAvatarThumbnailStoragePath) ?? null
       : null,
+    cleaningPhotos: cleaningPhotos
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((photo) => ({
+        id: photo.id,
+        storagePath: photo.storagePath,
+        thumbnailStoragePath: photo.thumbnailStoragePath,
+        signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+        thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+      })),
+  })
+})
+
+cleaningRoutes.get('/:id/report', async (c) => {
+  const profileId = c.get('profileId')
+  const id = c.req.param('id')
+
+  const [request] = await db
+    .select({
+      id: cleaningRequests.id,
+      propertyId: cleaningRequests.propertyId,
+      hostId: cleaningRequests.hostId,
+      propertyName: properties.name,
+      status: cleaningRequests.status,
+    })
+    .from(cleaningRequests)
+    .innerJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.hostId, profileId), isNull(properties.deletedAt)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '청소 요청을 찾을 수 없어요' }, 404)
+  }
+
+  const spaces = await db
+    .select({
+      id: propertySpaces.id,
+      category: propertySpaces.category,
+      floor: propertySpaces.floor,
+      name: propertySpaces.name,
+      pyeong: propertySpaces.pyeong,
+    })
+    .from(propertySpaces)
+    .where(eq(propertySpaces.propertyId, request.propertyId))
+
+  const assets = await db
+    .select({
+      id: propertyAssets.id,
+      category: propertyAssets.category,
+      name: propertyAssets.name,
+      location: propertyAssets.location,
+    })
+    .from(propertyAssets)
+    .where(eq(propertyAssets.propertyId, request.propertyId))
+
+  const [report] = await db
+    .select({
+      id: cleaningInspectionReports.id,
+      summaryMemo: cleaningInspectionReports.summaryMemo,
+    })
+    .from(cleaningInspectionReports)
+    .where(eq(cleaningInspectionReports.cleaningRequestId, id))
+    .limit(1)
+
+  const assetReports = report
+    ? await db
+        .select({
+          id: cleaningInspectionAssetReports.id,
+          assetId: cleaningInspectionAssetReports.assetId,
+          status: cleaningInspectionAssetReports.status,
+          memo: cleaningInspectionAssetReports.memo,
+        })
+        .from(cleaningInspectionAssetReports)
+        .where(eq(cleaningInspectionAssetReports.reportId, report.id))
+    : []
+
+  const reportPhotos = assetReports.length > 0
+    ? await db
+        .select({
+          id: cleaningInspectionAssetPhotos.id,
+          assetReportId: cleaningInspectionAssetPhotos.assetReportId,
+          storagePath: cleaningInspectionAssetPhotos.storagePath,
+          thumbnailStoragePath: cleaningInspectionAssetPhotos.thumbnailStoragePath,
+          sortOrder: cleaningInspectionAssetPhotos.sortOrder,
+        })
+        .from(cleaningInspectionAssetPhotos)
+        .where(inArray(cleaningInspectionAssetPhotos.assetReportId, assetReports.map((item) => item.id)))
+    : []
+
+  const signedUrlMap = await createSignedUrlMap([
+    ...reportPhotos.map((photo) => photo.storagePath),
+    ...reportPhotos.map((photo) => photo.thumbnailStoragePath),
+  ])
+
+  return c.json({
+    id: request.id,
+    propertyName: request.propertyName,
+    status: request.status,
+    spaces,
+    assets,
+    report: {
+      summaryMemo: report?.summaryMemo ?? '',
+      assets: assetReports.map((item) => ({
+        assetId: item.assetId,
+        status: item.status,
+        memo: item.memo,
+        photos: reportPhotos
+          .filter((photo) => photo.assetReportId === item.id)
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((photo) => ({
+            id: photo.id,
+            storagePath: photo.storagePath,
+            thumbnailStoragePath: photo.thumbnailStoragePath,
+            signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+            thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+          })),
+      })),
+    },
   })
 })
 

@@ -31,6 +31,62 @@ type CleaningRequestDetail = CleaningRequest & {
   managerPhone: string | null
   managerAvatarSignedUrl: string | null
   managerAvatarThumbnailSignedUrl: string | null
+  cleaningPhotos: Array<{
+    id: string
+    storagePath: string
+    thumbnailStoragePath: string
+    signedUrl: string | null
+    thumbnailSignedUrl: string | null
+  }>
+}
+
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type AssetCategory =
+  | 'lighting'
+  | 'furniture'
+  | 'faucet'
+  | 'boiler'
+  | 'appliance'
+  | 'lock'
+  | 'ac'
+  | 'washer'
+  | 'dryer'
+  | 'vent'
+  | 'other'
+type InspectionStatus = 'normal' | 'caution' | 'defective'
+
+export type CleaningRequestReport = {
+  id: string
+  propertyName: string | null
+  status: CleaningRequest['status']
+  spaces: Array<{
+    id: string
+    category: SpaceCategory
+    floor: number
+    name: string
+    pyeong: number
+  }>
+  assets: Array<{
+    id: string
+    category: AssetCategory
+    name: string
+    location: string
+  }>
+  report: {
+    summaryMemo: string
+    assets: Array<{
+      assetId: string
+      status: InspectionStatus | null
+      memo: string | null
+      photos: Array<{
+        id: string
+        storagePath: string
+        thumbnailStoragePath: string
+        signedUrl: string | null
+        thumbnailSignedUrl: string | null
+      }>
+    }>
+  }
 }
 
 export function useCleaningRequests() {
@@ -51,6 +107,16 @@ export function useCleaningRequest(id: string) {
   return useQuery({
     queryKey: ['cleaning-requests', id],
     queryFn: () => api.get<CleaningRequestDetail>(`/cleaning/${id}`),
+    enabled: !!user && !!id,
+  })
+}
+
+export function useCleaningReport(id: string) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['cleaning-requests', 'report', id],
+    queryFn: () => api.get<CleaningRequestReport>(`/cleaning/${id}/report`),
     enabled: !!user && !!id,
   })
 }

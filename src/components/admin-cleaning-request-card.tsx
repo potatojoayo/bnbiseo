@@ -1,13 +1,5 @@
+import { CleaningStatusBadge, type CleaningStatus } from '@/components/cleaning-status-badge'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: '결제 대기', color: 'bg-warning-soft text-warning' },
-  pending: { label: '배정 대기', color: 'bg-brand/8 text-brand' },
-  confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
-  in_progress: { label: '진행 중', color: 'bg-info-soft text-info' },
-  completed: { label: '완료', color: 'bg-surface-soft text-ink' },
-  cancelled: { label: '취소', color: 'bg-surface-soft text-ink-faint' },
-}
 
 type AdminCleaningRequestCardProps = {
   request: {
@@ -30,17 +22,26 @@ export function AdminCleaningRequestCard({
   action,
   className,
 }: AdminCleaningRequestCardProps) {
-  const statusInfo = STATUS_LABELS[request.status]
-
   return (
     <div className={cn('rounded-xl border border-outline-dim px-4 py-4', className)}>
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[15px] font-semibold text-ink">{request.propertyName || '숙소'}</span>
-        {statusInfo && (
-          <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${statusInfo.color}`}>
-            {statusInfo.label}
-          </span>
-        )}
+        <CleaningStatusBadge
+          status={request.status as CleaningStatus}
+          label={
+            request.status === 'pending'
+              ? '배정 대기'
+              : request.status === 'confirmed'
+                ? '배정 완료'
+                : request.status === 'in_progress'
+                  ? '진행 중'
+                  : request.status === 'completed'
+                    ? '완료'
+                    : request.status === 'cancelled'
+                      ? '취소'
+                      : undefined
+          }
+        />
       </div>
       <div className="mb-3 flex flex-col gap-1 text-[13px] text-ink-muted">
         <p>

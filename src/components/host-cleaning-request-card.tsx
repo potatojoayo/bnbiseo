@@ -1,14 +1,6 @@
 import Link from 'next/link'
+import { CleaningStatusBadge, type CleaningStatus } from '@/components/cleaning-status-badge'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: '결제 대기', color: 'bg-warning-soft text-warning' },
-  pending: { label: '매니저 배정 중', color: 'bg-brand/8 text-brand' },
-  confirmed: { label: '매니저 배정 완료', color: 'bg-success-soft text-success' },
-  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
-  completed: { label: '청소 완료', color: 'border border-outline-dim bg-surface-subtle text-ink-muted' },
-  cancelled: { label: '취소됨', color: 'bg-surface-soft text-ink-faint' },
-}
 
 type HostCleaningRequestCardProps = {
   request: {
@@ -29,7 +21,6 @@ export function HostCleaningRequestCard({
   href,
   className,
 }: HostCleaningRequestCardProps) {
-  const statusInfo = STATUS_LABELS[request.status]
   const isCancelled = request.status === 'cancelled'
   const metaText = [
     formatDateLabel(request.scheduledDate),
@@ -53,11 +44,7 @@ export function HostCleaningRequestCard({
             {metaText}
           </p>
         </div>
-        {statusInfo && (
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${statusInfo.color}`}>
-            {statusInfo.label}
-          </span>
-        )}
+        <CleaningStatusBadge status={request.status as CleaningStatus} />
       </div>
 
       <div className="mt-3 h-px w-full bg-outline-dim" />

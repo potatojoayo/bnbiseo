@@ -1,13 +1,7 @@
 import { CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
+import { CleaningStatusBadge } from '@/components/cleaning-status-badge'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import type { ManagerCleaning } from '@/lib/hooks/use-manager'
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
-  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
-  completed: { label: '청소 완료', color: 'border border-outline-dim bg-surface-subtle text-ink-muted' },
-  pending: { label: '배정 대기', color: 'bg-brand/8 text-brand' },
-}
 
 type ManagerCleaningCardProps = {
   cleaning: ManagerCleaning
@@ -22,7 +16,6 @@ export function ManagerCleaningCard({
   className,
   showStatus = false,
 }: ManagerCleaningCardProps) {
-  const statusInfo = showStatus ? STATUS_LABELS[cleaning.status] : null
   const spaceSummary = [
     cleaning.propertyPyeong != null && `${cleaning.propertyPyeong}평`,
     cleaning.propertyLivingRooms != null && `거실 ${cleaning.propertyLivingRooms}`,
@@ -43,10 +36,11 @@ export function ManagerCleaningCard({
             </p>
           )}
         </div>
-        {statusInfo && (
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusInfo.color}`}>
-            {statusInfo.label}
-          </span>
+        {showStatus && (
+          <CleaningStatusBadge
+            status={cleaning.status}
+            label={cleaning.status === 'pending' ? '배정 대기' : cleaning.status === 'confirmed' ? '배정 완료' : undefined}
+          />
         )}
       </div>
 

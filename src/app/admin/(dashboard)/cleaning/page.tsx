@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
 import { useAdminCleaning, useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { AdminCleaningRequestCard } from '@/components/admin-cleaning-request-card'
+import { CleaningStatusBadge, getCleaningStatusLabel, type CleaningStatus } from '@/components/cleaning-status-badge'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
@@ -17,21 +18,27 @@ import {
 } from '@/components/ui/drawer'
 import { LoadingButton } from '@/components/ui/loading-button'
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: '결제 대기', color: 'bg-warning-soft text-warning' },
-  pending: { label: '배정 대기', color: 'bg-brand/8 text-brand' },
-  confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
-  in_progress: { label: '진행 중', color: 'bg-info-soft text-info' },
-  completed: { label: '완료', color: 'bg-surface-soft text-ink' },
-  cancelled: { label: '취소', color: 'bg-surface-soft text-ink-faint' },
-}
-
 type CleaningFilter = 'all' | 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
 
 function StatusBadge({ status }: { status: string }) {
-  const info = STATUS_LABELS[status]
-  if (!info) return null
-  return <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${info.color}`}>{info.label}</span>
+  return (
+    <CleaningStatusBadge
+      status={status as CleaningStatus}
+      label={
+        status === 'pending'
+          ? '배정 대기'
+          : status === 'confirmed'
+            ? '배정 완료'
+            : status === 'in_progress'
+              ? '진행 중'
+              : status === 'completed'
+                ? '완료'
+                : status === 'cancelled'
+                  ? '취소'
+                  : undefined
+      }
+    />
+  )
 }
 
 export default function AdminCleaningPage() {
@@ -249,15 +256,11 @@ export default function AdminCleaningPage() {
               <DrawerTitle className="text-[18px] font-semibold text-ink">상태 변경</DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-2">
-              {['confirmed', 'in_progress', 'completed', 'cancelled'].map((s) => {
-                const info = STATUS_LABELS[s]
-                if (!info) return null
-                return (
-                  <LoadingButton key={s} type="button" variant="outline" loading={updating} onClick={() => handleStatusChange(s)}>
-                    {info.label}
-                  </LoadingButton>
-                )
-              })}
+              {(['confirmed', 'in_progress', 'completed', 'cancelled'] as CleaningStatus[]).map((status) => (
+                <LoadingButton key={status} type="button" variant="outline" loading={updating} onClick={() => handleStatusChange(status)}>
+                  {getCleaningStatusLabel(status)}
+                </LoadingButton>
+              ))}
             </div>
           </div>
         </DrawerContent>
