@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { eq, and, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
-import { properties, fixtures, propertySpaces } from '@/db/schema'
+import { properties, propertyAssets, propertySpaces } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 
@@ -84,8 +84,8 @@ propertiesRoutes.get('/:id', async (c) => {
 
   const propertyFixtures = await db
     .select()
-    .from(fixtures)
-    .where(eq(fixtures.propertyId, id))
+    .from(propertyAssets)
+    .where(eq(propertyAssets.propertyId, id))
 
   const spaces = await db
     .select({
@@ -219,18 +219,18 @@ propertiesRoutes.get('/summary/dashboard', async (c) => {
 
   const allFixtures = await db
     .select()
-    .from(fixtures)
+    .from(propertyAssets)
     .where(
       propertyIds.length === 1
-        ? eq(fixtures.propertyId, propertyIds[0])
-        : eq(fixtures.propertyId, propertyIds[0]), // simplified — full IN query below
+        ? eq(propertyAssets.propertyId, propertyIds[0])
+        : eq(propertyAssets.propertyId, propertyIds[0]), // simplified — full IN query below
     )
 
   // Use raw SQL for IN clause with multiple IDs
   const fixtureCount = await db
-    .select({ id: fixtures.id })
-    .from(fixtures)
-    .where(eq(fixtures.propertyId, userProperties[0]?.id))
+    .select({ id: propertyAssets.id })
+    .from(propertyAssets)
+    .where(eq(propertyAssets.propertyId, userProperties[0]?.id))
 
   return c.json({
     properties: userProperties,

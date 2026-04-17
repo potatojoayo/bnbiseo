@@ -1,13 +1,14 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, XIcon } from 'lucide-react'
+import { AdminImageUploadField } from '@/components/admin-image-upload-field'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
-import { api, ApiError, supabase } from '@/lib/api-client'
+import { api, ApiError } from '@/lib/api-client'
+import { type UploadedAdminImage } from '@/lib/admin-image-upload'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
@@ -28,6 +29,7 @@ type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
 type SpacePhoto = {
   id?: string
   storagePath: string
+  thumbnailStoragePath: string
   previewUrl: string
 }
 
@@ -41,7 +43,9 @@ type SpaceDetail = {
   photos: Array<{
     id: string
     storagePath: string
+    thumbnailStoragePath: string
     signedUrl: string | null
+    thumbnailSignedUrl: string | null
   }>
 }
 
@@ -95,9 +99,7 @@ function AdminSpaceEditForm({
   const router = useRouter()
   const invalidate = useInvalidateAdmin()
   const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -110,7 +112,8 @@ function AdminSpaceEditForm({
     space.photos.map((photo) => ({
       id: photo.id,
       storagePath: photo.storagePath,
-      previewUrl: photo.signedUrl || '',
+      thumbnailStoragePath: photo.thumbnailStoragePath,
+      previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
     })),
   )
 
@@ -121,7 +124,7 @@ function AdminSpaceEditForm({
       name: string
       pyeong: string
       notes?: string
-      photoPaths: string[]
+      photos: Array<{ storagePath: string; thumbnailStoragePath: string }>
     }) => api.patch(`/admin/properties/${propertyId}/registration/spaces/${space.id}`, payload),
     onSuccess: (_, variables) => {
       queryClient.setQueryData(
@@ -139,11 +142,12 @@ function AdminSpaceEditForm({
                         name: variables.name,
                         pyeong: Number(variables.pyeong),
                         notes: variables.notes || null,
-                        photos: variables.photoPaths.map((storagePath, index) => ({
+                        photos: variables.photos.map((photo, index) => ({
                           id: `${space.id}-${index}`,
-                          storagePath,
-                          signedUrl:
-                            photos.find((photo) => photo.storagePath === storagePath)?.previewUrl || null,
+                          storagePath: photo.storagePath,
+                          thumbnailStoragePath: photo.thumbnailStoragePath,
+                          signedUrl: photos.find((item) => item.storagePath === photo.storagePath)?.previewUrl || null,
+                          thumbnailSignedUrl: photos.find((item) => item.storagePath === photo.storagePath)?.previewUrl || null,
                         })),
                       }
                     : item,
@@ -174,58 +178,6 @@ function AdminSpaceEditForm({
     },
   })
 
-  async function handleFilesSelected(files: FileList | null) {
-    if (!files || files.length === 0) return
-
-    setUploading(true)
-    setMessage(null)
-
-    try {
-      const uploadedPhotos: SpacePhoto[] = []
-
-      for (const file of Array.from(files)) {
-        const signed = await api.post<{ path: string; token: string }>(`/admin/properties/${propertyId}/registration/upload-url`, {
-          fileName: file.name,
-          kind: 'spaces',
-        })
-
-        const { error } = await supabase.storage
-          .from('images')
-          .uploadToSignedUrl(signed.path, signed.token, file)
-
-        if (error) throw new Error(error.message)
-
-        uploadedPhotos.push({
-          storagePath: signed.path,
-          previewUrl: URL.createObjectURL(file),
-        })
-      }
-
-      setPhotos((prev) => [...prev, ...uploadedPhotos])
-    } catch (error) {
-      setMessage(error instanceof ApiError ? error.message : '사진 업로드에 실패했어요.')
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
-  }
-
-  function removePhoto(index: number) {
-    setPhotos((prev) => prev.filter((_, photoIndex) => photoIndex !== index))
-  }
-
-  function movePhoto(index: number, direction: 'left' | 'right') {
-    setPhotos((prev) => {
-      const nextIndex = direction === 'left' ? index - 1 : index + 1
-      if (nextIndex < 0 || nextIndex >= prev.length) return prev
-
-      const next = [...prev]
-      const [targetPhoto] = next.splice(index, 1)
-      next.splice(nextIndex, 0, targetPhoto)
-      return next
-    })
-  }
-
   async function handleSubmit() {
     setSaving(true)
     setMessage(null)
@@ -237,9 +189,17 @@ function AdminSpaceEditForm({
         name,
         pyeong,
         notes: notes || undefined,
-        photoPaths: photos.map((photo) => photo.storagePath),
+        photos: photos.map((photo) => ({
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
+        })),
       })
-      router.push(`/admin/properties/${propertyId}/spaces/${space.id}`)
+      if (window.history.length > 1) {
+        router.back()
+        return
+      }
+
+      router.replace(`/admin/properties/${propertyId}/spaces/${space.id}`)
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '공간 정보를 저장하지 못했어요.')
       setSaving(false)
@@ -252,7 +212,7 @@ function AdminSpaceEditForm({
 
     try {
       await deleteMutation.mutateAsync()
-      router.push(`/admin/properties/${propertyId}`)
+      router.replace(`/admin/properties/${propertyId}`)
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '공간 정보를 삭제하지 못했어요.')
       setDeleting(false)
@@ -342,83 +302,15 @@ function AdminSpaceEditForm({
           </CompoundInput>
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[16px] font-semibold text-ink">사진</p>
-              <p className="mt-1 text-[13px] text-ink-muted">순서를 바꾸면 첫 번째 사진이 썸네일이 돼요.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-outline-strong px-3 text-[13px] font-medium text-ink transition-colors hover:bg-surface-soft"
-            >
-              <ImagePlusIcon size={14} />
-              사진 추가
-            </button>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => void handleFilesSelected(e.target.files)}
-          />
-
-          {uploading && (
-            <p className="text-[12px] text-ink-muted">사진 업로드 중...</p>
-          )}
-
-          {photos.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
-              아직 추가된 사진이 없어요.
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-3">
-              {photos.map((photo, index) => (
-                <div key={`${photo.storagePath}-${index}`} className="group relative aspect-square overflow-hidden rounded-lg shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.previewUrl} alt="" className="h-full w-full object-cover" />
-                  {index === 0 && (
-                    <div className="absolute left-1 top-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white">
-                      썸네일
-                    </div>
-                  )}
-                  <div className="absolute bottom-1 left-1 flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => movePhoto(index, 'left')}
-                      disabled={index === 0}
-                      className="rounded-full bg-black/60 p-1 text-white disabled:opacity-40"
-                      aria-label="이전 순서로 이동"
-                    >
-                      <ChevronLeftIcon size={12} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => movePhoto(index, 'right')}
-                      disabled={index === photos.length - 1}
-                      className="rounded-full bg-black/60 p-1 text-white disabled:opacity-40"
-                      aria-label="다음 순서로 이동"
-                    >
-                      <ChevronRightIcon size={12} />
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(index)}
-                    className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white"
-                    aria-label="사진 삭제"
-                  >
-                    <XIcon size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <AdminImageUploadField
+          propertyId={propertyId}
+          kind="spaces"
+          images={photos as UploadedAdminImage[]}
+          onChange={(nextImages) => setPhotos(nextImages)}
+          description="순서를 바꾸면 첫 번째 사진이 썸네일이 돼요."
+          emptyText="아직 추가된 사진이 없어요."
+          onError={setMessage}
+        />
 
         {message && (
           <div className="rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-[13px] text-danger">

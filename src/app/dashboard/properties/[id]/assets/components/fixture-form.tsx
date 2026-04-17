@@ -71,11 +71,11 @@ export function FixtureForm({
     try {
       if (fixtureId) {
         const { propertyId: _, ...updateBody } = body
-        await api.patch(`/fixtures/${fixtureId}`, updateBody)
-        router.push(`/dashboard/properties/${propertyId}/fixtures/${fixtureId}`)
+        await api.patch(`/assets/${fixtureId}`, updateBody)
+        router.replace(`/dashboard/properties/${propertyId}/assets/${fixtureId}`)
       } else {
-        await api.post('/fixtures', body)
-        router.push(`/dashboard/properties/${propertyId}`)
+        await api.post('/assets', body)
+        router.replace(`/dashboard/properties/${propertyId}`)
       }
       router.refresh()
     } catch (err) {

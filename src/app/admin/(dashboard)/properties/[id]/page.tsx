@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { MapPinIcon, PlusIcon } from 'lucide-react'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
@@ -12,6 +12,12 @@ import { api, ApiError } from '@/lib/api-client'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { CompoundInput, FloatingInput } from '@/components/ui/floating-input'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
 
 type FixtureCategory =
   | 'lighting'
@@ -39,7 +45,9 @@ type RegistrationDetail = {
     photos: Array<{
       id: string
       storagePath: string
+      thumbnailStoragePath: string
       signedUrl: string | null
+      thumbnailSignedUrl: string | null
     }>
   }>
   fixtures: Array<{
@@ -54,7 +62,9 @@ type RegistrationDetail = {
     photos: Array<{
       id: string
       storagePath: string
+      thumbnailStoragePath: string
       signedUrl: string | null
+      thumbnailSignedUrl: string | null
     }>
   }>
 }
@@ -81,7 +91,9 @@ const CATEGORY_LABELS: Record<FixtureCategory, string> = {
 
 export default function AdminPropertyRegistrationPage() {
   const { id } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
   const { data, isLoading: loading, error } = useAdminPropertyRegistration(id)
+  const isEditMode = searchParams.get('mode') === 'edit'
 
   if (loading) {
     return (
@@ -105,7 +117,7 @@ export default function AdminPropertyRegistrationPage() {
     )
   }
 
-  if (data.status === 'active') {
+  if (data.status === 'active' && !isEditMode) {
     return <AdminPropertyDetailView propertyId={id} property={data} />
   }
 
@@ -113,6 +125,7 @@ export default function AdminPropertyRegistrationPage() {
     <AdminPropertyRegistrationForm
       key={`${id}-${data.spaces?.length ?? 0}-${data.fixtures?.length ?? 0}`}
       propertyId={id}
+      mode={isEditMode ? 'edit' : 'registration'}
       initialData={data}
     />
   )
@@ -120,9 +133,11 @@ export default function AdminPropertyRegistrationPage() {
 
 function AdminPropertyRegistrationForm({
   propertyId,
+  mode,
   initialData,
 }: {
   propertyId: string
+  mode: 'registration' | 'edit'
   initialData: {
     status: 'pending_activation' | 'active'
     name: string
@@ -151,6 +166,7 @@ function AdminPropertyRegistrationForm({
   const [doorLockPassword, setDoorLockPassword] = useState(initialData.doorLockPassword || '')
   const [wifiSsid, setWifiSsid] = useState(initialData.wifiSsid || '')
   const [wifiPassword, setWifiPassword] = useState(initialData.wifiPassword || '')
+  const isEditingActive = mode === 'edit'
   const lastSavedRef = useRef({
     entrancePassword: initialData.entrancePassword || '',
     doorLockPassword: initialData.doorLockPassword || '',
@@ -238,12 +254,15 @@ function AdminPropertyRegistrationForm({
           modelNumber: fixture.modelNumber || undefined,
           specNotes: fixture.specNotes || undefined,
           notes: fixture.notes || undefined,
-          photoPaths: fixture.photos.map((photo) => photo.storagePath),
+          photos: fixture.photos.map((photo) => ({
+            storagePath: photo.storagePath,
+            thumbnailStoragePath: photo.thumbnailStoragePath,
+          })),
         })),
       })
       invalidate.propertyRegistration(propertyId)
       invalidate.properties()
-      router.push('/admin/properties')
+      router.replace(isEditingActive ? `/admin/properties/${propertyId}` : '/admin/properties')
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '등록 진행 내용을 저장하지 못했어요.')
       setSaving(false)
@@ -255,8 +274,8 @@ function AdminPropertyRegistrationForm({
       <SiteHeader title="등록 진행" />
       <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-7 p-6 max-md:animate-fade-up-fast max-md:gap-6 max-md:p-5">
         <div className="-mb-2 md:hidden">
-          <MobileBackButton href="/admin/properties" mode="back" />
-          <h1 className="mt-2 text-[22px] font-semibold text-ink">등록 진행</h1>
+          <MobileBackButton href={isEditingActive ? `/admin/properties/${propertyId}` : '/admin/properties'} mode="back" />
+          <h1 className="mt-2 text-[22px] font-semibold text-ink">{isEditingActive ? '숙소 수정' : '등록 진행'}</h1>
         </div>
         <section className="rounded-xl border border-outline-dim px-5 py-4">
           <p className="text-[20px] font-semibold text-ink">{initialData.name}</p>
@@ -331,7 +350,11 @@ function AdminPropertyRegistrationForm({
               {initialData.spaces.map((space) => (
                 <Link
                   key={space.id}
-                  href={`/admin/properties/${propertyId}/spaces/${space.id}`}
+                  href={
+                    isEditingActive
+                      ? `/admin/properties/${propertyId}/spaces/${space.id}/edit`
+                      : `/admin/properties/${propertyId}/spaces/${space.id}`
+                  }
                   className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
                 >
                   <div>
@@ -373,7 +396,7 @@ function AdminPropertyRegistrationForm({
               <p className="mt-1 text-[13px] text-ink-muted">추가한 시설물은 바로 저장돼요.</p>
             </div>
             <Link
-              href={`/admin/properties/${propertyId}/fixtures/new`}
+              href={`/admin/properties/${propertyId}/assets/new`}
               className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-outline-strong px-3 text-[13px] font-medium text-ink transition-colors hover:bg-surface-soft"
             >
               <PlusIcon size={14} />
@@ -390,7 +413,11 @@ function AdminPropertyRegistrationForm({
               {initialData.fixtures.map((fixture) => (
                 <Link
                   key={fixture.id}
-                  href={`/admin/properties/${propertyId}/fixtures/${fixture.id}`}
+                  href={
+                    isEditingActive
+                      ? `/admin/properties/${propertyId}/assets/${fixture.id}/edit`
+                      : `/admin/properties/${propertyId}/assets/${fixture.id}`
+                  }
                   className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
                 >
                   <div className="flex items-stretch">
@@ -440,7 +467,7 @@ function AdminPropertyRegistrationForm({
 
         <div className="grid grid-cols-2 gap-3 pb-2 md:flex md:justify-end">
           <Link
-            href="/admin/properties"
+            href={isEditingActive ? `/admin/properties/${propertyId}` : '/admin/properties'}
             className="inline-flex h-12 min-w-0 items-center justify-center whitespace-nowrap rounded-lg border border-outline-strong px-4 text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft md:min-w-[120px]"
           >
             취소
@@ -453,7 +480,7 @@ function AdminPropertyRegistrationForm({
             className="min-w-0 whitespace-nowrap md:min-w-[120px]"
             disabled={!doorLockPassword.trim()}
           >
-            등록 완료
+            {isEditingActive ? '저장하기' : '등록 완료'}
           </LoadingButton>
         </div>
       </div>
@@ -485,12 +512,38 @@ function AdminPropertyDetailView({
     fixtures: RegistrationDetail['fixtures']
   }
 }) {
+  const router = useRouter()
+  const invalidate = useInvalidateAdmin()
+  const queryClient = useQueryClient()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null)
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/admin/properties/${propertyId}`),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ['admin', 'property-registration', propertyId] })
+      invalidate.properties()
+    },
+  })
+
   const details = [
     property.pyeong != null && `${property.pyeong}평`,
     property.livingRooms != null && `거실 ${property.livingRooms}`,
     property.bedrooms != null && `침실 ${property.bedrooms}`,
     property.bathrooms != null && `욕실 ${property.bathrooms}`,
   ].filter(Boolean)
+
+  async function handleDelete() {
+    setDeleteMessage(null)
+
+    try {
+      await deleteMutation.mutateAsync()
+      router.replace('/admin/properties')
+    } catch (error) {
+      setDeleteMessage(error instanceof ApiError ? error.message : '숙소를 삭제하지 못했어요.')
+      setDeleteOpen(false)
+    }
+  }
 
   return (
     <>
@@ -602,7 +655,7 @@ function AdminPropertyDetailView({
               {property.fixtures.map((fixture) => (
                 <Link
                   key={fixture.id}
-                  href={`/admin/properties/${propertyId}/fixtures/${fixture.id}`}
+                  href={`/admin/properties/${propertyId}/assets/${fixture.id}`}
                   className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
                 >
                   <div className="flex items-stretch">
@@ -643,7 +696,59 @@ function AdminPropertyDetailView({
             </div>
           )}
         </section>
+
+        <div className="flex flex-col gap-4">
+          <Link
+            href={`/admin/properties/${propertyId}?mode=edit`}
+            className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-ink px-4 text-[15px] font-semibold text-white transition-all active:scale-[0.98] md:min-w-[120px]"
+          >
+            수정하기
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
+            disabled={deleteMutation.isPending}
+          >
+            숙소 삭제
+          </button>
+
+          {deleteMessage && (
+            <p className="text-center text-[13px] text-danger">{deleteMessage}</p>
+          )}
+        </div>
       </div>
+
+      <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DrawerContent className="px-5 pb-8">
+          <DrawerHeader className="px-0">
+            <DrawerTitle className="text-[18px] font-semibold text-ink">
+              삭제하시겠습니까?
+            </DrawerTitle>
+          </DrawerHeader>
+          <p className="mb-6 text-[14px] text-ink-muted">
+            숙소를 삭제하면 되돌릴 수 없어요.
+          </p>
+          <div className="flex flex-col gap-4">
+            <button
+              type="button"
+              onClick={() => void handleDelete()}
+              disabled={deleteMutation.isPending}
+              className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-ink text-[15px] font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-60"
+            >
+              {deleteMutation.isPending ? '삭제 중...' : '삭제하기'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(false)}
+              className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+            >
+              취소
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </>
   )
 }

@@ -127,7 +127,9 @@ type RegistrationDetail = {
     photos: Array<{
       id: string
       storagePath: string
+      thumbnailStoragePath: string
       signedUrl: string | null
+      thumbnailSignedUrl: string | null
     }>
   }>
   fixtures: Array<{
@@ -142,7 +144,9 @@ type RegistrationDetail = {
     photos: Array<{
       id: string
       storagePath: string
+      thumbnailStoragePath: string
       signedUrl: string | null
+      thumbnailSignedUrl: string | null
     }>
   }>
 }

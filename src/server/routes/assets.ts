@@ -2,10 +2,10 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
 import { db } from '@/db'
-import { fixtures, fixturePhotos, properties } from '@/db/schema'
+import { propertyAssets, propertyAssetPhotos, properties } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 
-const FixtureSchema = z.object({
+const AssetSchema = z.object({
   propertyId: z.string().uuid(),
   category: z.enum([
     'lighting', 'faucet', 'boiler', 'appliance', 'lock',
@@ -18,7 +18,10 @@ const FixtureSchema = z.object({
   specNotes: z.string().optional(),
   installedAt: z.string().optional(),
   notes: z.string().optional(),
-  photoPaths: z.array(z.string()).optional(),
+  photos: z.array(z.object({
+    storagePath: z.string().min(1),
+    thumbnailStoragePath: z.string().min(1),
+  })).optional(),
 })
 
 async function verifyPropertyOwnership(propertyId: string, profileId: string) {
@@ -30,19 +33,19 @@ async function verifyPropertyOwnership(propertyId: string, profileId: string) {
   return result.length > 0
 }
 
-export const fixturesRoutes = new Hono<AuthEnv>()
+export const assetsRoutes = new Hono<AuthEnv>()
 
-fixturesRoutes.use('*', authMiddleware)
+assetsRoutes.use('*', authMiddleware)
 
 // Get single fixture with photos
-fixturesRoutes.get('/:id', async (c) => {
+assetsRoutes.get('/:id', async (c) => {
   const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [fixture] = await db
     .select()
-    .from(fixtures)
-    .where(eq(fixtures.id, id))
+    .from(propertyAssets)
+    .where(eq(propertyAssets.id, id))
     .limit(1)
 
   if (!fixture) {
@@ -56,23 +59,23 @@ fixturesRoutes.get('/:id', async (c) => {
 
   const photos = await db
     .select()
-    .from(fixturePhotos)
-    .where(eq(fixturePhotos.fixtureId, id))
+    .from(propertyAssetPhotos)
+    .where(eq(propertyAssetPhotos.fixtureId, id))
 
   return c.json({ ...fixture, photos })
 })
 
 // Create fixture
-fixturesRoutes.post('/', async (c) => {
+assetsRoutes.post('/', async (c) => {
   const profileId = c.get('profileId')
   const body = await c.req.json()
-  const validated = FixtureSchema.safeParse(body)
+  const validated = AssetSchema.safeParse(body)
 
   if (!validated.success) {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
   }
 
-  const { propertyId, photoPaths, installedAt, ...rest } = validated.data
+  const { propertyId, photos, installedAt, ...rest } = validated.data
 
   const owned = await verifyPropertyOwnership(propertyId, profileId)
   if (!owned) {
@@ -80,7 +83,7 @@ fixturesRoutes.post('/', async (c) => {
   }
 
   const [created] = await db
-    .insert(fixtures)
+    .insert(propertyAssets)
     .values({
       propertyId,
       ...rest,
@@ -88,11 +91,12 @@ fixturesRoutes.post('/', async (c) => {
     })
     .returning()
 
-  if (photoPaths?.length) {
-    await db.insert(fixturePhotos).values(
-      photoPaths.map((path, i) => ({
+  if (photos?.length) {
+    await db.insert(propertyAssetPhotos).values(
+      photos.map((photo, i) => ({
         fixtureId: created.id,
-        storagePath: path,
+        storagePath: photo.storagePath,
+        thumbnailStoragePath: photo.thumbnailStoragePath,
         sortOrder: i,
       })),
     )
@@ -102,15 +106,15 @@ fixturesRoutes.post('/', async (c) => {
 })
 
 // Update fixture
-fixturesRoutes.patch('/:id', async (c) => {
+assetsRoutes.patch('/:id', async (c) => {
   const profileId = c.get('profileId')
   const id = c.req.param('id')
   const body = await c.req.json()
 
   const [existing] = await db
-    .select({ propertyId: fixtures.propertyId })
-    .from(fixtures)
-    .where(eq(fixtures.id, id))
+    .select({ propertyId: propertyAssets.propertyId })
+    .from(propertyAssets)
+    .where(eq(propertyAssets.id, id))
     .limit(1)
 
   if (!existing) {
@@ -122,33 +126,34 @@ fixturesRoutes.patch('/:id', async (c) => {
     return c.json({ error: '권한이 없습니다.' }, 403)
   }
 
-  const validated = FixtureSchema.omit({ propertyId: true }).safeParse(body)
+  const validated = AssetSchema.omit({ propertyId: true }).safeParse(body)
   if (!validated.success) {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
   }
 
-  const { photoPaths, installedAt, ...rest } = validated.data
+  const { photos, installedAt, ...rest } = validated.data
 
   const [updated] = await db
-    .update(fixtures)
+    .update(propertyAssets)
     .set({ ...rest, installedAt: installedAt || null, updatedAt: new Date() })
-    .where(eq(fixtures.id, id))
+    .where(eq(propertyAssets.id, id))
     .returning()
 
-  if (photoPaths?.length) {
+  if (photos?.length) {
     const existingPhotos = await db
-      .select({ sortOrder: fixturePhotos.sortOrder })
-      .from(fixturePhotos)
-      .where(eq(fixturePhotos.fixtureId, id))
+      .select({ sortOrder: propertyAssetPhotos.sortOrder })
+      .from(propertyAssetPhotos)
+      .where(eq(propertyAssetPhotos.fixtureId, id))
 
     const maxOrder = existingPhotos.length > 0
       ? Math.max(...existingPhotos.map((p) => p.sortOrder ?? 0))
       : -1
 
-    await db.insert(fixturePhotos).values(
-      photoPaths.map((path, i) => ({
+    await db.insert(propertyAssetPhotos).values(
+      photos.map((photo, i) => ({
         fixtureId: id,
-        storagePath: path,
+        storagePath: photo.storagePath,
+        thumbnailStoragePath: photo.thumbnailStoragePath,
         sortOrder: maxOrder + 1 + i,
       })),
     )
@@ -158,14 +163,14 @@ fixturesRoutes.patch('/:id', async (c) => {
 })
 
 // Delete fixture
-fixturesRoutes.delete('/:id', async (c) => {
+assetsRoutes.delete('/:id', async (c) => {
   const profileId = c.get('profileId')
   const id = c.req.param('id')
 
   const [existing] = await db
-    .select({ propertyId: fixtures.propertyId })
-    .from(fixtures)
-    .where(eq(fixtures.id, id))
+    .select({ propertyId: propertyAssets.propertyId })
+    .from(propertyAssets)
+    .where(eq(propertyAssets.id, id))
     .limit(1)
 
   if (!existing) {
@@ -177,20 +182,20 @@ fixturesRoutes.delete('/:id', async (c) => {
     return c.json({ error: '권한이 없습니다.' }, 403)
   }
 
-  await db.delete(fixtures).where(eq(fixtures.id, id))
+  await db.delete(propertyAssets).where(eq(propertyAssets.id, id))
 
   return c.json({ success: true })
 })
 
 // Delete fixture photo
-fixturesRoutes.delete('/photos/:photoId', async (c) => {
+assetsRoutes.delete('/photos/:photoId', async (c) => {
   const profileId = c.get('profileId')
   const photoId = c.req.param('photoId')
 
   const [photo] = await db
-    .select({ fixtureId: fixturePhotos.fixtureId })
-    .from(fixturePhotos)
-    .where(eq(fixturePhotos.id, photoId))
+    .select({ fixtureId: propertyAssetPhotos.fixtureId })
+    .from(propertyAssetPhotos)
+    .where(eq(propertyAssetPhotos.id, photoId))
     .limit(1)
 
   if (!photo) {
@@ -198,9 +203,9 @@ fixturesRoutes.delete('/photos/:photoId', async (c) => {
   }
 
   const [fixture] = await db
-    .select({ propertyId: fixtures.propertyId })
-    .from(fixtures)
-    .where(eq(fixtures.id, photo.fixtureId))
+    .select({ propertyId: propertyAssets.propertyId })
+    .from(propertyAssets)
+    .where(eq(propertyAssets.id, photo.fixtureId))
     .limit(1)
 
   if (!fixture) {
@@ -212,7 +217,7 @@ fixturesRoutes.delete('/photos/:photoId', async (c) => {
     return c.json({ error: '권한이 없습니다.' }, 403)
   }
 
-  await db.delete(fixturePhotos).where(eq(fixturePhotos.id, photoId))
+  await db.delete(propertyAssetPhotos).where(eq(propertyAssetPhotos.id, photoId))
 
   return c.json({ success: true })
 })

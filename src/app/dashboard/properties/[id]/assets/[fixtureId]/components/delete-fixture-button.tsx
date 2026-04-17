@@ -20,8 +20,8 @@ export function DeleteFixtureButton({ fixtureId, propertyId }: DeleteFixtureButt
       return
     }
     setPending(true)
-    await api.delete(`/fixtures/${fixtureId}`)
-    router.push(`/dashboard/properties/${propertyId}`)
+    await api.delete(`/assets/${fixtureId}`)
+    router.replace(`/dashboard/properties/${propertyId}`)
     router.refresh()
   }
 

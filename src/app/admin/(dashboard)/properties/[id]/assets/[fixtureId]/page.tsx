@@ -104,7 +104,7 @@ export default function AdminFixtureDetailPage() {
   const linkedSpace = data?.spaces.find((space) => space.name === locationParts.spaceName)
 
   const deleteMutation = useMutation({
-    mutationFn: () => api.delete(`/admin/properties/${id}/registration/fixtures/${fixtureId}`),
+    mutationFn: () => api.delete(`/admin/properties/${id}/registration/assets/${fixtureId}`),
     onSuccess: () => {
       queryClient.setQueryData(
         ['admin', 'property-registration', id],
@@ -141,7 +141,7 @@ export default function AdminFixtureDetailPage() {
 
     try {
       await deleteMutation.mutateAsync()
-      router.push(`/admin/properties/${id}`)
+      router.replace(`/admin/properties/${id}`)
     } catch (error) {
       setDeleteMessage(error instanceof ApiError ? error.message : '시설물을 삭제하지 못했어요.')
       setDeleteOpen(false)
@@ -173,7 +173,7 @@ export default function AdminFixtureDetailPage() {
   return (
     <>
       <SiteHeader title={fixture.name} />
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-only max-md:p-5">
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
         <div className="-mb-1 md:hidden">
           <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
           <h1 className="mt-2 text-[22px] font-semibold text-ink">{fixture.name}</h1>
@@ -266,7 +266,7 @@ export default function AdminFixtureDetailPage() {
         </section>
 
         <Link
-          href={`/admin/properties/${id}/fixtures/${fixture.id}/edit`}
+          href={`/admin/properties/${id}/assets/${fixture.id}/edit`}
           className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-ink px-4 text-[15px] font-semibold text-white transition-all active:scale-[0.98] md:min-w-[120px]"
         >
           수정하기

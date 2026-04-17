@@ -66,7 +66,9 @@ type SpaceDetail = {
   photos: Array<{
     id: string
     storagePath: string
+    thumbnailStoragePath: string
     signedUrl: string | null
+    thumbnailSignedUrl: string | null
   }>
 }
 
@@ -152,7 +154,7 @@ export default function AdminSpaceDetailPage() {
 
     try {
       await deleteMutation.mutateAsync()
-      router.push(`/admin/properties/${id}`)
+      router.replace(`/admin/properties/${id}`)
     } catch (error) {
       setDeleteMessage(error instanceof ApiError ? error.message : '공간 정보를 삭제하지 못했어요.')
       setDeleteOpen(false)
@@ -162,7 +164,7 @@ export default function AdminSpaceDetailPage() {
   return (
     <>
       <SiteHeader title={space.name} />
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-only max-md:p-5">
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
         <div className="-mb-1 md:hidden">
           <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
           <h1 className="mt-2 text-[22px] font-semibold text-ink">{space.name}</h1>
@@ -253,7 +255,7 @@ export default function AdminSpaceDetailPage() {
               {linkedFixtures.map((fixture) => (
                 <Link
                   key={fixture.id}
-                  href={`/admin/properties/${id}/fixtures/${fixture.id}`}
+                  href={`/admin/properties/${id}/assets/${fixture.id}`}
                   className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
                 >
                   <div className="flex items-stretch">

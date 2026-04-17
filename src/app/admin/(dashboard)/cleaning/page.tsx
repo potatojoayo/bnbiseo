@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
 import { useAdminCleaning, useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Drawer,
   DrawerContent,
@@ -24,14 +25,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   cancelled: { label: '취소', color: 'bg-surface-soft text-ink-faint' },
 }
 
-const TABS = [
-  { key: '', label: '전체' },
-  { key: 'pending', label: '배정 대기' },
-  { key: 'confirmed', label: '배정 완료' },
-  { key: 'in_progress', label: '진행 중' },
-  { key: 'completed', label: '완료' },
-  { key: 'cancelled', label: '취소' },
-]
+type CleaningFilter = 'all' | 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
 
 function StatusBadge({ status }: { status: string }) {
   const info = STATUS_LABELS[status]
@@ -40,13 +34,24 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function AdminCleaningPage() {
-  const [tab, setTab] = useState('')
-  const { data: requests = [], isLoading: requestsLoading } = useAdminCleaning(tab || undefined)
+  const [tab, setTab] = useState<CleaningFilter>('all')
+  const [page, setPage] = useState(1)
+  const [mobileVisibleCount, setMobileVisibleCount] = useState(10)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const { data: allRequests = [], isLoading: requestsLoading } = useAdminCleaning()
   const { data: allManagers = [], isLoading: managersLoading } = useAdminManagers()
   const invalidate = useInvalidateAdmin()
   const isPageLoading = requestsLoading || managersLoading
 
   const activeManagers = allManagers.filter((m) => m.isActive)
+  const pendingCount = allRequests.filter((request) => request.status === 'pending').length
+  const confirmedCount = allRequests.filter((request) => request.status === 'confirmed').length
+  const inProgressCount = allRequests.filter((request) => request.status === 'in_progress').length
+  const completedCount = allRequests.filter((request) => request.status === 'completed').length
+  const cancelledCount = allRequests.filter((request) => request.status === 'cancelled').length
+  const filteredRequests = allRequests.filter((request) => (tab === 'all' ? true : request.status === tab))
+  const mobileRequests = filteredRequests.slice(0, mobileVisibleCount)
+  const { paged, totalPages } = useTablePagination(filteredRequests, page)
 
   const [assignOpen, setAssignOpen] = useState(false)
   const [assignTargetId, setAssignTargetId] = useState('')
@@ -55,8 +60,28 @@ export default function AdminCleaningPage() {
   const [statusOpen, setStatusOpen] = useState(false)
   const [statusTargetId, setStatusTargetId] = useState('')
   const [updating, setUpdating] = useState(false)
-  const [page, setPage] = useState(1)
-  const { paged, totalPages } = useTablePagination(requests, page)
+
+  useEffect(() => {
+    const target = loadMoreRef.current
+
+    if (!target || mobileVisibleCount >= filteredRequests.length) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return
+        setMobileVisibleCount((current) => Math.min(current + 10, filteredRequests.length))
+      },
+      { rootMargin: '120px 0px' },
+    )
+
+    observer.observe(target)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [filteredRequests.length, mobileVisibleCount])
 
   async function handleAssign(managerId: string) {
     setAssigning(true)
@@ -85,27 +110,45 @@ export default function AdminCleaningPage() {
         </div>
       ) : (
       <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
-        {/* Tabs */}
-        <div className="flex gap-2 overflow-x-auto">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => { setTab(t.key); setPage(1) }}
-              className={`px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors ${
-                tab === t.key ? 'bg-ink text-white' : 'bg-surface-soft text-ink-muted hover:bg-outline-dim'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="flex flex-col gap-3">
+          <Tabs
+            value={tab}
+            onValueChange={(value) => {
+              setTab(value as CleaningFilter)
+              setPage(1)
+              setMobileVisibleCount(10)
+            }}
+            className="w-full"
+          >
+            <TabsList className="!h-10 w-full justify-start overflow-x-auto rounded-xl bg-surface-subtle p-1">
+              <TabsTrigger value="all" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                전체({allRequests.length})
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                배정 대기({pendingCount})
+              </TabsTrigger>
+              <TabsTrigger value="confirmed" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                배정 완료({confirmedCount})
+              </TabsTrigger>
+              <TabsTrigger value="in_progress" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                진행 중({inProgressCount})
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                완료({completedCount})
+              </TabsTrigger>
+              <TabsTrigger value="cancelled" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                취소({cancelledCount})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        {requests.length === 0 ? (
+        {filteredRequests.length === 0 ? (
           <p className="py-20 text-center text-[14px] text-ink-muted">청소 요청이 없어요</p>
         ) : (
           <>
           <div className="flex flex-col gap-3 md:hidden">
-            {requests.map((r) => (
+            {mobileRequests.map((r) => (
               <div key={r.id} className="rounded-xl border border-outline-dim px-4 py-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[15px] font-semibold text-ink">{r.propertyName || '숙소'}</span>
@@ -127,6 +170,11 @@ export default function AdminCleaningPage() {
                 </div>
               </div>
             ))}
+            {mobileVisibleCount < filteredRequests.length && (
+              <div ref={loadMoreRef} className="flex items-center justify-center py-3">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+              </div>
+            )}
           </div>
           <div className="overflow-hidden rounded-xl border border-outline-dim max-md:hidden">
             <Table>
@@ -168,7 +216,9 @@ export default function AdminCleaningPage() {
               </TableBody>
             </Table>
           </div>
-          <AdminTablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <div className="max-md:hidden">
+            <AdminTablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
           </>
         )}
       </div>

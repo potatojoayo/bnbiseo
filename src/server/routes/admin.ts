@@ -8,8 +8,8 @@ import {
   properties,
   cleaningRequests,
   managers,
-  fixtures,
-  fixturePhotos,
+  propertyAssets,
+  propertyAssetPhotos,
   propertySpaces,
   propertySpacePhotos,
 } from '@/db/schema'
@@ -284,6 +284,11 @@ const UpdateManagerSchema = z.object({
   memo: z.string().optional(),
 })
 
+const PhotoUploadSchema = z.object({
+  storagePath: z.string().min(1),
+  thumbnailStoragePath: z.string().min(1),
+})
+
 const FixtureRegistrationSchema = z.object({
   id: z.string().uuid().optional(),
   category: z.enum([
@@ -305,7 +310,7 @@ const FixtureRegistrationSchema = z.object({
   modelNumber: z.string().optional(),
   specNotes: z.string().optional(),
   notes: z.string().optional(),
-  photoPaths: z.array(z.string()).min(1, '사진을 최소 1장 추가해주세요.'),
+  photos: z.array(PhotoUploadSchema).min(1, '사진을 최소 1장 추가해주세요.'),
 })
 
 const PropertyRegistrationSchema = z.object({
@@ -343,13 +348,13 @@ const CreateFixtureSchema = z.object({
   modelNumber: z.string().optional(),
   specNotes: z.string().optional(),
   notes: z.string().optional(),
-  photoPaths: z.array(z.string()).min(1, '사진을 최소 1장 추가해주세요.'),
+  photos: z.array(PhotoUploadSchema).min(1, '사진을 최소 1장 추가해주세요.'),
 })
 
 const SignedUploadSchema = z.object({
   propertyId: z.string().uuid(),
   fileName: z.string().min(1),
-  kind: z.enum(['fixtures', 'spaces']).optional(),
+  kind: z.enum(['assets', 'spaces']).optional(),
 })
 
 const PropertySpaceSchema = z.object({
@@ -358,7 +363,7 @@ const PropertySpaceSchema = z.object({
   name: z.string().min(1),
   pyeong: z.coerce.number().int().positive(),
   notes: z.string().optional(),
-  photoPaths: z.array(z.string()).min(1, '사진을 최소 1장 추가해주세요.'),
+  photos: z.array(PhotoUploadSchema).min(1, '사진을 최소 1장 추가해주세요.'),
 })
 
 async function createSignedUrlMap(paths: string[]) {
@@ -638,17 +643,17 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
 
   const propertyFixtures = await db
     .select({
-      id: fixtures.id,
-      category: fixtures.category,
-      name: fixtures.name,
-      location: fixtures.location,
-      brand: fixtures.brand,
-      modelNumber: fixtures.modelNumber,
-      specNotes: fixtures.specNotes,
-      notes: fixtures.notes,
+      id: propertyAssets.id,
+      category: propertyAssets.category,
+      name: propertyAssets.name,
+      location: propertyAssets.location,
+      brand: propertyAssets.brand,
+      modelNumber: propertyAssets.modelNumber,
+      specNotes: propertyAssets.specNotes,
+      notes: propertyAssets.notes,
     })
-    .from(fixtures)
-    .where(eq(fixtures.propertyId, id))
+    .from(propertyAssets)
+    .where(eq(propertyAssets.propertyId, id))
 
   const spaces = await db
     .select({
@@ -666,13 +671,14 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
   const fixturePhotoRows = fixtureIds.length > 0
     ? await db
       .select({
-        id: fixturePhotos.id,
-        fixtureId: fixturePhotos.fixtureId,
-        storagePath: fixturePhotos.storagePath,
-        sortOrder: fixturePhotos.sortOrder,
+        id: propertyAssetPhotos.id,
+        fixtureId: propertyAssetPhotos.fixtureId,
+        storagePath: propertyAssetPhotos.storagePath,
+        thumbnailStoragePath: propertyAssetPhotos.thumbnailStoragePath,
+        sortOrder: propertyAssetPhotos.sortOrder,
       })
-      .from(fixturePhotos)
-      .where(inArray(fixturePhotos.fixtureId, fixtureIds))
+      .from(propertyAssetPhotos)
+      .where(inArray(propertyAssetPhotos.fixtureId, fixtureIds))
     : []
 
   const spaceIds = spaces.map((space) => space.id)
@@ -682,6 +688,7 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
         id: propertySpacePhotos.id,
         propertySpaceId: propertySpacePhotos.propertySpaceId,
         storagePath: propertySpacePhotos.storagePath,
+        thumbnailStoragePath: propertySpacePhotos.thumbnailStoragePath,
         sortOrder: propertySpacePhotos.sortOrder,
       })
       .from(propertySpacePhotos)
@@ -692,6 +699,10 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
     ...fixturePhotoRows.map((photo) => photo.storagePath),
     ...spacePhotoRows.map((photo) => photo.storagePath),
   ])
+  const thumbnailSignedUrlMap = await createSignedUrlMap([
+    ...fixturePhotoRows.map((photo) => photo.thumbnailStoragePath),
+    ...spacePhotoRows.map((photo) => photo.thumbnailStoragePath),
+  ])
 
   const fixturesWithPhotos = propertyFixtures.map((fixture) => ({
     ...fixture,
@@ -701,7 +712,9 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       .map((photo) => ({
         id: photo.id,
         storagePath: photo.storagePath,
+        thumbnailStoragePath: photo.thumbnailStoragePath,
         signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+        thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
       })),
   }))
 
@@ -713,7 +726,9 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       .map((photo) => ({
         id: photo.id,
         storagePath: photo.storagePath,
+        thumbnailStoragePath: photo.thumbnailStoragePath,
         signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+        thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
       })),
   }))
 
@@ -723,6 +738,25 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
     spaces: spacesWithPhotos,
     fixtures: fixturesWithPhotos,
   })
+})
+
+adminRoutes.delete('/properties/:id', async (c) => {
+  const id = c.req.param('id')
+
+  const [deleted] = await db
+    .update(properties)
+    .set({
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
+    .returning({ id: properties.id })
+
+  if (!deleted) {
+    return warnJson(c, { error: '숙소를 찾을 수 없어요' }, 404)
+  }
+
+  return c.json({ success: true })
 })
 
 adminRoutes.post('/properties/:id/registration/upload-url', async (c) => {
@@ -747,21 +781,30 @@ adminRoutes.post('/properties/:id/registration/upload-url', async (c) => {
     return warnJson(c, { error: '숙소를 찾을 수 없어요' }, 404)
   }
 
+  const kind = validated.data.kind ?? 'assets'
   const ext = validated.data.fileName.split('.').pop()?.toLowerCase() || 'jpg'
-  const kind = validated.data.kind ?? 'fixtures'
-  const path = `properties/${propertyId}/${kind}/${crypto.randomUUID()}.${ext}`
+  const fileId = crypto.randomUUID()
+  const originalPath = `properties/${propertyId}/${kind}/original/${fileId}.${ext}`
+  const thumbnailStoragePath = `properties/${propertyId}/${kind}/thumb/${fileId}.jpg`
   const supabaseAdmin = getSupabaseAdmin()
-  const { data, error } = await supabaseAdmin.storage
-    .from('images')
-    .createSignedUploadUrl(path)
+  const [{ data: originalData, error: originalError }, { data: thumbnailData, error: thumbnailError }] = await Promise.all([
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(originalPath),
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(thumbnailStoragePath),
+  ])
 
-  if (error || !data) {
-    return warnJson(c, { error: error?.message || '업로드 URL을 만들 수 없어요.' }, 400)
+  if (originalError || thumbnailError || !originalData || !thumbnailData) {
+    return warnJson(c, { error: originalError?.message || thumbnailError?.message || '업로드 URL을 만들 수 없어요.' }, 400)
   }
 
   return c.json({
-    path,
-    token: data.token,
+    original: {
+      path: originalPath,
+      token: originalData.token,
+    },
+    thumbnail: {
+      path: thumbnailStoragePath,
+      token: thumbnailData.token,
+    },
   })
 })
 
@@ -825,11 +868,12 @@ adminRoutes.post('/properties/:id/registration/spaces', async (c) => {
       })
       .returning()
 
-    if (validated.data.photoPaths.length > 0) {
+    if (validated.data.photos.length > 0) {
       await tx.insert(propertySpacePhotos).values(
-        validated.data.photoPaths.map((storagePath, index) => ({
+        validated.data.photos.map((photo, index) => ({
           propertySpaceId: space.id,
-          storagePath,
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
           sortOrder: index,
         })),
       )
@@ -876,11 +920,12 @@ adminRoutes.patch('/properties/:id/registration/spaces/:spaceId', async (c) => {
 
     await tx.delete(propertySpacePhotos).where(eq(propertySpacePhotos.propertySpaceId, spaceId))
 
-    if (validated.data.photoPaths.length > 0) {
+    if (validated.data.photos.length > 0) {
       await tx.insert(propertySpacePhotos).values(
-        validated.data.photoPaths.map((storagePath, index) => ({
+        validated.data.photos.map((photo, index) => ({
           propertySpaceId: spaceId,
-          storagePath,
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
           sortOrder: index,
         })),
       )
@@ -905,12 +950,12 @@ adminRoutes.delete('/properties/:id/registration/spaces/:spaceId', async (c) => 
   }
 
   const [linkedFixture] = await db
-    .select({ id: fixtures.id })
-    .from(fixtures)
+    .select({ id: propertyAssets.id })
+    .from(propertyAssets)
     .where(
       and(
-        eq(fixtures.propertyId, propertyId),
-        sql`${fixtures.location} = ${space.name} or ${fixtures.location} like ${space.name + ' · %'}`,
+        eq(propertyAssets.propertyId, propertyId),
+        sql`${propertyAssets.location} = ${space.name} or ${propertyAssets.location} like ${space.name + ' · %'}`,
       ),
     )
     .limit(1)
@@ -924,7 +969,7 @@ adminRoutes.delete('/properties/:id/registration/spaces/:spaceId', async (c) => 
   return c.json({ success: true })
 })
 
-adminRoutes.post('/properties/:id/registration/fixtures', async (c) => {
+adminRoutes.post('/properties/:id/registration/assets', async (c) => {
   const propertyId = c.req.param('id')
   const body = await c.req.json()
   const validated = CreateFixtureSchema.safeParse(body)
@@ -945,7 +990,7 @@ adminRoutes.post('/properties/:id/registration/fixtures', async (c) => {
 
   const created = await db.transaction(async (tx) => {
     const [fixture] = await tx
-      .insert(fixtures)
+      .insert(propertyAssets)
       .values({
         propertyId,
         category: validated.data.category,
@@ -958,11 +1003,12 @@ adminRoutes.post('/properties/:id/registration/fixtures', async (c) => {
       })
       .returning()
 
-    if (validated.data.photoPaths.length > 0) {
-      await tx.insert(fixturePhotos).values(
-        validated.data.photoPaths.map((storagePath, index) => ({
+    if (validated.data.photos.length > 0) {
+      await tx.insert(propertyAssetPhotos).values(
+        validated.data.photos.map((photo, index) => ({
           fixtureId: fixture.id,
-          storagePath,
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
           sortOrder: index,
         })),
       )
@@ -974,7 +1020,7 @@ adminRoutes.post('/properties/:id/registration/fixtures', async (c) => {
   return c.json(created, 201)
 })
 
-adminRoutes.patch('/properties/:id/registration/fixtures/:fixtureId', async (c) => {
+adminRoutes.patch('/properties/:id/registration/assets/:fixtureId', async (c) => {
   const propertyId = c.req.param('id')
   const fixtureId = c.req.param('fixtureId')
   const body = await c.req.json()
@@ -985,9 +1031,9 @@ adminRoutes.patch('/properties/:id/registration/fixtures/:fixtureId', async (c) 
   }
 
   const [fixture] = await db
-    .select({ id: fixtures.id })
-    .from(fixtures)
-    .where(and(eq(fixtures.id, fixtureId), eq(fixtures.propertyId, propertyId)))
+    .select({ id: propertyAssets.id })
+    .from(propertyAssets)
+    .where(and(eq(propertyAssets.id, fixtureId), eq(propertyAssets.propertyId, propertyId)))
     .limit(1)
 
   if (!fixture) {
@@ -996,7 +1042,7 @@ adminRoutes.patch('/properties/:id/registration/fixtures/:fixtureId', async (c) 
 
   await db.transaction(async (tx) => {
     await tx
-      .update(fixtures)
+      .update(propertyAssets)
       .set({
         category: validated.data.category,
         name: validated.data.name.trim(),
@@ -1007,15 +1053,16 @@ adminRoutes.patch('/properties/:id/registration/fixtures/:fixtureId', async (c) 
         notes: validated.data.notes?.trim() || null,
         updatedAt: new Date(),
       })
-      .where(eq(fixtures.id, fixtureId))
+      .where(eq(propertyAssets.id, fixtureId))
 
-    await tx.delete(fixturePhotos).where(eq(fixturePhotos.fixtureId, fixtureId))
+    await tx.delete(propertyAssetPhotos).where(eq(propertyAssetPhotos.fixtureId, fixtureId))
 
-    if (validated.data.photoPaths.length > 0) {
-      await tx.insert(fixturePhotos).values(
-        validated.data.photoPaths.map((storagePath, index) => ({
+    if (validated.data.photos.length > 0) {
+      await tx.insert(propertyAssetPhotos).values(
+        validated.data.photos.map((photo, index) => ({
           fixtureId,
-          storagePath,
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
           sortOrder: index,
         })),
       )
@@ -1025,21 +1072,21 @@ adminRoutes.patch('/properties/:id/registration/fixtures/:fixtureId', async (c) 
   return c.json({ success: true })
 })
 
-adminRoutes.delete('/properties/:id/registration/fixtures/:fixtureId', async (c) => {
+adminRoutes.delete('/properties/:id/registration/assets/:fixtureId', async (c) => {
   const propertyId = c.req.param('id')
   const fixtureId = c.req.param('fixtureId')
 
   const [fixture] = await db
-    .select({ id: fixtures.id })
-    .from(fixtures)
-    .where(and(eq(fixtures.id, fixtureId), eq(fixtures.propertyId, propertyId)))
+    .select({ id: propertyAssets.id })
+    .from(propertyAssets)
+    .where(and(eq(propertyAssets.id, fixtureId), eq(propertyAssets.propertyId, propertyId)))
     .limit(1)
 
   if (!fixture) {
     return warnJson(c, { error: '시설물을 찾을 수 없어요' }, 404)
   }
 
-  await db.delete(fixtures).where(eq(fixtures.id, fixtureId))
+  await db.delete(propertyAssets).where(eq(propertyAssets.id, fixtureId))
 
   return c.json({ success: true })
 })
@@ -1078,9 +1125,9 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
       .where(eq(properties.id, id))
 
     const existingFixtures = await tx
-      .select({ id: fixtures.id })
-      .from(fixtures)
-      .where(eq(fixtures.propertyId, id))
+      .select({ id: propertyAssets.id })
+      .from(propertyAssets)
+      .where(eq(propertyAssets.propertyId, id))
 
     const incomingIds = validated.data.fixtures
       .map((fixture) => fixture.id)
@@ -1091,7 +1138,7 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
       .filter((fixtureId) => !incomingIds.includes(fixtureId))
 
     if (fixturesToDelete.length > 0) {
-      await tx.delete(fixtures).where(inArray(fixtures.id, fixturesToDelete))
+      await tx.delete(propertyAssets).where(inArray(propertyAssets.id, fixturesToDelete))
     }
 
     for (const fixture of validated.data.fixtures) {
@@ -1099,7 +1146,7 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
 
       if (fixtureId) {
         await tx
-          .update(fixtures)
+          .update(propertyAssets)
           .set({
             category: fixture.category,
             name: fixture.name,
@@ -1110,12 +1157,12 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
             notes: fixture.notes || null,
             updatedAt: new Date(),
           })
-          .where(eq(fixtures.id, fixtureId))
+          .where(eq(propertyAssets.id, fixtureId))
 
-        await tx.delete(fixturePhotos).where(eq(fixturePhotos.fixtureId, fixtureId))
+        await tx.delete(propertyAssetPhotos).where(eq(propertyAssetPhotos.fixtureId, fixtureId))
       } else {
         const [createdFixture] = await tx
-          .insert(fixtures)
+          .insert(propertyAssets)
           .values({
             propertyId: id,
             category: fixture.category,
@@ -1126,16 +1173,17 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
             specNotes: fixture.specNotes || null,
             notes: fixture.notes || null,
           })
-          .returning({ id: fixtures.id })
+          .returning({ id: propertyAssets.id })
 
         fixtureId = createdFixture.id
       }
 
-      if (fixture.photoPaths.length > 0) {
-        await tx.insert(fixturePhotos).values(
-          fixture.photoPaths.map((path, index) => ({
+      if (fixture.photos.length > 0) {
+        await tx.insert(propertyAssetPhotos).values(
+          fixture.photos.map((photo, index) => ({
             fixtureId: fixtureId!,
-            storagePath: path,
+            storagePath: photo.storagePath,
+            thumbnailStoragePath: photo.thumbnailStoragePath,
             sortOrder: index,
           })),
         )

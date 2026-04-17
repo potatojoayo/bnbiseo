@@ -194,7 +194,7 @@ export const propertyPhotos = pgTable('property_photos', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-export const fixtures = pgTable('fixtures', {
+export const propertyAssets = pgTable('property_assets', {
   id: uuid('id').primaryKey().defaultRandom(),
   propertyId: uuid('property_id')
     .notNull()
@@ -215,12 +215,13 @@ export const fixtures = pgTable('fixtures', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-export const fixturePhotos = pgTable('fixture_photos', {
+export const propertyAssetPhotos = pgTable('property_asset_photos', {
   id: uuid('id').primaryKey().defaultRandom(),
-  fixtureId: uuid('fixture_id')
+  fixtureId: uuid('property_asset_id')
     .notNull()
-    .references(() => fixtures.id, { onDelete: 'cascade' }),
+    .references(() => propertyAssets.id, { onDelete: 'cascade' }),
   storagePath: text('storage_path').notNull(),
+  thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
   caption: text('caption'),
   sortOrder: smallint('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -246,6 +247,7 @@ export const propertySpacePhotos = pgTable('property_space_photos', {
     .notNull()
     .references(() => propertySpaces.id, { onDelete: 'cascade' }),
   storagePath: text('storage_path').notNull(),
+  thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
   caption: text('caption'),
   sortOrder: smallint('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -271,7 +273,7 @@ export const repairRequests = pgTable('repair_requests', {
   propertyId: uuid('property_id')
     .notNull()
     .references(() => properties.id, { onDelete: 'cascade' }),
-  fixtureId: uuid('fixture_id').references(() => fixtures.id, {
+  fixtureId: uuid('fixture_id').references(() => propertyAssets.id, {
     onDelete: 'set null',
   }),
   source: repairSourceEnum('source').default('host').notNull(),
@@ -371,7 +373,7 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   host: one(profiles, { fields: [properties.hostId], references: [profiles.id] }),
   photos: many(propertyPhotos),
   spaces: many(propertySpaces),
-  fixtures: many(fixtures),
+  fixtures: many(propertyAssets),
   cleaningRequests: many(cleaningRequests),
   repairRequests: many(repairRequests),
   guestSessions: many(guestSessions),
@@ -408,19 +410,19 @@ export const propertyPhotosRelations = relations(propertyPhotos, ({ one }) => ({
   }),
 }))
 
-export const fixturesRelations = relations(fixtures, ({ one, many }) => ({
+export const propertyAssetsRelations = relations(propertyAssets, ({ one, many }) => ({
   property: one(properties, {
-    fields: [fixtures.propertyId],
+    fields: [propertyAssets.propertyId],
     references: [properties.id],
   }),
-  photos: many(fixturePhotos),
+  photos: many(propertyAssetPhotos),
   repairRequests: many(repairRequests),
 }))
 
-export const fixturePhotosRelations = relations(fixturePhotos, ({ one }) => ({
-  fixture: one(fixtures, {
-    fields: [fixturePhotos.fixtureId],
-    references: [fixtures.id],
+export const propertyAssetPhotosRelations = relations(propertyAssetPhotos, ({ one }) => ({
+  fixture: one(propertyAssets, {
+    fields: [propertyAssetPhotos.fixtureId],
+    references: [propertyAssets.id],
   }),
 }))
 
@@ -453,9 +455,9 @@ export const repairRequestsRelations = relations(repairRequests, ({ one, many })
     fields: [repairRequests.propertyId],
     references: [properties.id],
   }),
-  fixture: one(fixtures, {
+  fixture: one(propertyAssets, {
     fields: [repairRequests.fixtureId],
-    references: [fixtures.id],
+    references: [propertyAssets.id],
   }),
   guestSession: one(guestSessions, {
     fields: [repairRequests.guestSessionId],

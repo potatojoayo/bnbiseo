@@ -51,7 +51,7 @@ export default function FixtureDetailPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<Fixture>(`/fixtures/${params.fixtureId}`)
+    api.get<Fixture>(`/assets/${params.fixtureId}`)
       .then(setFixture)
       .catch(() => notFound())
       .finally(() => setLoading(false))
@@ -78,7 +78,7 @@ export default function FixtureDetailPage() {
         </Button>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/dashboard/properties/${id}/fixtures/${fixtureId}/edit`}>
+            <Link href={`/dashboard/properties/${id}/assets/${fixtureId}/edit`}>
               <Edit className="h-4 w-4" />
               수정
             </Link>

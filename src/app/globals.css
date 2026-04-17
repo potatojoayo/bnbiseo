@@ -73,10 +73,6 @@
   --sidebar-ring: #222222;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   background: var(--surface);
   color: var(--on-surface);

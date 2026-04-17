@@ -20,7 +20,7 @@ export function DeleteButton({ propertyId }: DeleteButtonProps) {
     }
     setPending(true)
     await api.delete(`/properties/${propertyId}`)
-    router.push('/dashboard/properties')
+    router.replace('/dashboard/properties')
     router.refresh()
   }
 

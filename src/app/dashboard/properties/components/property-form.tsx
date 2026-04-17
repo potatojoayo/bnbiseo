@@ -65,10 +65,10 @@ export function PropertyForm({
     try {
       if (propertyId) {
         await api.patch(`/properties/${propertyId}`, body)
-        router.push(redirectTo ?? `/dashboard/properties/${propertyId}`)
+        router.replace(redirectTo ?? `/dashboard/properties/${propertyId}`)
       } else {
         const created = await api.post<{ id: string }>('/properties', body)
-        router.push(redirectTo ?? `/dashboard/properties/${created.id}`)
+        router.replace(redirectTo ?? `/dashboard/properties/${created.id}`)
       }
       router.refresh()
     } catch (err) {

@@ -28,7 +28,7 @@ export function FixturePhotoGallery({ photos: initialPhotos, propertyId, fixture
 
   async function handleDelete(photoId: string) {
     if (!confirm('사진을 삭제하시겠습니까?')) return
-    await api.delete(`/fixtures/photos/${photoId}`)
+    await api.delete(`/assets/photos/${photoId}`)
     setPhotos((prev) => prev.filter((p) => p.id !== photoId))
   }
 

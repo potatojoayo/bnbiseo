@@ -27,7 +27,7 @@ export default function EditFixturePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<Fixture>(`/fixtures/${params.fixtureId}`)
+    api.get<Fixture>(`/assets/${params.fixtureId}`)
       .then(setFixture)
       .catch(() => notFound())
       .finally(() => setLoading(false))
@@ -45,7 +45,7 @@ export default function EditFixturePage() {
     <div className="p-8 max-w-2xl">
       <div className="mb-6">
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/dashboard/properties/${params.id}/fixtures/${params.fixtureId}`}>
+          <Link href={`/dashboard/properties/${params.id}/assets/${params.fixtureId}`}>
             <ArrowLeft className="h-4 w-4" />
             시설물로 돌아가기
           </Link>

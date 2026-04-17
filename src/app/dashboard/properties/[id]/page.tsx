@@ -207,7 +207,7 @@ export default function PropertyDetailPage() {
             <p className="text-sm text-ink-muted">총 {propertyFixtures.length}개</p>
           </div>
           <Button size="sm" asChild>
-            <Link href={`/dashboard/properties/${id}/fixtures/new`}>
+            <Link href={`/dashboard/properties/${id}/assets/new`}>
               <Plus className="h-4 w-4" />
               시설물 등록
             </Link>
@@ -225,7 +225,7 @@ export default function PropertyDetailPage() {
                 </p>
               </div>
               <Button size="sm" asChild>
-                <Link href={`/dashboard/properties/${id}/fixtures/new`}>
+                <Link href={`/dashboard/properties/${id}/assets/new`}>
                   <Plus className="h-4 w-4" />
                   시설물 등록하기
                 </Link>
@@ -237,7 +237,7 @@ export default function PropertyDetailPage() {
             {propertyFixtures.map((fixture) => (
               <Link
                 key={fixture.id}
-                href={`/dashboard/properties/${id}/fixtures/${fixture.id}`}
+                href={`/dashboard/properties/${id}/assets/${fixture.id}`}
               >
                 <Card className="hover:shadow-md transition-all cursor-pointer group">
                   <CardHeader className="pb-2">

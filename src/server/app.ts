@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { authRoutes } from './routes/auth'
 import { propertiesRoutes } from './routes/properties'
-import { fixturesRoutes } from './routes/fixtures'
+import { assetsRoutes } from './routes/assets'
 import { profilesRoutes } from './routes/profiles'
 import { airroiRoutes } from './routes/airroi'
 import { cleaningRoutes } from './routes/cleaning'
@@ -23,7 +23,7 @@ app.use(
 
 app.route('/auth', authRoutes)
 app.route('/properties', propertiesRoutes)
-app.route('/fixtures', fixturesRoutes)
+app.route('/assets', assetsRoutes)
 app.route('/profiles', profilesRoutes)
 app.route('/airroi', airroiRoutes)
 app.route('/cleaning', cleaningRoutes)

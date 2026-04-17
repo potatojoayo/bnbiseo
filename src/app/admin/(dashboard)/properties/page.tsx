@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
 import { useAdminProperties } from '@/lib/hooks/use-admin'
@@ -25,12 +25,37 @@ export default function AdminPropertiesPage() {
   const { data: properties = [], isLoading } = useAdminProperties()
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState<PropertyFilter>('all')
+  const [mobileVisibleCount, setMobileVisibleCount] = useState(10)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const pendingCount = properties.filter((property) => property.status === 'pending_activation').length
   const activeCount = properties.filter((property) => property.status === 'active').length
   const filteredProperties = properties.filter((property) =>
     filter === 'all' ? true : property.status === filter,
   )
+  const mobileProperties = filteredProperties.slice(0, mobileVisibleCount)
   const { paged, totalPages } = useTablePagination(filteredProperties, page)
+
+  useEffect(() => {
+    const target = loadMoreRef.current
+
+    if (!target || mobileVisibleCount >= filteredProperties.length) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return
+        setMobileVisibleCount((current) => Math.min(current + 10, filteredProperties.length))
+      },
+      { rootMargin: '120px 0px' },
+    )
+
+    observer.observe(target)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [filteredProperties.length, mobileVisibleCount])
 
   return (
     <>
@@ -42,14 +67,12 @@ export default function AdminPropertiesPage() {
       ) : (
       <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
         <div className="flex flex-col gap-3">
-          <div className="flex items-center h-9">
-            <p className="text-[14px] text-ink-muted">총 {filteredProperties.length}개</p>
-          </div>
           <Tabs
             value={filter}
             onValueChange={(value) => {
               setFilter(value as PropertyFilter)
               setPage(1)
+              setMobileVisibleCount(10)
             }}
             className="w-full"
           >
@@ -81,7 +104,7 @@ export default function AdminPropertiesPage() {
         ) : (
           <>
           <div className="flex flex-col gap-3 md:hidden">
-            {filteredProperties.map((p) => {
+            {mobileProperties.map((p) => {
               const details = p.status === 'active'
                 ? [
                     p.pyeong && `${p.pyeong}평`,
@@ -131,6 +154,11 @@ export default function AdminPropertiesPage() {
                 </Link>
               )
             })}
+            {mobileVisibleCount < filteredProperties.length && (
+              <div ref={loadMoreRef} className="flex items-center justify-center py-3">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+              </div>
+            )}
           </div>
           <div className="rounded-xl border border-outline-dim overflow-hidden max-md:hidden">
             <Table>
@@ -192,7 +220,9 @@ export default function AdminPropertiesPage() {
               </TableBody>
             </Table>
           </div>
-          <AdminTablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <div className="max-md:hidden">
+            <AdminTablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
           </>
         )}
       </div>

@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { PlusIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FloatingInput, CompoundInput } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
@@ -26,6 +27,8 @@ type Manager = {
   isActive: boolean
 }
 
+type ManagerFilter = 'all' | 'active' | 'inactive'
+
 function formatPhoneNumber(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 11)
 
@@ -37,6 +40,10 @@ function formatPhoneNumber(value: string) {
 export default function AdminManagersPage() {
   const { data: managers = [], isLoading } = useAdminManagers()
   const invalidate = useInvalidateAdmin()
+  const [filter, setFilter] = useState<ManagerFilter>('all')
+  const [page, setPage] = useState(1)
+  const [mobileVisibleCount, setMobileVisibleCount] = useState(10)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   const [formOpen, setFormOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Manager | null>(null)
@@ -51,8 +58,37 @@ export default function AdminManagersPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Manager | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [page, setPage] = useState(1)
-  const { paged, totalPages } = useTablePagination(managers, page)
+  const activeCount = managers.filter((manager) => manager.isActive).length
+  const inactiveCount = managers.length - activeCount
+  const filteredManagers = managers.filter((manager) => {
+    if (filter === 'active') return manager.isActive
+    if (filter === 'inactive') return !manager.isActive
+    return true
+  })
+  const mobileManagers = filteredManagers.slice(0, mobileVisibleCount)
+  const { paged, totalPages } = useTablePagination(filteredManagers, page)
+
+  useEffect(() => {
+    const target = loadMoreRef.current
+
+    if (!target || mobileVisibleCount >= filteredManagers.length) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return
+        setMobileVisibleCount((current) => Math.min(current + 10, filteredManagers.length))
+      },
+      { rootMargin: '120px 0px' },
+    )
+
+    observer.observe(target)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [filteredManagers.length, mobileVisibleCount])
 
   function openCreate() {
     setEditTarget(null)
@@ -124,8 +160,7 @@ export default function AdminManagersPage() {
         </div>
       ) : (
       <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
-        <div className="flex items-center justify-between h-9">
-          <p className="text-[14px] text-ink-muted">총 {managers.length}명</p>
+        <div className="flex items-center justify-end h-9">
           <button
             onClick={openCreate}
             className="flex items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-[13px] font-medium text-white"
@@ -135,12 +170,34 @@ export default function AdminManagersPage() {
           </button>
         </div>
 
-        {managers.length === 0 ? (
+        <Tabs
+          value={filter}
+          onValueChange={(value) => {
+            setFilter(value as ManagerFilter)
+            setPage(1)
+            setMobileVisibleCount(10)
+          }}
+          className="w-full"
+        >
+          <TabsList className="!h-10 w-full justify-start overflow-x-auto rounded-xl bg-surface-subtle p-1">
+            <TabsTrigger value="all" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+              전체({managers.length})
+            </TabsTrigger>
+            <TabsTrigger value="active" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+              활성({activeCount})
+            </TabsTrigger>
+            <TabsTrigger value="inactive" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+              비활성({inactiveCount})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {filteredManagers.length === 0 ? (
           <p className="py-20 text-center text-[14px] text-ink-muted">등록된 매니저가 없어요</p>
         ) : (
           <>
           <div className="flex flex-col gap-3 md:hidden">
-            {managers.map((m) => (
+            {mobileManagers.map((m) => (
               <div key={m.id} className="rounded-xl border border-outline-dim px-4 py-4">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[15px] font-semibold text-ink">{m.name}</span>
@@ -152,12 +209,17 @@ export default function AdminManagersPage() {
                 <p className="text-[13px] text-ink-muted">{m.phone}</p>
                 {m.memo && <p className="mt-1 text-[12px] text-ink-faint">{m.memo}</p>}
                 <div className="flex gap-2 mt-3">
-                  <button onClick={() => openEdit(m)} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">수정</button>
-                  <button onClick={() => handleToggle(m)} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">{m.isActive ? '비활성화' : '활성화'}</button>
-                  <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-faint">삭제</button>
+                  <button onClick={() => openEdit(m)} className="flex-1 rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">수정</button>
+                  <button onClick={() => handleToggle(m)} className="flex-1 rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">{m.isActive ? '비활성화' : '활성화'}</button>
+                  <button onClick={() => { setDeleteTarget(m); setDeleteOpen(true) }} className="flex-1 rounded-lg border border-danger-border bg-danger-soft px-3 py-1.5 text-[12px] font-medium text-danger">삭제</button>
                 </div>
               </div>
             ))}
+            {mobileVisibleCount < filteredManagers.length && (
+              <div ref={loadMoreRef} className="flex items-center justify-center py-3">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+              </div>
+            )}
           </div>
           <div className="overflow-hidden rounded-xl border border-outline-dim max-md:hidden">
             <Table>
@@ -195,7 +257,9 @@ export default function AdminManagersPage() {
               </TableBody>
             </Table>
           </div>
-          <AdminTablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <div className="max-md:hidden">
+            <AdminTablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
           </>
         )}
       </div>
