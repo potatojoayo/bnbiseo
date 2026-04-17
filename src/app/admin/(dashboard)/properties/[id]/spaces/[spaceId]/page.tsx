@@ -3,17 +3,24 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useParams, useRouter } from 'next/navigation'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
-import { ApiError } from '@/lib/api-client'
-import { useAdminPropertyRegistration } from '@/lib/hooks/use-admin'
+import { api, ApiError } from '@/lib/api-client'
+import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   type CarouselApi,
 } from '@/components/ui/carousel'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
 
 type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
 type FixtureCategory =
@@ -49,16 +56,57 @@ const CATEGORY_LABELS: Record<FixtureCategory, string> = {
   other: '기타',
 }
 
+type SpaceDetail = {
+  id: string
+  category: SpaceCategory
+  floor: number
+  name: string
+  pyeong: number
+  notes: string | null
+  photos: Array<{
+    id: string
+    storagePath: string
+    signedUrl: string | null
+  }>
+}
+
+type RegistrationCache = {
+  spaces: SpaceDetail[]
+}
+
 function isFixtureLinkedToSpace(location: string, spaceName: string) {
   return location === spaceName || location.startsWith(`${spaceName} · `)
 }
 
 export default function AdminSpaceDetailPage() {
+  const router = useRouter()
   const { id, spaceId } = useParams<{ id: string; spaceId: string }>()
   const { data, isLoading, error } = useAdminPropertyRegistration(id)
+  const invalidate = useInvalidateAdmin()
+  const queryClient = useQueryClient()
   const space = data?.spaces.find((item) => item.id === spaceId)
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null)
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/admin/properties/${id}/registration/spaces/${spaceId}`),
+    onSuccess: () => {
+      queryClient.setQueryData(
+        ['admin', 'property-registration', id],
+        (previous: RegistrationCache | undefined) =>
+          previous
+            ? {
+                ...previous,
+                spaces: previous.spaces.filter((item) => item.id !== spaceId),
+              }
+            : previous,
+      )
+      invalidate.propertyRegistration(id)
+      invalidate.properties()
+    },
+  })
 
   useEffect(() => {
     if (!carouselApi) return
@@ -99,10 +147,22 @@ export default function AdminSpaceDetailPage() {
 
   const linkedFixtures = data.fixtures.filter((fixture) => isFixtureLinkedToSpace(fixture.location, space.name))
 
+  async function handleDelete() {
+    setDeleteMessage(null)
+
+    try {
+      await deleteMutation.mutateAsync()
+      router.push(`/admin/properties/${id}`)
+    } catch (error) {
+      setDeleteMessage(error instanceof ApiError ? error.message : '공간 정보를 삭제하지 못했어요.')
+      setDeleteOpen(false)
+    }
+  }
+
   return (
     <>
       <SiteHeader title={space.name} />
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-only max-md:p-5">
         <div className="-mb-1 md:hidden">
           <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
           <h1 className="mt-2 text-[22px] font-semibold text-ink">{space.name}</h1>
@@ -241,7 +301,50 @@ export default function AdminSpaceDetailPage() {
         >
           수정하기
         </Link>
+
+        <button
+          type="button"
+          onClick={() => setDeleteOpen(true)}
+          className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
+          disabled={deleteMutation.isPending}
+        >
+          공간 삭제
+        </button>
+
+        {deleteMessage && (
+          <p className="text-center text-[13px] text-danger">{deleteMessage}</p>
+        )}
       </div>
+
+      <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DrawerContent className="px-5 pb-8">
+          <DrawerHeader className="px-0">
+            <DrawerTitle className="text-[18px] font-semibold text-ink">
+              삭제하시겠습니까?
+            </DrawerTitle>
+          </DrawerHeader>
+          <p className="mb-6 text-[14px] text-ink-muted">
+            공간 정보를 삭제하면 되돌릴 수 없어요.
+          </p>
+          <div className="flex flex-col gap-4">
+            <button
+              type="button"
+              onClick={() => void handleDelete()}
+              disabled={deleteMutation.isPending}
+              className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-ink text-[15px] font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-60"
+            >
+              {deleteMutation.isPending ? '삭제 중...' : '삭제하기'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(false)}
+              className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+            >
+              취소
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </>
   )
 }
