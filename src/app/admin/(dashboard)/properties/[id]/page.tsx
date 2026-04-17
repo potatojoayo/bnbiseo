@@ -500,23 +500,21 @@ function AdminPropertyDetailView({
           <MobileBackButton href="/admin/properties" mode="back" />
         </div>
 
-        <section className="rounded-xl border border-outline-dim px-5 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[20px] font-semibold text-ink">{property.name}</p>
-              <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
-                <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
-                {property.address}{property.addressDetail ? ` ${property.addressDetail}` : ''}
-              </p>
-            </div>
+        <section className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <p className="min-w-0 text-[22px] font-semibold text-ink">{property.name}</p>
             <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-medium text-success">
               등록 완료
             </span>
           </div>
+          <p className="text-[14px] leading-relaxed text-ink-muted">
+            <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
+            {property.address}{property.addressDetail ? ` ${property.addressDetail}` : ''}
+          </p>
           {details.length > 0 && (
-            <p className="mt-2 text-[13px] text-ink-muted">{details.join(' · ')}</p>
+            <p className="text-[13px] text-ink-muted">{details.join(' · ')}</p>
           )}
-          <p className="mt-2 text-[13px] text-ink-muted">호스트: {property.hostName || property.hostEmail || '-'}</p>
+          <p className="text-[13px] text-ink-muted">호스트: {property.hostName || property.hostEmail || '-'}</p>
         </section>
 
         <section className="space-y-4">

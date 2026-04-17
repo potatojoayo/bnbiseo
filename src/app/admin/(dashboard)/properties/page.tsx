@@ -118,19 +118,10 @@ export default function AdminPropertiesPage() {
                   <p className="mt-3 text-[12px] text-ink-muted">
                     호스트: {p.hostName || p.hostEmail || '-'}
                   </p>
-
-                  {p.status === 'pending_activation' && (
-                    <Link
-                      href={`/admin/properties/${p.id}`}
-                      className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-lg bg-ink px-3 text-[14px] font-semibold text-white transition-all active:scale-[0.98]"
-                    >
-                      등록 진행
-                    </Link>
-                  )}
                 </div>
               )
 
-              return p.status === 'active' ? (
+              return (
                 <Link
                   key={p.id}
                   href={`/admin/properties/${p.id}`}
@@ -138,8 +129,6 @@ export default function AdminPropertiesPage() {
                 >
                   {card}
                 </Link>
-              ) : (
-                <div key={p.id}>{card}</div>
               )
             })}
           </div>
