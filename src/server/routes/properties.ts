@@ -1,8 +1,15 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
+import { createClient } from '@supabase/supabase-js'
 import { eq, and, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
-import { properties, propertyAssets, propertySpaces } from '@/db/schema'
+import {
+  properties,
+  propertyAssets,
+  propertyAssetPhotos,
+  propertySpaces,
+  propertySpacePhotos,
+} from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 
@@ -36,6 +43,29 @@ export const propertiesRoutes = new Hono<AuthEnv>()
 
 propertiesRoutes.use('*', authMiddleware)
 
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!,
+  )
+}
+
+async function createSignedUrlMap(paths: string[]) {
+  const signedUrlMap = new Map<string, string | null>()
+  if (paths.length === 0) return signedUrlMap
+
+  const supabaseAdmin = getSupabaseAdmin()
+  const { data } = await supabaseAdmin.storage
+    .from('images')
+    .createSignedUrls(paths, 60 * 60)
+
+  data?.forEach((item, index) => {
+    signedUrlMap.set(paths[index], item.signedUrl ?? null)
+  })
+
+  return signedUrlMap
+}
+
 // List all properties for the user
 propertiesRoutes.get('/', async (c) => {
   const profileId = c.get('profileId')
@@ -67,7 +97,7 @@ propertiesRoutes.get('/', async (c) => {
   )
 })
 
-// Get single property with fixtures
+// Get single property with spaces and assets
 propertiesRoutes.get('/:id', async (c) => {
   const profileId = c.get('profileId')
   const id = c.req.param('id')
@@ -82,23 +112,77 @@ propertiesRoutes.get('/:id', async (c) => {
     return c.json({ error: '숙소를 찾을 수 없거나 권한이 없습니다.' }, 404)
   }
 
-  const propertyFixtures = await db
+  const spaces = await db
     .select()
+    .from(propertySpaces)
+    .where(eq(propertySpaces.propertyId, id))
+
+  const spaceIds = spaces.map((space) => space.id)
+  const spacePhotos = spaceIds.length > 0
+    ? await db
+      .select()
+      .from(propertySpacePhotos)
+      .where(inArray(propertySpacePhotos.propertySpaceId, spaceIds))
+    : []
+
+  const assets = await db
+    .select({
+      id: propertyAssets.id,
+      propertyId: propertyAssets.propertyId,
+      category: propertyAssets.category,
+      name: propertyAssets.name,
+      location: propertyAssets.location,
+      brand: propertyAssets.brand,
+      modelNumber: propertyAssets.modelNumber,
+      specNotes: propertyAssets.specNotes,
+      notes: propertyAssets.notes,
+    })
     .from(propertyAssets)
     .where(eq(propertyAssets.propertyId, id))
 
-  const spaces = await db
-    .select({
-      category: propertySpaces.category,
-      pyeong: propertySpaces.pyeong,
-    })
-    .from(propertySpaces)
-    .where(eq(propertySpaces.propertyId, id))
+  const assetIds = assets.map((asset) => asset.id)
+  const assetPhotos = assetIds.length > 0
+    ? await db
+      .select()
+      .from(propertyAssetPhotos)
+      .where(inArray(propertyAssetPhotos.fixtureId, assetIds))
+    : []
+
+  const signedUrlMap = await createSignedUrlMap([
+    ...spacePhotos.map((photo) => photo.storagePath),
+    ...assetPhotos.map((photo) => photo.storagePath),
+  ])
+
+  const thumbnailSignedUrlMap = await createSignedUrlMap([
+    ...spacePhotos.map((photo) => photo.thumbnailStoragePath),
+    ...assetPhotos.map((photo) => photo.thumbnailStoragePath),
+  ])
 
   return c.json({
     ...property,
     ...summarizeSpaces(spaces),
-    fixtures: propertyFixtures,
+    spaces: spaces.map((space) => ({
+      ...space,
+      photos: spacePhotos
+        .filter((photo) => photo.propertySpaceId === space.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((photo) => ({
+          ...photo,
+          signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+          thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+        })),
+    })),
+    assets: assets.map((asset) => ({
+      ...asset,
+      photos: assetPhotos
+        .filter((photo) => photo.fixtureId === asset.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((photo) => ({
+          ...photo,
+          signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+          thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+        })),
+    })),
   })
 })
 

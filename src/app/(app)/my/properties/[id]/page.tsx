@@ -14,6 +14,7 @@ export default function MyPropertyDetailPage() {
       propertyId={id}
       backHref={fromHome ? '/home' : '/my/properties'}
       editHref={`/my/properties/${id}/edit`}
+      detailBaseHref={`/my/properties/${id}`}
     />
   )
 }

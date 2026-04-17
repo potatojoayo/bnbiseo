@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronLeftIcon, Loader2Icon, MapPinIcon } from 'lucide-react'
+import { Loader2Icon, MapPinIcon } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { ProcessDrawer } from '@/components/process-drawer'
 import { useAirbnbListing } from '@/lib/hooks/use-airbnb-listing'
@@ -17,6 +17,51 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
+import { MobileBackButton } from '@/components/mobile-back-button'
+
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type AssetCategory =
+  | 'lighting'
+  | 'furniture'
+  | 'faucet'
+  | 'boiler'
+  | 'appliance'
+  | 'lock'
+  | 'ac'
+  | 'washer'
+  | 'dryer'
+  | 'vent'
+  | 'other'
+
+type PropertyPhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
+
+type PropertySpace = {
+  id: string
+  category: SpaceCategory
+  floor: number
+  name: string
+  pyeong: number
+  notes: string | null
+  photos: PropertyPhoto[]
+}
+
+type PropertyAsset = {
+  id: string
+  category: AssetCategory
+  name: string
+  location: string
+  brand: string | null
+  modelNumber: string | null
+  specNotes: string | null
+  notes: string | null
+  photos: PropertyPhoto[]
+}
 
 type PropertyDetail = {
   id: string
@@ -28,19 +73,47 @@ type PropertyDetail = {
   livingRooms: number | null
   bedrooms: number | null
   bathrooms: number | null
+  entrancePassword: string | null
+  doorLockPassword: string | null
+  wifiSsid: string | null
+  wifiPassword: string | null
   airbnbListingId: string | null
+  spaces: PropertySpace[]
+  assets: PropertyAsset[]
 }
 
 type PropertyDetailViewProps = {
   propertyId: string
   backHref: string
   editHref: string
+  detailBaseHref: string
+}
+
+const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
+  living_room: '거실',
+  bedroom: '침실',
+  bathroom: '화장실',
+}
+
+const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
+  lighting: '조명',
+  furniture: '가구',
+  faucet: '수도/배관',
+  boiler: '보일러',
+  appliance: '가전',
+  lock: '잠금장치',
+  ac: '에어컨',
+  washer: '세탁기',
+  dryer: '건조기',
+  vent: '환기',
+  other: '기타',
 }
 
 export function PropertyDetailView({
   propertyId,
   backHref,
   editHref,
+  detailBaseHref,
 }: PropertyDetailViewProps) {
   const router = useRouter()
   const invalidateProperties = useInvalidateProperties()
@@ -87,7 +160,7 @@ export function PropertyDetailView({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[100dvh]">
+      <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
         <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
       </div>
     )
@@ -95,7 +168,7 @@ export function PropertyDetailView({
 
   if (!property) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-80px)] px-6 text-center">
         <p className="text-[14px] text-ink-muted mb-4">숙소를 찾을 수 없어요</p>
         <button
           type="button"
@@ -117,129 +190,265 @@ export function PropertyDetailView({
 
   return (
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
-      <Link
-        href={backHref}
-        className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-surface-soft transition-colors text-ink"
-      >
-        <ChevronLeftIcon size={32} />
-      </Link>
-
-      <h1 className="text-[22px] font-semibold text-ink mb-2">
-        {property.name}
-      </h1>
-      <div className="mb-6 flex items-center gap-2">
-        <span className="rounded-full border border-outline-dim bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-ink-muted">
-          {property.status === 'pending_activation' ? '등록 대기' : '등록 완료'}
-        </span>
+      <div className="-mb-1">
+        <MobileBackButton href={backHref} mode="back" />
       </div>
 
-      <div className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-3 mb-4">
-        <p className="text-[13px] leading-relaxed text-ink-muted">
-          <MapPinIcon size={14} className="inline-block align-[-2px] mr-1 text-ink-faint" strokeWidth={1.75} />
-          {property.address}
-          {property.addressDetail ? ` ${property.addressDetail}` : ''}
-        </p>
-        {details.length > 0 && (
-          <p className="text-[13px] text-ink-muted">
-            {details.join(' · ')}
-          </p>
-        )}
-      </div>
+      <h1 className="mt-2 text-[22px] font-semibold text-ink">{property.name}</h1>
 
-      {property.status === 'pending_activation' && (
-        <div className="rounded-xl border border-outline-dim px-4 py-4 mb-4">
-          <p className="text-[15px] font-semibold text-ink">
-            숙소 등록을 진행하고 있어요
-          </p>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
-            48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
-          </p>
-          <button
-            type="button"
-            onClick={() => setRegistrationDrawerOpen(true)}
-            className="mt-3 text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-          >
-            숙소 등록은 어떻게 진행되나요?
-          </button>
-        </div>
-      )}
+      {property.status === 'pending_activation' ? (
+        <>
+          <div className="mb-6 mt-2 flex items-center gap-2">
+            <span className="rounded-full border border-outline-dim bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-ink-muted">
+              등록 대기
+            </span>
+          </div>
 
-      {property.airbnbListingId && airbnbFetching && (
-        <div className="mb-4 flex items-center gap-2 text-[13px] text-ink-muted">
-          <Loader2Icon className="size-3.5 animate-spin" />
-          숙소 정보를 가져오는 중...
-        </div>
-      )}
+          <div className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-3 mb-4">
+            <p className="text-[13px] leading-relaxed text-ink-muted">
+              <MapPinIcon size={14} className="inline-block align-[-2px] mr-1 text-ink-faint" strokeWidth={1.75} />
+              {property.address}
+              {property.addressDetail ? ` ${property.addressDetail}` : ''}
+            </p>
+            {details.length > 0 && (
+              <p className="text-[13px] text-ink-muted">
+                {details.join(' · ')}
+              </p>
+            )}
+          </div>
 
-      {property.airbnbListingId && airbnbPreview && !airbnbFetching && (
-        <a
-          href={property.airbnbListingId}
-          target="_blank"
-          rel="noreferrer"
-          className="mb-6 block overflow-hidden rounded-xl border border-outline-dim animate-fade-up-fast"
-        >
-          {airbnbPreview.imageUrl && (
-            <div className="relative h-40 w-full">
-              <Image
-                src={airbnbPreview.imageUrl}
-                alt={airbnbPreview.name}
-                fill
-                className="object-cover"
-                sizes="560px"
-                unoptimized
-              />
+          <div className="rounded-xl border border-outline-dim px-4 py-4 mb-4">
+            <p className="text-[15px] font-semibold text-ink">
+              숙소 등록을 진행하고 있어요
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+              48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
+            </p>
+            <button
+              type="button"
+              onClick={() => setRegistrationDrawerOpen(true)}
+              className="mt-3 text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+            >
+              숙소 등록은 어떻게 진행되나요?
+            </button>
+          </div>
+
+          {property.airbnbListingId && airbnbFetching && (
+            <div className="mb-4 flex items-center gap-2 text-[13px] text-ink-muted">
+              <Loader2Icon className="size-3.5 animate-spin" />
+              숙소 정보를 가져오는 중...
             </div>
           )}
-          <div className="px-4 py-3">
-            <p className="text-[15px] font-semibold leading-snug text-ink">
-              {airbnbPreview.name}
-            </p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-ink-muted">
-              {airbnbPreview.location && <span>{airbnbPreview.location}</span>}
-              {airbnbPreview.rating && <span>★ {airbnbPreview.rating}</span>}
-              {airbnbPreview.bedrooms != null && <span>침실 {airbnbPreview.bedrooms}</span>}
-              {airbnbPreview.beds != null && <span>침대 {airbnbPreview.beds}</span>}
-              {airbnbPreview.bathrooms != null && <span>욕실 {airbnbPreview.bathrooms}</span>}
+
+          {property.airbnbListingId && airbnbPreview && !airbnbFetching && (
+            <a
+              href={property.airbnbListingId}
+              target="_blank"
+              rel="noreferrer"
+              className="mb-6 block overflow-hidden rounded-xl border border-outline-dim animate-fade-up-fast"
+            >
+              {airbnbPreview.imageUrl && (
+                <div className="relative h-40 w-full">
+                  <Image
+                    src={airbnbPreview.imageUrl}
+                    alt={airbnbPreview.name}
+                    fill
+                    className="object-cover"
+                    sizes="560px"
+                    unoptimized
+                  />
+                </div>
+              )}
+              <div className="px-4 py-3">
+                <p className="text-[15px] font-semibold leading-snug text-ink">
+                  {airbnbPreview.name}
+                </p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-ink-muted">
+                  {airbnbPreview.location && <span>{airbnbPreview.location}</span>}
+                  {airbnbPreview.rating && <span>★ {airbnbPreview.rating}</span>}
+                  {airbnbPreview.bedrooms != null && <span>침실 {airbnbPreview.bedrooms}</span>}
+                  {airbnbPreview.beds != null && <span>침대 {airbnbPreview.beds}</span>}
+                  {airbnbPreview.bathrooms != null && <span>욕실 {airbnbPreview.bathrooms}</span>}
+                </div>
+              </div>
+            </a>
+          )}
+
+          {property.airbnbListingId && !airbnbPreview && !airbnbFetching && (
+            <div className="rounded-xl border border-outline-dim px-4 py-4 mb-6">
+              <p className="mb-2 text-[12px] font-medium text-ink-faint">에어비앤비 링크</p>
+              <a
+                href={property.airbnbListingId}
+                target="_blank"
+                rel="noreferrer"
+                className="break-all text-[13px] text-ink-muted underline underline-offset-2"
+              >
+                {property.airbnbListingId}
+              </a>
             </div>
-          </div>
-        </a>
-      )}
+          )}
 
-      {property.airbnbListingId && !airbnbPreview && !airbnbFetching && (
-        <div className="rounded-xl border border-outline-dim px-4 py-4 mb-6">
-          <p className="mb-2 text-[12px] font-medium text-ink-faint">에어비앤비 링크</p>
-          <a
-            href={property.airbnbListingId}
-            target="_blank"
-            rel="noreferrer"
-            className="break-all text-[13px] text-ink-muted underline underline-offset-2"
+          {message && (
+            <div className="mb-4 flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm text-brand">
+              <span>!</span>
+              {message}
+            </div>
+          )}
+
+          <Link
+            href={editHref}
+            className="mt-2 inline-flex h-12 w-full items-center justify-center rounded-lg bg-ink text-[15px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
           >
-            {property.airbnbListingId}
-          </a>
-        </div>
-      )}
+            수정하기
+          </Link>
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            disabled={deleting}
+            className="mt-4 w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
+          >
+            숙소 삭제
+          </button>
+        </>
+      ) : (
+        <>
+          <section className="mt-2 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className="min-w-0 text-[14px] leading-relaxed text-ink-muted">
+                <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
+                {property.address}{property.addressDetail ? ` ${property.addressDetail}` : ''}
+              </p>
+              <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-medium text-success">
+                등록 완료
+              </span>
+            </div>
+            {details.length > 0 && (
+              <p className="text-[13px] text-ink-muted">{details.join(' · ')}</p>
+            )}
+          </section>
 
-      {message && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm text-brand">
-          <span>!</span>
-          {message}
-        </div>
-      )}
+          <section className="mt-7 space-y-4">
+            <p className="text-[16px] font-semibold text-ink">출입 및 와이파이 정보</p>
+            <div className="rounded-xl border border-outline-dim px-5 py-4">
+              <div className="flex flex-col gap-3 text-[14px] text-ink">
+                <div>
+                  <p className="text-[12px] text-ink-muted">현관 비밀번호</p>
+                  <p className="mt-1">{property.entrancePassword || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] text-ink-muted">도어락 비밀번호</p>
+                  <p className="mt-1">{property.doorLockPassword || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] text-ink-muted">와이파이 이름</p>
+                  <p className="mt-1">{property.wifiSsid || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] text-ink-muted">와이파이 비밀번호</p>
+                  <p className="mt-1">{property.wifiPassword || '-'}</p>
+                </div>
+              </div>
+            </div>
+          </section>
 
-      <Link
-        href={editHref}
-        className="mt-2 inline-flex h-12 w-full items-center justify-center rounded-lg bg-ink text-[15px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-      >
-        수정하기
-      </Link>
-      <button
-        type="button"
-        onClick={() => setDeleteOpen(true)}
-        disabled={deleting}
-        className="mt-4 w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
-      >
-        숙소 삭제
-      </button>
+          <section className="mt-7 space-y-4">
+            <p className="text-[16px] font-semibold text-ink">공간 정보</p>
+            {property.spaces.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
+                등록된 공간이 없어요.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {property.spaces.map((space) => (
+                  <Link
+                    key={space.id}
+                    href={`${detailBaseHref}/spaces/${space.id}`}
+                    className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                  >
+                    <div className="relative aspect-[16/10] w-full bg-surface-soft">
+                      {space.photos[0]?.signedUrl ? (
+                        <Image
+                          src={space.photos[0].signedUrl}
+                          alt=""
+                          fill
+                          sizes="(max-width: 768px) 100vw, 720px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
+                          사진 없음
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-4 py-4">
+                      <p className="text-[15px] font-semibold text-ink">{space.name}</p>
+                      <p className="mt-1 text-[13px] text-ink-muted">
+                        {space.floor}층 · {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
+                      </p>
+                      {space.notes && (
+                        <p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink-muted">{space.notes}</p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="mt-7 space-y-4">
+            <p className="text-[16px] font-semibold text-ink">시설물 정보</p>
+            {property.assets.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
+                등록된 시설물이 없어요.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {property.assets.map((asset) => (
+                  <Link
+                    key={asset.id}
+                    href={`${detailBaseHref}/assets/${asset.id}`}
+                    className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                  >
+                    <div className="flex items-stretch">
+                      <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
+                        {asset.photos[0]?.signedUrl ? (
+                          <Image
+                            src={asset.photos[0].signedUrl}
+                            alt=""
+                            fill
+                            sizes="104px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">
+                            사진 없음
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-1 items-start px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="text-[15px] font-semibold text-ink">{asset.name}</p>
+                          <p className="mt-1 text-[13px] text-ink-muted">
+                            {ASSET_CATEGORY_LABELS[asset.category]} · {asset.location}
+                          </p>
+                          {(asset.brand || asset.modelNumber) && (
+                            <p className="mt-1 text-[13px] text-ink-muted">
+                              {[asset.brand, asset.modelNumber].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
+                          {asset.notes && (
+                            <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{asset.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DrawerContent>

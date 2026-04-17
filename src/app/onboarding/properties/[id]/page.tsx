@@ -11,6 +11,7 @@ export default function OnboardingPropertyDetailPage() {
       propertyId={id}
       backHref="/onboarding/complete"
       editHref={`/onboarding/edit/${id}`}
+      detailBaseHref={`/my/properties/${id}`}
     />
   )
 }
