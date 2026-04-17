@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
 import { useAdminCleaning, useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
+import { AdminCleaningRequestCard } from '@/components/admin-cleaning-request-card'
 import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
@@ -149,26 +150,20 @@ export default function AdminCleaningPage() {
           <>
           <div className="flex flex-col gap-3 md:hidden">
             {mobileRequests.map((r) => (
-              <div key={r.id} className="rounded-xl border border-outline-dim px-4 py-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[15px] font-semibold text-ink">{r.propertyName || '숙소'}</span>
-                  <StatusBadge status={r.status} />
-                </div>
-                <div className="mb-3 flex flex-col gap-1 text-[13px] text-ink-muted">
-                  <p>{formatDateLabel(r.scheduledDate)} {formatTimeKorean(r.scheduledTime)} {r.cleaningType === 'urgent' && '(긴급)'}</p>
-                  <p>호스트: {r.hostName || r.hostEmail || '-'}</p>
-                  <p>매니저: {r.managerName || '미배정'}</p>
-                  <p>금액: {r.finalPrice.toLocaleString()}원</p>
-                </div>
-                <div className="flex gap-2">
-                  {r.status === 'pending' && (
-                    <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="rounded-lg bg-ink px-3 py-1.5 text-[12px] font-medium text-white">매니저 배정</button>
-                  )}
-                  {['pending', 'confirmed', 'in_progress'].includes(r.status) && (
-                    <button onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">상태 변경</button>
-                  )}
-                </div>
-              </div>
+              <AdminCleaningRequestCard
+                key={r.id}
+                request={r}
+                action={(
+                  <>
+                    {r.status === 'pending' && (
+                      <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="rounded-lg bg-ink px-3 py-1.5 text-[12px] font-medium text-white">매니저 배정</button>
+                    )}
+                    {['pending', 'confirmed', 'in_progress'].includes(r.status) && (
+                      <button onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">상태 변경</button>
+                    )}
+                  </>
+                )}
+              />
             ))}
             {mobileVisibleCount < filteredRequests.length && (
               <div ref={loadMoreRef} className="flex items-center justify-center py-3">

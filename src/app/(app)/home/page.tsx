@@ -8,19 +8,12 @@ import { useProfile } from '@/lib/hooks/use-profile'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { Logo } from '@/components/logo'
-import { BellIcon, CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
-import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { BellIcon } from 'lucide-react'
+import { HostCleaningRequestCard } from '@/components/host-cleaning-request-card'
 import { CLEANING_PROCESS_STEPS, PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { PropertyCard } from '@/components/property-card'
 import { PendingActivationPanel } from '@/components/pending-activation-panel'
 import { ProcessDrawer } from '@/components/process-drawer'
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: '매니저 배정 중', color: 'bg-brand/8 text-brand' },
-  confirmed: { label: '매니저 배정 완료', color: 'bg-success-soft text-success' },
-  in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
-  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink' },
-}
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -122,48 +115,13 @@ export default function HomePage() {
         /* ─── Upcoming Cleanings ─── */
         <div className="px-6 pt-6 pb-8 flex flex-col gap-3">
           <p className="text-[13px] font-medium text-ink-muted px-1">청소 내역</p>
-          {upcoming.map((r) => {
-            const statusInfo = STATUS_LABELS[r.status]
-            return (
-              <Link
-                key={r.id}
-                href={`/cleaning/${r.id}`}
-                className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-2.5 active:scale-[0.99] transition-all"
-              >
-                {/* Status badge + property name */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[15px] font-semibold text-ink">
-                    {r.propertyName || '숙소'}
-                  </span>
-                  {statusInfo && (
-                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${statusInfo.color}`}>
-                      {statusInfo.label}
-                    </span>
-                  )}
-                </div>
-
-                {/* Date & Time */}
-                <div className="flex items-center gap-4 text-[13px] text-ink-muted">
-                  <span className="flex items-center gap-1">
-                    <CalendarIcon size={13} strokeWidth={1.5} />
-                    {formatDateLabel(r.scheduledDate)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <ClockIcon size={13} strokeWidth={1.5} />
-                    {formatTimeKorean(r.scheduledTime)}
-                  </span>
-                </div>
-
-                {/* Address */}
-                {r.propertyAddress && (
-                  <p className="text-[12px] text-ink-faint flex items-center gap-1">
-                    <MapPinIcon size={12} strokeWidth={1.5} />
-                    {r.propertyAddress}
-                  </p>
-                )}
-              </Link>
-            )
-          })}
+          {upcoming.map((r) => (
+            <HostCleaningRequestCard
+              key={r.id}
+              request={r}
+              href={`/cleaning/${r.id}`}
+            />
+          ))}
           {pendingProperties.length > 0 && (
             renderPendingList()
           )}
