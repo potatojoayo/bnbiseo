@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
-import { PlusIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -160,16 +159,6 @@ export default function AdminManagersPage() {
         </div>
       ) : (
       <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
-        <div className="flex items-center justify-end h-9">
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-[13px] font-medium text-white"
-          >
-            <PlusIcon size={14} />
-            매니저 추가
-          </button>
-        </div>
-
         <Tabs
           value={filter}
           onValueChange={(value) => {
@@ -179,17 +168,25 @@ export default function AdminManagersPage() {
           }}
           className="w-full"
         >
-          <TabsList className="!h-10 w-full justify-start overflow-x-auto rounded-xl bg-surface-subtle p-1">
-            <TabsTrigger value="all" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-              전체({managers.length})
-            </TabsTrigger>
-            <TabsTrigger value="active" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-              활성({activeCount})
-            </TabsTrigger>
-            <TabsTrigger value="inactive" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-              비활성({inactiveCount})
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center gap-2">
+            <TabsList className="!h-10 min-w-0 flex-1 justify-start overflow-x-auto rounded-xl bg-surface-subtle p-1">
+              <TabsTrigger value="all" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                전체({managers.length})
+              </TabsTrigger>
+              <TabsTrigger value="active" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                활성({activeCount})
+              </TabsTrigger>
+              <TabsTrigger value="inactive" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
+                비활성({inactiveCount})
+              </TabsTrigger>
+            </TabsList>
+            <button
+              onClick={openCreate}
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-ink px-4 text-[13px] font-medium text-white"
+            >
+              매니저 추가
+            </button>
+          </div>
         </Tabs>
 
         {filteredManagers.length === 0 ? (
