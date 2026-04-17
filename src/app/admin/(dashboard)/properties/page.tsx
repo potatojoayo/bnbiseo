@@ -53,14 +53,23 @@ export default function AdminPropertiesPage() {
             }}
             className="w-full"
           >
-            <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-xl bg-surface-soft p-1">
-              <TabsTrigger value="all" className="shrink-0 rounded-lg px-3 py-2 text-[13px] font-medium">
+            <TabsList className="!h-10 w-full justify-start overflow-x-auto rounded-xl bg-surface-subtle p-1">
+              <TabsTrigger
+                value="all"
+                className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink"
+              >
                 전체({properties.length})
               </TabsTrigger>
-              <TabsTrigger value="pending_activation" className="shrink-0 rounded-lg px-3 py-2 text-[13px] font-medium">
+              <TabsTrigger
+                value="pending_activation"
+                className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink"
+              >
                 등록 대기({pendingCount})
               </TabsTrigger>
-              <TabsTrigger value="active" className="shrink-0 rounded-lg px-3 py-2 text-[13px] font-medium">
+              <TabsTrigger
+                value="active"
+                className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink"
+              >
                 등록 완료({activeCount})
               </TabsTrigger>
             </TabsList>

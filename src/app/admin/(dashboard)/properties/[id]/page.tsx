@@ -106,7 +106,7 @@ export default function AdminPropertyRegistrationPage() {
   }
 
   if (data.status === 'active') {
-    return <AdminPropertyDetailView property={data} />
+    return <AdminPropertyDetailView propertyId={id} property={data} />
   }
 
   return (
@@ -462,8 +462,10 @@ function AdminPropertyRegistrationForm({
 }
 
 function AdminPropertyDetailView({
+  propertyId,
   property,
 }: {
+  propertyId: string
   property: {
     status: 'pending_activation' | 'active'
     name: string
@@ -496,7 +498,6 @@ function AdminPropertyDetailView({
       <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-7 p-6 max-md:animate-fade-up-fast max-md:gap-6 max-md:p-5">
         <div className="-mb-2 md:hidden">
           <MobileBackButton href="/admin/properties" mode="back" />
-          <h1 className="mt-2 text-[22px] font-semibold text-ink">숙소 상세</h1>
         </div>
 
         <section className="rounded-xl border border-outline-dim px-5 py-4">
@@ -555,7 +556,11 @@ function AdminPropertyDetailView({
           ) : (
             <div className="flex flex-col gap-3">
               {property.spaces.map((space) => (
-                <div key={space.id} className="overflow-hidden rounded-xl border border-outline-dim">
+                <Link
+                  key={space.id}
+                  href={`/admin/properties/${propertyId}/spaces/${space.id}`}
+                  className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                >
                   <div className="relative aspect-[16/10] w-full bg-surface-soft">
                     {space.photos[0]?.signedUrl ? (
                       <Image
@@ -580,7 +585,7 @@ function AdminPropertyDetailView({
                       <p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink-muted">{space.notes}</p>
                     )}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -597,7 +602,11 @@ function AdminPropertyDetailView({
           ) : (
             <div className="flex flex-col gap-3">
               {property.fixtures.map((fixture) => (
-                <div key={fixture.id} className="overflow-hidden rounded-xl border border-outline-dim">
+                <Link
+                  key={fixture.id}
+                  href={`/admin/properties/${propertyId}/fixtures/${fixture.id}`}
+                  className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                >
                   <div className="flex items-stretch">
                     <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                       {fixture.photos[0]?.signedUrl ? (
@@ -631,7 +640,7 @@ function AdminPropertyDetailView({
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

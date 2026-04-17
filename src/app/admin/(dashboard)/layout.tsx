@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { AdminSidebar } from '@/components/admin-sidebar'
 import { AdminBottomNav } from '@/components/admin-bottom-nav'
 import { SiteHeaderVisibilityContext } from '@/components/site-header'
@@ -20,7 +19,6 @@ export default function AdminDashboardLayout({
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-  const isMobile = useIsMobile()
   const [ready, setReady] = useState(false)
   const rootNavPaths = ['/admin', '/admin/cleaning', '/admin/users', '/admin/properties', '/admin/managers']
   const showBottomNav = rootNavPaths.includes(pathname)
@@ -56,23 +54,6 @@ export default function AdminDashboardLayout({
     )
   }
 
-  // Mobile: bottom nav layout
-  if (isMobile) {
-    return (
-      <SiteHeaderVisibilityContext.Provider value={false}>
-        <div className="min-h-[100dvh] flex flex-col bg-white">
-          <main className={`flex-1 ${showBottomNav ? 'pb-[72px]' : ''}`}>
-            <div key={pathname}>
-              {children}
-            </div>
-          </main>
-          {showBottomNav && <AdminBottomNav />}
-        </div>
-      </SiteHeaderVisibilityContext.Provider>
-    )
-  }
-
-  // Desktop: sidebar layout
   return (
     <SiteHeaderVisibilityContext.Provider value>
       <SidebarProvider
@@ -82,14 +63,20 @@ export default function AdminDashboardLayout({
             '--header-height': 'calc(var(--spacing) * 12)',
           } as React.CSSProperties
         }
+        className="min-h-[100dvh] bg-white"
       >
         <AdminSidebar
           variant="inset"
           user={{ email: user?.email ?? '' }}
         />
-        <SidebarInset>
+        <SidebarInset className={showBottomNav ? 'pb-[72px] md:pb-0' : undefined}>
           {children}
         </SidebarInset>
+        {showBottomNav && (
+          <div className="md:hidden">
+            <AdminBottomNav />
+          </div>
+        )}
       </SidebarProvider>
     </SiteHeaderVisibilityContext.Provider>
   )

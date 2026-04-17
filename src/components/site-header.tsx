@@ -1,14 +1,18 @@
 'use client'
 
 import { createContext, useContext } from 'react'
+import { usePathname } from 'next/navigation'
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger, SidebarContext } from "@/components/ui/sidebar"
+import { cn } from '@/lib/utils'
 
 export const SiteHeaderVisibilityContext = createContext(true)
 
 export function SiteHeader({ title = "대시보드" }: { title?: string }) {
   const hasSidebar = useContext(SidebarContext) !== null
   const isVisible = useContext(SiteHeaderVisibilityContext)
+  const pathname = usePathname()
+  const isAdminRoute = pathname.startsWith('/admin')
 
   if (!isVisible) {
     return null
@@ -16,14 +20,19 @@ export function SiteHeader({ title = "대시보드" }: { title?: string }) {
 
   if (!hasSidebar) {
     return (
-      <div className="px-6 pt-6 pb-2">
+      <div className={cn("px-6 pt-6 pb-2", isAdminRoute && "hidden md:block")}>
         <h1 className="text-[22px] font-semibold text-ink">{title}</h1>
       </div>
     )
   }
 
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header
+      className={cn(
+        "flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)",
+        isAdminRoute && "hidden md:flex",
+      )}
+    >
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Separator
