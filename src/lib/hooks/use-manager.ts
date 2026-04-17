@@ -8,6 +8,10 @@ type ManagerMe = {
     email: string | null
     fullName: string | null
     phone: string | null
+    avatarStoragePath: string | null
+    avatarThumbnailStoragePath: string | null
+    avatarSignedUrl: string | null
+    avatarThumbnailSignedUrl: string | null
     role: 'user' | 'admin' | 'manager'
   }
   manager: {
@@ -54,6 +58,7 @@ type AssetCategory =
   | 'dryer'
   | 'vent'
   | 'other'
+type InspectionStatus = 'normal' | 'caution' | 'defective'
 
 export type ManagerCleaningDetail = ManagerCleaning & {
   entrancePassword: string | null
@@ -92,6 +97,17 @@ export type ManagerCleaningDetail = ManagerCleaning & {
       thumbnailSignedUrl: string | null
     }>
   }>
+}
+
+export type ManagerCleaningReport = ManagerCleaningDetail & {
+  report: {
+    summaryMemo: string
+    assets: Array<{
+      assetId: string
+      status: InspectionStatus | null
+      memo: string | null
+    }>
+  }
 }
 
 export function useManagerMe() {
@@ -139,6 +155,16 @@ export function useManagerCleaning(id: string) {
   })
 }
 
+export function useManagerCleaningReport(id: string) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['manager', 'cleanings', 'report', id],
+    queryFn: () => api.get<ManagerCleaningReport>(`/manager/cleanings/${id}/report`),
+    enabled: !!user && !!id,
+  })
+}
+
 export function useInvalidateManager() {
   const queryClient = useQueryClient()
 
@@ -148,5 +174,6 @@ export function useInvalidateManager() {
     openCleanings: () => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'open', 'v2'] }),
     myCleanings: () => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'me', 'v2'] }),
     cleaningDetail: (id: string) => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'detail', id] }),
+    cleaningReport: (id: string) => queryClient.invalidateQueries({ queryKey: ['manager', 'cleanings', 'report', id] }),
   }
 }

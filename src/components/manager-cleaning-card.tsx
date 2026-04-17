@@ -5,7 +5,7 @@ import type { ManagerCleaning } from '@/lib/hooks/use-manager'
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   confirmed: { label: '배정 완료', color: 'bg-success-soft text-success' },
   in_progress: { label: '청소 진행 중', color: 'bg-info-soft text-info' },
-  completed: { label: '청소 완료', color: 'bg-surface-soft text-ink' },
+  completed: { label: '청소 완료', color: 'border border-outline-dim bg-surface-subtle text-ink-muted' },
   pending: { label: '배정 대기', color: 'bg-brand/8 text-brand' },
 }
 

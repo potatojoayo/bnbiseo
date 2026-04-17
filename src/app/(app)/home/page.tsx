@@ -17,8 +17,8 @@ import { ProcessDrawer } from '@/components/process-drawer'
 import { nowKST } from '@/lib/utils'
 
 export default function HomePage() {
-  const { user } = useAuth()
-  const { data: profile } = useProfile()
+  const { user, loading: authLoading } = useAuth()
+  const { data: profile, isLoading: profileLoading } = useProfile()
   const { data: properties = [], isLoading: propertiesLoading } = useProperties()
   const { data: cleaningRequests = [], isLoading: cleaningLoading } = useCleaningRequests()
   const [processOpen, setProcessOpen] = useState(false)
@@ -79,7 +79,11 @@ export default function HomePage() {
     )
   }
 
-  if (cleaningLoading || propertiesLoading) {
+  const isPageLoading =
+    authLoading ||
+    (!!user && (profileLoading || propertiesLoading || cleaningLoading))
+
+  if (isPageLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
         <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />

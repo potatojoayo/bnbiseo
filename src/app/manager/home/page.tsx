@@ -14,14 +14,14 @@ function getTodayKst() {
 }
 
 export default function ManagerHomePage() {
-  const { data: managerMe } = useManagerMe()
+  const { data: managerMe, isLoading: managerMeLoading } = useManagerMe()
   const { data: cleanings = [], isLoading } = useManagerMyCleanings()
   const todayDate = getTodayKst()
   const todayCleanings = cleanings.filter((cleaning) => cleaning.scheduledDate === todayDate)
   const inProgressCleanings = cleanings.filter((cleaning) => cleaning.status === 'in_progress')
   const upcomingCleanings = cleanings.filter((cleaning) => cleaning.status === 'confirmed')
 
-  if (isLoading) {
+  if (managerMeLoading || isLoading) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />

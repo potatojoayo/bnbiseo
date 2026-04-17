@@ -207,6 +207,8 @@ export function useAdminPropertyRegistration(propertyId: string) {
     queryKey: ['admin', 'property-registration', propertyId],
     queryFn: () => api.get<RegistrationDetail>(`/admin/properties/${propertyId}/registration`),
     enabled: !!propertyId,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

@@ -26,9 +26,9 @@ const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!
 
 export default function CleaningPage() {
   const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { data: properties = [], isLoading: propertiesLoading } = useProperties()
-  const { data: cleaningHistory = [] } = useCleaningRequests()
+  const { data: cleaningHistory = [], isLoading: cleaningLoading } = useCleaningRequests()
 
   const isFirstCleaning = cleaningHistory.length === 0
 
@@ -141,7 +141,11 @@ export default function CleaningPage() {
     }
   }
 
-  if (propertiesLoading) {
+  const isPageLoading =
+    authLoading ||
+    (!!user && (propertiesLoading || cleaningLoading))
+
+  if (isPageLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
         <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />

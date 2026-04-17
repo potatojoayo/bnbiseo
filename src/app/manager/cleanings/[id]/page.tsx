@@ -15,8 +15,8 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { api, ApiError } from '@/lib/api-client'
-import { useManagerCleaning, useInvalidateManager, type ManagerCleaningDetail } from '@/lib/hooks/use-manager'
-import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { useManagerCleaning, useManagerCleaningReport, useInvalidateManager, type ManagerCleaningDetail } from '@/lib/hooks/use-manager'
+import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import { useState } from 'react'
 
 const SPACE_CATEGORY_LABELS: Record<ManagerCleaningDetail['spaces'][number]['category'], string> = {
@@ -55,10 +55,11 @@ export default function ManagerCleaningDetailPage() {
   const { id } = useParams<{ id: string }>()
   const invalidateManager = useInvalidateManager()
   const { data: cleaning, isLoading } = useManagerCleaning(id)
+  const { data: report, isLoading: reportLoading } = useManagerCleaningReport(id)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isActionDrawerOpen, setIsActionDrawerOpen] = useState(false)
 
-  if (isLoading) {
+  if (isLoading || reportLoading) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
@@ -90,6 +91,11 @@ export default function ManagerCleaningDetailPage() {
     : actionStatus === 'completed'
       ? '청소 완료'
       : null
+  const canWriteReport = ['confirmed', 'in_progress', 'completed'].includes(cleaning.status)
+  const reportActionLabel = cleaning.status === 'completed' ? '시설물 점검 리포트' : '시설물 점검 리포트 작성'
+  const allAssetsInspected = cleaning.assets.every((asset) =>
+    report?.report.assets.some((item) => item.assetId === asset.id && item.status),
+  )
 
   async function handleStatusUpdate() {
     if (!actionStatus || isSubmitting) return
@@ -159,17 +165,37 @@ export default function ManagerCleaningDetailPage() {
         </div>
       </section>
 
-      {actionLabel && (
-        <div className="mt-5">
-          <LoadingButton
-            type="button"
-            variant="primary"
-            loading={false}
-            onClick={() => setIsActionDrawerOpen(true)}
-            className="h-12 w-full rounded-xl text-[15px] font-semibold"
-          >
-            {actionLabel}
-          </LoadingButton>
+      {(actionLabel || canWriteReport) && (
+        <div className="mt-5 flex flex-col gap-3">
+          {canWriteReport && (
+            <Link
+              href={`/manager/cleanings/${id}/report`}
+              className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-outline-dim text-[14px] font-medium text-ink transition-colors active:bg-surface-soft"
+            >
+              {reportActionLabel}
+            </Link>
+          )}
+          {actionLabel && (
+            <LoadingButton
+              type="button"
+              variant="primary"
+              loading={false}
+              onClick={() => {
+                if (actionStatus === 'completed' && !allAssetsInspected) {
+                  toast.info('모든 시설물의 점검 상태를 선택한 뒤 청소를 완료할 수 있어요.')
+                  return
+                }
+                setIsActionDrawerOpen(true)
+              }}
+              className={cn(
+                'h-12 w-full rounded-xl text-[15px] font-semibold',
+                actionStatus === 'completed' && !allAssetsInspected && 'opacity-50',
+              )}
+              aria-disabled={actionStatus === 'completed' && !allAssetsInspected}
+            >
+              {actionLabel}
+            </LoadingButton>
+          )}
         </div>
       )}
 

@@ -86,6 +86,12 @@ export const uploadedByEnum = pgEnum('uploaded_by', ['host', 'guest'])
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin', 'manager'])
 
+export const inspectionStatusEnum = pgEnum('inspection_status', [
+  'normal',
+  'caution',
+  'defective',
+])
+
 // ─── Tables ──────────────────────────────────────────────────────────────────
 
 export const profiles = pgTable('profiles', {
@@ -281,6 +287,38 @@ export const repairParts = pgTable('repair_parts', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+export const cleaningInspectionReports = pgTable(
+  'cleaning_inspection_reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    cleaningRequestId: uuid('cleaning_request_id')
+      .notNull()
+      .references(() => cleaningRequests.id, { onDelete: 'cascade' }),
+    summaryMemo: text('summary_memo'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('cleaning_inspection_reports_cleaning_request_id_idx').on(t.cleaningRequestId)],
+)
+
+export const cleaningInspectionAssetReports = pgTable(
+  'cleaning_inspection_asset_reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    reportId: uuid('report_id')
+      .notNull()
+      .references(() => cleaningInspectionReports.id, { onDelete: 'cascade' }),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => propertyAssets.id, { onDelete: 'cascade' }),
+    status: inspectionStatusEnum('status'),
+    memo: text('memo'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('cleaning_inspection_asset_reports_report_asset_idx').on(t.reportId, t.assetId)],
+)
+
 // ─── Relations ───────────────────────────────────────────────────────────────
 
 export const profilesRelations = relations(profiles, ({ many }) => ({
@@ -317,6 +355,10 @@ export const cleaningRequestsRelations = relations(cleaningRequests, ({ one }) =
     fields: [cleaningRequests.managerId],
     references: [managers.id],
   }),
+  inspectionReport: one(cleaningInspectionReports, {
+    fields: [cleaningRequests.id],
+    references: [cleaningInspectionReports.cleaningRequestId],
+  }),
 }))
 
 export const propertyAssetsRelations = relations(propertyAssets, ({ one, many }) => ({
@@ -326,6 +368,7 @@ export const propertyAssetsRelations = relations(propertyAssets, ({ one, many })
   }),
   photos: many(propertyAssetPhotos),
   repairRequests: many(repairRequests),
+  inspectionReports: many(cleaningInspectionAssetReports),
 }))
 
 export const propertyAssetPhotosRelations = relations(propertyAssetPhotos, ({ one }) => ({
@@ -374,5 +417,24 @@ export const repairPartsRelations = relations(repairParts, ({ one }) => ({
   repairRequest: one(repairRequests, {
     fields: [repairParts.repairRequestId],
     references: [repairRequests.id],
+  }),
+}))
+
+export const cleaningInspectionReportsRelations = relations(cleaningInspectionReports, ({ one, many }) => ({
+  cleaningRequest: one(cleaningRequests, {
+    fields: [cleaningInspectionReports.cleaningRequestId],
+    references: [cleaningRequests.id],
+  }),
+  assetReports: many(cleaningInspectionAssetReports),
+}))
+
+export const cleaningInspectionAssetReportsRelations = relations(cleaningInspectionAssetReports, ({ one }) => ({
+  report: one(cleaningInspectionReports, {
+    fields: [cleaningInspectionAssetReports.reportId],
+    references: [cleaningInspectionReports.id],
+  }),
+  asset: one(propertyAssets, {
+    fields: [cleaningInspectionAssetReports.assetId],
+    references: [propertyAssets.id],
   }),
 }))

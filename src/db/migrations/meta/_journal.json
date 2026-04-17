@@ -120,6 +120,27 @@
       "when": 1776415413949,
       "tag": "0016_goofy_shape",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1776434418107,
+      "tag": "0017_lucky_nightmare",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1776437178646,
+      "tag": "0018_fast_zaran",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1776438173083,
+      "tag": "0019_public_bromley",
+      "breakpoints": true
     }
   ]
 }

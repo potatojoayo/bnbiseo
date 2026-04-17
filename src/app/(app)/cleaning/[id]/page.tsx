@@ -250,9 +250,6 @@ export default function CleaningDetailPage() {
                       isDone ? 'text-ink' : 'text-ink-faint'
                     )}>
                       {step.title}
-                      {isCurrent && isDone && (
-                        <span className="text-brand ml-1.5 text-[12px] font-normal">현재</span>
-                      )}
                     </p>
                     <p className={cn(
                       'text-[13px] mt-0.5 leading-relaxed',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -173,6 +173,8 @@ function AdminPropertyRegistrationForm({
     wifiSsid: initialData.wifiSsid || '',
     wifiPassword: initialData.wifiPassword || '',
   })
+  const readyToAutosaveRef = useRef(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const draftMutation = useMutation({
     mutationFn: (payload: { entrancePassword?: string; doorLockPassword?: string; wifiSsid?: string; wifiPassword?: string }) =>
@@ -201,12 +203,26 @@ function AdminPropertyRegistrationForm({
       }
     },
   })
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      readyToAutosaveRef.current = true
+    })
+
+    return () => {
+      cancelAnimationFrame(frame)
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [])
+
   function handleDraftChange(setter: (value: string) => void, value: string) {
     setter(value)
     if (message) setMessage(null)
   }
 
-  async function saveDraftOnBlur() {
+  async function saveDraft() {
     const nextDraft = {
       entrancePassword,
       doorLockPassword,
@@ -234,6 +250,24 @@ function AdminPropertyRegistrationForm({
       setMessage(error instanceof ApiError ? error.message : '임시 저장에 실패했어요.')
     }
   }
+
+  useEffect(() => {
+    if (!readyToAutosaveRef.current) return
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+
+    debounceRef.current = setTimeout(() => {
+      void saveDraft()
+    }, 600)
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [entrancePassword, doorLockPassword, wifiSsid, wifiPassword])
 
   async function handleSubmit() {
     setSaving(true)
@@ -297,7 +331,6 @@ function AdminPropertyRegistrationForm({
               label="현관 비밀번호 (선택)"
               value={entrancePassword}
               onChange={(e) => handleDraftChange(setEntrancePassword, e.target.value)}
-              onBlur={() => void saveDraftOnBlur()}
               placeholder="예: 1234#"
               borderRadius="12px 12px 0 0"
             />
@@ -305,21 +338,18 @@ function AdminPropertyRegistrationForm({
               label="도어락 비밀번호"
               value={doorLockPassword}
               onChange={(e) => handleDraftChange(setDoorLockPassword, e.target.value)}
-              onBlur={() => void saveDraftOnBlur()}
               placeholder="예: 2580#"
             />
             <FloatingInput
               label="와이파이 이름 (선택)"
               value={wifiSsid}
               onChange={(e) => handleDraftChange(setWifiSsid, e.target.value)}
-              onBlur={() => void saveDraftOnBlur()}
               placeholder="예: Bnbiseo_Wifi"
             />
             <FloatingInput
               label="와이파이 비밀번호 (선택)"
               value={wifiPassword}
               onChange={(e) => handleDraftChange(setWifiPassword, e.target.value)}
-              onBlur={() => void saveDraftOnBlur()}
               placeholder="예: wifi1234"
               borderRadius="0 0 12px 12px"
             />
