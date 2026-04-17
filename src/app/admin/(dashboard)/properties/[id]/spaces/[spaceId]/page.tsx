@@ -164,7 +164,7 @@ export default function AdminSpaceDetailPage() {
   return (
     <>
       <SiteHeader title={space.name} />
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
         <div className="-mb-1 md:hidden">
           <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
           <h1 className="mt-2 text-[22px] font-semibold text-ink">{space.name}</h1>
@@ -181,11 +181,37 @@ export default function AdminSpaceDetailPage() {
           </div>
         </section>
 
-        <section className="-mx-5 space-y-4 max-md:-mx-5">
+        <section className="-mx-5 space-y-4 md:mx-0 max-md:-mx-5">
+          <div className="hidden md:flex md:flex-col md:gap-3">
+            {space.photos.length > 0 ? (
+              space.photos.map((photo) => (
+                <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
+                  {photo.signedUrl ? (
+                    <Image
+                      src={photo.signedUrl}
+                      alt=""
+                      fill
+                      sizes="720px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
+                      사진 없음
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-soft text-[13px] text-ink-faint">
+                사진 없음
+              </div>
+            )}
+          </div>
+
           <Carousel
             setApi={setCarouselApi}
             opts={{ loop: space.photos.length > 1 }}
-            className="w-full"
+            className="w-full md:hidden"
           >
             <CarouselContent className="-ml-0">
               {space.photos.length > 0 ? (
@@ -219,7 +245,7 @@ export default function AdminSpaceDetailPage() {
           </Carousel>
 
           {space.photos.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 px-5">
+            <div className="flex items-center justify-center gap-1.5 px-5 md:hidden">
               {space.photos.map((photo, index) => (
                 <button
                   key={photo.id}
@@ -242,13 +268,13 @@ export default function AdminSpaceDetailPage() {
 
         <section className="space-y-4">
           <div>
-            <p className="text-[16px] font-semibold text-ink">연결된 시설물</p>
+            <p className="text-[16px] font-semibold text-ink">등록된 시설물</p>
             <p className="mt-1 text-[13px] text-ink-muted">이 공간에 등록된 시설물을 함께 확인할 수 있어요.</p>
           </div>
 
           {linkedFixtures.length === 0 ? (
             <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
-              연결된 시설물이 없어요.
+              등록된 시설물이 없어요.
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -256,7 +282,7 @@ export default function AdminSpaceDetailPage() {
                 <Link
                   key={fixture.id}
                   href={`/admin/properties/${id}/assets/${fixture.id}`}
-                  className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                  className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
                 >
                   <div className="flex items-stretch">
                     <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">

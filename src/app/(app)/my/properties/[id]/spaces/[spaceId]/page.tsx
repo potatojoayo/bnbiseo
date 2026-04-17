@@ -11,49 +11,11 @@ import {
   CarouselItem,
   type CarouselApi,
 } from '@/components/ui/carousel'
-import { api } from '@/lib/api-client'
-
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
-type AssetCategory =
-  | 'lighting'
-  | 'furniture'
-  | 'faucet'
-  | 'boiler'
-  | 'appliance'
-  | 'lock'
-  | 'ac'
-  | 'washer'
-  | 'dryer'
-  | 'vent'
-  | 'other'
-
-type PropertyDetail = {
-  spaces: Array<{
-    id: string
-    category: SpaceCategory
-    floor: number
-    name: string
-    pyeong: number
-    notes: string | null
-    photos: Array<{
-      id: string
-      signedUrl: string | null
-    }>
-  }>
-  assets: Array<{
-    id: string
-    category: AssetCategory
-    name: string
-    location: string
-    brand: string | null
-    modelNumber: string | null
-    notes: string | null
-    photos: Array<{
-      id: string
-      signedUrl: string | null
-    }>
-  }>
-}
+import {
+  usePropertyDetail,
+  type SpaceCategory,
+  type AssetCategory,
+} from '@/lib/hooks/use-properties'
 
 const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
   living_room: '거실',
@@ -81,17 +43,9 @@ function isAssetLinkedToSpace(location: string, spaceName: string) {
 
 export default function MyPropertySpaceDetailPage() {
   const { id, spaceId } = useParams<{ id: string; spaceId: string }>()
-  const [data, setData] = useState<PropertyDetail | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading } = usePropertyDetail(id)
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
-
-  useEffect(() => {
-    api.get<PropertyDetail>(`/properties/${id}`)
-      .then(setData)
-      .catch(() => setData(null))
-      .finally(() => setLoading(false))
-  }, [id])
 
   useEffect(() => {
     if (!carouselApi) return
@@ -108,7 +62,7 @@ export default function MyPropertySpaceDetailPage() {
     }
   }, [carouselApi])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
@@ -128,7 +82,7 @@ export default function MyPropertySpaceDetailPage() {
   const linkedAssets = data.assets.filter((asset) => isAssetLinkedToSpace(asset.location, space.name))
 
   return (
-    <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
+    <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
       <div className="-mb-1">
         <MobileBackButton href={`/my/properties/${id}`} mode="back" />
         <h1 className="mt-2 text-[22px] font-semibold text-ink">{space.name}</h1>
@@ -143,8 +97,34 @@ export default function MyPropertySpaceDetailPage() {
         )}
       </section>
 
-      <section className="-mx-5 space-y-4">
-        <Carousel setApi={setCarouselApi} opts={{ loop: space.photos.length > 1 }} className="w-full">
+      <section className="-mx-5 space-y-4 md:mx-0">
+        <div className="hidden md:flex md:flex-col md:gap-3">
+          {space.photos.length > 0 ? (
+            space.photos.map((photo) => (
+              <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
+                {photo.signedUrl ? (
+                  <Image
+                    src={photo.signedUrl}
+                    alt=""
+                    fill
+                    sizes="720px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
+                    사진 없음
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-soft text-[13px] text-ink-faint">
+              사진 없음
+            </div>
+          )}
+        </div>
+
+        <Carousel setApi={setCarouselApi} opts={{ loop: space.photos.length > 1 }} className="w-full md:hidden">
           <CarouselContent className="-ml-0">
             {space.photos.length > 0 ? (
               space.photos.map((photo) => (
@@ -177,7 +157,7 @@ export default function MyPropertySpaceDetailPage() {
         </Carousel>
 
         {space.photos.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5 px-5">
+          <div className="flex items-center justify-center gap-1.5 px-5 md:hidden">
             {space.photos.map((photo, index) => (
               <button
                 key={photo.id}
@@ -198,13 +178,13 @@ export default function MyPropertySpaceDetailPage() {
 
       <section className="space-y-4">
         <div>
-          <p className="text-[16px] font-semibold text-ink">연결된 시설물</p>
+          <p className="text-[16px] font-semibold text-ink">등록된 시설물</p>
           <p className="mt-1 text-[13px] text-ink-muted">이 공간에 등록된 시설물을 함께 확인할 수 있어요.</p>
         </div>
 
         {linkedAssets.length === 0 ? (
           <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
-            연결된 시설물이 없어요.
+            등록된 시설물이 없어요.
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -212,7 +192,7 @@ export default function MyPropertySpaceDetailPage() {
               <Link
                 key={asset.id}
                 href={`/my/properties/${id}/assets/${asset.id}`}
-                className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
               >
                 <div className="flex items-stretch">
                   <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">

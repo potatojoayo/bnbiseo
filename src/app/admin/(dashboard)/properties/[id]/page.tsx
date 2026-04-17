@@ -11,7 +11,7 @@ import { SiteHeader } from '@/components/site-header'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
-import { CompoundInput, FloatingInput } from '@/components/ui/floating-input'
+import { CompoundField, CompoundInput, FloatingInput } from '@/components/ui/floating-input'
 import {
   Drawer,
   DrawerContent,
@@ -574,26 +574,20 @@ function AdminPropertyDetailView({
           <div>
             <p className="text-[16px] font-semibold text-ink">출입 및 와이파이 정보</p>
           </div>
-          <div className="rounded-xl border border-outline-dim px-5 py-4">
-            <div className="flex flex-col gap-3 text-[14px] text-ink">
-              <div>
-                <p className="text-[12px] text-ink-muted">현관 비밀번호</p>
-                <p className="mt-1">{property.entrancePassword || '-'}</p>
-              </div>
-              <div>
-                <p className="text-[12px] text-ink-muted">도어락 비밀번호</p>
-                <p className="mt-1">{property.doorLockPassword || '-'}</p>
-              </div>
-              <div>
-                <p className="text-[12px] text-ink-muted">와이파이 이름</p>
-                <p className="mt-1">{property.wifiSsid || '-'}</p>
-              </div>
-              <div>
-                <p className="text-[12px] text-ink-muted">와이파이 비밀번호</p>
-                <p className="mt-1">{property.wifiPassword || '-'}</p>
-              </div>
-            </div>
-          </div>
+          <CompoundInput>
+            <CompoundField label="현관 비밀번호" borderRadius="12px 12px 0 0">
+              <span className="block w-full text-[16px] text-ink">{property.entrancePassword || '-'}</span>
+            </CompoundField>
+            <CompoundField label="도어락 비밀번호">
+              <span className="block w-full text-[16px] text-ink">{property.doorLockPassword || '-'}</span>
+            </CompoundField>
+            <CompoundField label="와이파이 이름">
+              <span className="block w-full text-[16px] text-ink">{property.wifiSsid || '-'}</span>
+            </CompoundField>
+            <CompoundField label="와이파이 비밀번호" borderRadius="0 0 12px 12px">
+              <span className="block w-full text-[16px] text-ink">{property.wifiPassword || '-'}</span>
+            </CompoundField>
+          </CompoundInput>
         </section>
 
         <section className="space-y-4">
@@ -610,7 +604,7 @@ function AdminPropertyDetailView({
                 <Link
                   key={space.id}
                   href={`/admin/properties/${propertyId}/spaces/${space.id}`}
-                  className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                  className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
                 >
                   <div className="relative aspect-[16/10] w-full bg-surface-soft">
                     {space.photos[0]?.signedUrl ? (
@@ -656,7 +650,7 @@ function AdminPropertyDetailView({
                 <Link
                   key={fixture.id}
                   href={`/admin/properties/${propertyId}/assets/${fixture.id}`}
-                  className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                  className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
                 >
                   <div className="flex items-stretch">
                     <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">

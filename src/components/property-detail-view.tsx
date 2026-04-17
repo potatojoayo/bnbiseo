@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -8,9 +8,15 @@ import { Loader2Icon, MapPinIcon } from 'lucide-react'
 import { api } from '@/lib/api-client'
 import { ProcessDrawer } from '@/components/process-drawer'
 import { useAirbnbListing } from '@/lib/hooks/use-airbnb-listing'
-import { useInvalidateProperties } from '@/lib/hooks/use-properties'
+import {
+  useInvalidateProperties,
+  usePropertyDetail,
+  type SpaceCategory,
+  type AssetCategory,
+} from '@/lib/hooks/use-properties'
 import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { CompoundField, CompoundInput } from '@/components/ui/floating-input'
 import {
   Drawer,
   DrawerContent,
@@ -18,69 +24,6 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { MobileBackButton } from '@/components/mobile-back-button'
-
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
-type AssetCategory =
-  | 'lighting'
-  | 'furniture'
-  | 'faucet'
-  | 'boiler'
-  | 'appliance'
-  | 'lock'
-  | 'ac'
-  | 'washer'
-  | 'dryer'
-  | 'vent'
-  | 'other'
-
-type PropertyPhoto = {
-  id: string
-  storagePath: string
-  thumbnailStoragePath: string
-  signedUrl: string | null
-  thumbnailSignedUrl: string | null
-}
-
-type PropertySpace = {
-  id: string
-  category: SpaceCategory
-  floor: number
-  name: string
-  pyeong: number
-  notes: string | null
-  photos: PropertyPhoto[]
-}
-
-type PropertyAsset = {
-  id: string
-  category: AssetCategory
-  name: string
-  location: string
-  brand: string | null
-  modelNumber: string | null
-  specNotes: string | null
-  notes: string | null
-  photos: PropertyPhoto[]
-}
-
-type PropertyDetail = {
-  id: string
-  status: 'pending_activation' | 'active'
-  name: string
-  address: string
-  addressDetail: string | null
-  pyeong: number | null
-  livingRooms: number | null
-  bedrooms: number | null
-  bathrooms: number | null
-  entrancePassword: string | null
-  doorLockPassword: string | null
-  wifiSsid: string | null
-  wifiPassword: string | null
-  airbnbListingId: string | null
-  spaces: PropertySpace[]
-  assets: PropertyAsset[]
-}
 
 type PropertyDetailViewProps = {
   propertyId: string
@@ -117,19 +60,11 @@ export function PropertyDetailView({
 }: PropertyDetailViewProps) {
   const router = useRouter()
   const invalidateProperties = useInvalidateProperties()
-  const [property, setProperty] = useState<PropertyDetail | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: property, isLoading } = usePropertyDetail(propertyId)
   const [message, setMessage] = useState<string | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [registrationDrawerOpen, setRegistrationDrawerOpen] = useState(false)
-
-  useEffect(() => {
-    api.get<PropertyDetail>(`/properties/${propertyId}`)
-      .then(setProperty)
-      .catch(() => setProperty(null))
-      .finally(() => setLoading(false))
-  }, [propertyId])
 
   const {
     data: airbnbPreview,
@@ -158,7 +93,7 @@ export function PropertyDetailView({
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
         <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
@@ -194,17 +129,22 @@ export function PropertyDetailView({
         <MobileBackButton href={backHref} mode="back" />
       </div>
 
-      <h1 className="mt-2 text-[22px] font-semibold text-ink">{property.name}</h1>
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <h1 className="min-w-0 text-[22px] font-semibold text-ink">{property.name}</h1>
+        <span
+          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            property.status === 'pending_activation'
+              ? 'border border-outline-dim bg-surface-subtle text-ink-muted'
+              : 'bg-success-soft text-success'
+          }`}
+        >
+          {property.status === 'pending_activation' ? '등록 대기' : '등록 완료'}
+        </span>
+      </div>
 
       {property.status === 'pending_activation' ? (
         <>
-          <div className="mb-6 mt-2 flex items-center gap-2">
-            <span className="rounded-full border border-outline-dim bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-ink-muted">
-              등록 대기
-            </span>
-          </div>
-
-          <div className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-3 mb-4">
+          <div className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-3 mb-4 mt-2">
             <p className="text-[13px] leading-relaxed text-ink-muted">
               <MapPinIcon size={14} className="inline-block align-[-2px] mr-1 text-ink-faint" strokeWidth={1.75} />
               {property.address}
@@ -313,15 +253,10 @@ export function PropertyDetailView({
       ) : (
         <>
           <section className="mt-2 space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <p className="min-w-0 text-[14px] leading-relaxed text-ink-muted">
-                <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
-                {property.address}{property.addressDetail ? ` ${property.addressDetail}` : ''}
-              </p>
-              <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-medium text-success">
-                등록 완료
-              </span>
-            </div>
+            <p className="min-w-0 text-[14px] leading-relaxed text-ink-muted">
+              <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
+              {property.address}{property.addressDetail ? ` ${property.addressDetail}` : ''}
+            </p>
             {details.length > 0 && (
               <p className="text-[13px] text-ink-muted">{details.join(' · ')}</p>
             )}
@@ -329,26 +264,20 @@ export function PropertyDetailView({
 
           <section className="mt-7 space-y-4">
             <p className="text-[16px] font-semibold text-ink">출입 및 와이파이 정보</p>
-            <div className="rounded-xl border border-outline-dim px-5 py-4">
-              <div className="flex flex-col gap-3 text-[14px] text-ink">
-                <div>
-                  <p className="text-[12px] text-ink-muted">현관 비밀번호</p>
-                  <p className="mt-1">{property.entrancePassword || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] text-ink-muted">도어락 비밀번호</p>
-                  <p className="mt-1">{property.doorLockPassword || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] text-ink-muted">와이파이 이름</p>
-                  <p className="mt-1">{property.wifiSsid || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] text-ink-muted">와이파이 비밀번호</p>
-                  <p className="mt-1">{property.wifiPassword || '-'}</p>
-                </div>
-              </div>
-            </div>
+            <CompoundInput>
+              <CompoundField label="현관 비밀번호" borderRadius="12px 12px 0 0">
+                <span className="block w-full text-[16px] text-ink">{property.entrancePassword || '-'}</span>
+              </CompoundField>
+              <CompoundField label="도어락 비밀번호">
+                <span className="block w-full text-[16px] text-ink">{property.doorLockPassword || '-'}</span>
+              </CompoundField>
+              <CompoundField label="와이파이 이름">
+                <span className="block w-full text-[16px] text-ink">{property.wifiSsid || '-'}</span>
+              </CompoundField>
+              <CompoundField label="와이파이 비밀번호" borderRadius="0 0 12px 12px">
+                <span className="block w-full text-[16px] text-ink">{property.wifiPassword || '-'}</span>
+              </CompoundField>
+            </CompoundInput>
           </section>
 
           <section className="mt-7 space-y-4">
@@ -363,7 +292,7 @@ export function PropertyDetailView({
                   <Link
                     key={space.id}
                     href={`${detailBaseHref}/spaces/${space.id}`}
-                    className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                    className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
                   >
                     <div className="relative aspect-[16/10] w-full bg-surface-soft">
                       {space.photos[0]?.signedUrl ? (
@@ -407,7 +336,7 @@ export function PropertyDetailView({
                   <Link
                     key={asset.id}
                     href={`${detailBaseHref}/assets/${asset.id}`}
-                    className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
+                    className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
                   >
                     <div className="flex items-stretch">
                       <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">

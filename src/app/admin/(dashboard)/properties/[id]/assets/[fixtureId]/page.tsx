@@ -173,7 +173,7 @@ export default function AdminFixtureDetailPage() {
   return (
     <>
       <SiteHeader title={fixture.name} />
-      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
+      <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
         <div className="-mb-1 md:hidden">
           <MobileBackButton href={`/admin/properties/${id}`} mode="back" />
           <h1 className="mt-2 text-[22px] font-semibold text-ink">{fixture.name}</h1>
@@ -208,11 +208,37 @@ export default function AdminFixtureDetailPage() {
           )}
         </section>
 
-        <section className="-mx-5 space-y-4">
+        <section className="-mx-5 space-y-4 md:mx-0">
+          <div className="hidden md:flex md:flex-col md:gap-3">
+            {fixture.photos.length > 0 ? (
+              fixture.photos.map((photo) => (
+                <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
+                  {photo.signedUrl ? (
+                    <Image
+                      src={photo.signedUrl}
+                      alt=""
+                      fill
+                      sizes="720px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
+                      사진 없음
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-soft text-[13px] text-ink-faint">
+                사진 없음
+              </div>
+            )}
+          </div>
+
           <Carousel
             setApi={setCarouselApi}
             opts={{ loop: fixture.photos.length > 1 }}
-            className="w-full"
+            className="w-full md:hidden"
           >
             <CarouselContent className="-ml-0">
               {fixture.photos.length > 0 ? (
@@ -246,7 +272,7 @@ export default function AdminFixtureDetailPage() {
           </Carousel>
 
           {fixture.photos.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 px-5">
+            <div className="flex items-center justify-center gap-1.5 px-5 md:hidden">
               {fixture.photos.map((photo, index) => (
                 <button
                   key={photo.id}

@@ -6,7 +6,7 @@ import { ChevronLeftIcon } from 'lucide-react'
 
 export function MobileBackButton({
   href,
-  mode = 'link',
+  mode = 'back',
 }: {
   href: string
   mode?: 'link' | 'back'

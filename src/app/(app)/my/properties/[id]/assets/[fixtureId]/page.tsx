@@ -11,43 +11,11 @@ import {
   CarouselItem,
   type CarouselApi,
 } from '@/components/ui/carousel'
-import { api } from '@/lib/api-client'
-
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
-type AssetCategory =
-  | 'lighting'
-  | 'furniture'
-  | 'faucet'
-  | 'boiler'
-  | 'appliance'
-  | 'lock'
-  | 'ac'
-  | 'washer'
-  | 'dryer'
-  | 'vent'
-  | 'other'
-
-type PropertyDetail = {
-  spaces: Array<{
-    id: string
-    name: string
-    category: SpaceCategory
-  }>
-  assets: Array<{
-    id: string
-    category: AssetCategory
-    name: string
-    location: string
-    brand: string | null
-    modelNumber: string | null
-    specNotes: string | null
-    notes: string | null
-    photos: Array<{
-      id: string
-      signedUrl: string | null
-    }>
-  }>
-}
+import {
+  usePropertyDetail,
+  type SpaceCategory,
+  type AssetCategory,
+} from '@/lib/hooks/use-properties'
 
 const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   lighting: '조명',
@@ -80,17 +48,9 @@ function splitAssetLocation(location: string, spaceNames: string[]) {
 
 export default function MyPropertyAssetDetailPage() {
   const { id, fixtureId } = useParams<{ id: string; fixtureId: string }>()
-  const [data, setData] = useState<PropertyDetail | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading } = usePropertyDetail(id)
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
-
-  useEffect(() => {
-    api.get<PropertyDetail>(`/properties/${id}`)
-      .then(setData)
-      .catch(() => setData(null))
-      .finally(() => setLoading(false))
-  }, [id])
 
   useEffect(() => {
     if (!carouselApi) return
@@ -114,7 +74,7 @@ export default function MyPropertyAssetDetailPage() {
   )
   const linkedSpace = data?.spaces.find((space) => space.name === locationParts.spaceName)
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
@@ -131,7 +91,7 @@ export default function MyPropertyAssetDetailPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 max-md:animate-fade-up-fast max-md:p-5">
+    <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
       <div className="-mb-1">
         <MobileBackButton href={`/my/properties/${id}`} mode="back" />
         <h1 className="mt-2 text-[22px] font-semibold text-ink">{asset.name}</h1>
@@ -164,8 +124,34 @@ export default function MyPropertyAssetDetailPage() {
         )}
       </section>
 
-      <section className="-mx-5 space-y-4">
-        <Carousel setApi={setCarouselApi} opts={{ loop: asset.photos.length > 1 }} className="w-full">
+      <section className="-mx-5 space-y-4 md:mx-0">
+        <div className="hidden md:flex md:flex-col md:gap-3">
+          {asset.photos.length > 0 ? (
+            asset.photos.map((photo) => (
+              <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
+                {photo.signedUrl ? (
+                  <Image
+                    src={photo.signedUrl}
+                    alt=""
+                    fill
+                    sizes="720px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
+                    사진 없음
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-soft text-[13px] text-ink-faint">
+              사진 없음
+            </div>
+          )}
+        </div>
+
+        <Carousel setApi={setCarouselApi} opts={{ loop: asset.photos.length > 1 }} className="w-full md:hidden">
           <CarouselContent className="-ml-0">
             {asset.photos.length > 0 ? (
               asset.photos.map((photo) => (
@@ -198,7 +184,7 @@ export default function MyPropertyAssetDetailPage() {
         </Carousel>
 
         {asset.photos.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5 px-5">
+          <div className="flex items-center justify-center gap-1.5 px-5 md:hidden">
             {asset.photos.map((photo, index) => (
               <button
                 key={photo.id}
