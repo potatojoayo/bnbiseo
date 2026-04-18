@@ -23,6 +23,8 @@ type ReadOnlyPhotoGalleryProps = {
   titleClassName?: string
   contentClassName?: string
   emptyMessageClassName?: string
+  forceCarousel?: boolean
+  disableCarousel?: boolean
 }
 
 export function ReadOnlyPhotoGallery({
@@ -33,6 +35,8 @@ export function ReadOnlyPhotoGallery({
   titleClassName,
   contentClassName,
   emptyMessageClassName,
+  forceCarousel = false,
+  disableCarousel = false,
 }: ReadOnlyPhotoGalleryProps) {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
@@ -60,9 +64,21 @@ export function ReadOnlyPhotoGallery({
         <div className={cn('pt-4 text-center text-[14px] text-ink-muted', contentClassName, emptyMessageClassName)}>
           {emptyMessage}
         </div>
+      ) : disableCarousel ? (
+        <div className={cn('pt-4 flex flex-col gap-3', contentClassName)}>
+          {photos.map((photo) => (
+            <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
+              {photo.signedUrl ? (
+                <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="100vw" className="object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
+              )}
+            </div>
+          ))}
+        </div>
       ) : (
         <div className={cn('pt-4', contentClassName)}>
-          <div className="hidden md:flex md:flex-col md:gap-3">
+          <div className={cn('hidden md:flex md:flex-col md:gap-3', forceCarousel && 'md:hidden')}>
             {photos.map((photo) => (
               <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
                 {photo.signedUrl ? (
@@ -74,7 +90,7 @@ export function ReadOnlyPhotoGallery({
             ))}
           </div>
 
-          <div className="space-y-4 md:hidden">
+          <div className={cn('space-y-4', !forceCarousel && 'md:hidden')}>
             <Carousel setApi={setCarouselApi} opts={{ loop: photos.length > 1 }} className="w-full">
               <CarouselContent className="-ml-0">
                 {photos.map((photo) => (

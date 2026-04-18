@@ -162,6 +162,7 @@ function AssetReadOnlyCard({
             title="점검 사진"
             photos={photos}
             titleClassName="text-[14px] font-semibold"
+            disableCarousel
           />
         </div>
       )}

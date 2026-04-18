@@ -22,6 +22,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.replace('/login')
     } else if (!profile) {
       router.replace('/login')
+    } else if (profile.role !== 'user') {
+      router.replace('/login')
     } else if (!profile.onboardingCompleted) {
       router.replace('/onboarding')
     }
@@ -35,7 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!user || !profile || !profile.onboardingCompleted) return null
+  if (!user || !profile || profile.role !== 'user' || !profile.onboardingCompleted) return null
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col mx-auto max-w-[480px] bg-white relative">

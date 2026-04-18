@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/api-client'
 import { api } from '@/lib/api-client'
-import { useInvalidateProfile } from '@/lib/hooks/use-profile'
+import { useAuth } from '@/lib/auth-provider'
+import { useInvalidateProfile, useProfile } from '@/lib/hooks/use-profile'
 import { CompoundInput, CompoundField, FloatingInput } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
 
@@ -12,6 +13,8 @@ type Step = 'email' | 'login' | 'signup'
 
 export function AuthForm() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+  const { data: profile, isLoading: profileLoading } = useProfile()
   const invalidateProfile = useInvalidateProfile()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
@@ -30,6 +33,12 @@ export function AuthForm() {
   const [visibleStep, setVisibleStep] = useState<Step>('email')
 
   const font = { fontFamily: 'var(--font-body)' }
+
+  useEffect(() => {
+    if (!authLoading && user && profile?.role === 'user') {
+      router.replace(profile.onboardingCompleted ? '/home' : '/onboarding')
+    }
+  }, [authLoading, profile, router, user])
 
   // When step changes, update visibleStep (for open) or start close animation
   useEffect(() => {
@@ -241,6 +250,19 @@ export function AuthForm() {
   const isExpanded = step !== 'email'
   const emailRadius = isExpanded ? '12px 12px 0 0' : '12px'
 
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    setMessage(undefined)
+  }
+
+  if (authLoading || (user && profileLoading)) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-white px-6">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+      </div>
+    )
+  }
+
   return (
     <>
       {/* Error banner */}
@@ -259,6 +281,16 @@ export function AuthForm() {
         </div>
       )}
 
+      {user && profile?.role !== 'user' ? (
+        <div className="flex flex-col gap-3">
+          <p className="text-[14px] leading-relaxed text-ink-muted" style={font}>
+            호스트 계정으로 로그인해주세요.
+          </p>
+          <LoadingButton type="button" variant="primary" onClick={handleSignOut}>
+            다른 계정으로 로그인
+          </LoadingButton>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} noValidate>
         {/* Outer container — no divide-y here because extra fields slide in */}
         <div className="rounded-xl border border-ink-faint overflow-hidden">
@@ -468,6 +500,7 @@ export function AuthForm() {
           </button>
         )}
       </form>
+      )}
     </>
   )
 }

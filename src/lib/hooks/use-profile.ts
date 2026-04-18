@@ -7,6 +7,7 @@ type Profile = {
   email: string | null
   fullName: string | null
   onboardingCompleted: boolean
+  role: 'user' | 'admin' | 'manager'
 }
 
 export function useProfile() {

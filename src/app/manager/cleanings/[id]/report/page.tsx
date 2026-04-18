@@ -98,7 +98,7 @@ function ManagerCleaningReportEditor({
         photos: (saved?.photos ?? []).map((photo) => ({
           storagePath: photo.storagePath,
           thumbnailStoragePath: photo.thumbnailStoragePath,
-          previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+          previewUrl: photo.signedUrl || photo.thumbnailSignedUrl || '',
         })),
       }
       return acc
@@ -245,28 +245,32 @@ function ManagerCleaningReportEditor({
         <div className="-mb-1">
           <MobileBackButton href={`/manager/cleanings/${id}`} mode="back" />
         </div>
-        <CleaningReportReadOnly
-          propertyName={data.propertyName}
-          spaces={data.spaces}
-          assets={data.assets}
-          report={{
-            summaryMemo,
-            assets: data.assets.map((asset) => {
-              const draft = assetDrafts[asset.id] ?? { status: null, memo: '', photos: [] }
+        <section className="mt-2 space-y-3">
+          <h1 className="text-[22px] font-semibold text-ink">시설물 점검 리포트</h1>
+          <CleaningReportReadOnly
+            propertyName={data.propertyName}
+            spaces={data.spaces}
+            assets={data.assets}
+            report={{
+              summaryMemo,
+              assets: data.assets.map((asset) => {
+                const draft = assetDrafts[asset.id] ?? { status: null, memo: '', photos: [] }
 
-              return {
-                assetId: asset.id,
-                status: draft.status,
-                memo: draft.memo || null,
-                photos: draft.photos.map((photo) => ({
-                  id: photo.storagePath,
-                  signedUrl: photo.previewUrl || null,
-                  thumbnailSignedUrl: photo.previewUrl || null,
-                })),
-              }
-            }),
-          }}
-        />
+                return {
+                  assetId: asset.id,
+                  status: draft.status,
+                  memo: draft.memo || null,
+                  photos: draft.photos.map((photo) => ({
+                    id: photo.storagePath,
+                    signedUrl: photo.previewUrl || null,
+                    thumbnailSignedUrl: photo.previewUrl || null,
+                  })),
+                }
+              }),
+            }}
+            showHeader={false}
+          />
+        </section>
       </div>
     )
   }

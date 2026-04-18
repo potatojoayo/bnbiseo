@@ -239,6 +239,7 @@ export default function CleaningDetailPage() {
             emptyMessage="등록된 청소 사진이 없어요."
             titleClassName="mx-0"
             emptyMessageClassName="text-center"
+            disableCarousel
           />
           {reportData && (
             <section className="space-y-3">
