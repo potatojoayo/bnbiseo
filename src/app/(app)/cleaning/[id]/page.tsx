@@ -237,6 +237,7 @@ export default function CleaningDetailPage() {
             emptyMessage="등록된 청소 사진이 없어요."
             titleClassName="mx-0"
             contentClassName="-mx-6"
+            emptyMessageClassName="text-center"
           />
           <Link
             href={`/cleaning/${id}/report`}

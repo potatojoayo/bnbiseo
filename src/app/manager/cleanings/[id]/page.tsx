@@ -254,6 +254,7 @@ export default function ManagerCleaningDetailPage() {
                 }))}
                 emptyMessage="등록된 청소 사진이 없어요."
                 contentClassName="-mx-6 md:mx-0"
+                emptyMessageClassName="text-center"
               />
             )
           )}

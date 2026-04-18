@@ -157,7 +157,7 @@ function AssetReadOnlyCard({
       </div>
 
       {photos.length > 0 && (
-        <div className="border-t border-outline-dim bg-[#fcfcfc] px-4 py-4">
+        <div className="border-t border-outline-dim bg-[#fcfcfc] px-4 pt-4 pb-4">
           <ReadOnlyPhotoGallery
             title="점검 사진"
             photos={photos}

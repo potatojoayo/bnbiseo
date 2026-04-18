@@ -22,6 +22,7 @@ type ReadOnlyPhotoGalleryProps = {
   className?: string
   titleClassName?: string
   contentClassName?: string
+  emptyMessageClassName?: string
 }
 
 export function ReadOnlyPhotoGallery({
@@ -31,6 +32,7 @@ export function ReadOnlyPhotoGallery({
   className,
   titleClassName,
   contentClassName,
+  emptyMessageClassName,
 }: ReadOnlyPhotoGalleryProps) {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
@@ -55,7 +57,7 @@ export function ReadOnlyPhotoGallery({
       <p className={cn('text-[16px] font-semibold text-ink', titleClassName)}>{title}</p>
 
       {photos.length === 0 ? (
-        <div className={cn('pt-4 text-center text-[14px] text-ink-muted md:text-left', contentClassName)}>
+        <div className={cn('pt-4 text-center text-[14px] text-ink-muted', contentClassName, emptyMessageClassName)}>
           {emptyMessage}
         </div>
       ) : (
