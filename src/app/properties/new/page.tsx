@@ -1,13 +1,15 @@
-'use client'
-
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { ChevronLeftIcon } from 'lucide-react'
 import { PropertyForm } from '@/app/onboarding/property-form'
 
-export default function NewPropertyPage() {
-  const searchParams = useSearchParams()
-  const from = searchParams.get('from')
+type NewPropertyPageProps = {
+  searchParams: Promise<{
+    from?: string
+  }>
+}
+
+export default async function NewPropertyPage({ searchParams }: NewPropertyPageProps) {
+  const { from } = await searchParams
   const destination = from === 'cleaning' ? '/cleaning' : '/home'
 
   return (
