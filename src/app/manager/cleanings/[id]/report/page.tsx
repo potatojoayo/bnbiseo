@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { CleaningReportReadOnly } from '@/components/cleaning-report-read-only'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { ManagerReportPhotoField } from '@/components/manager-report-photo-field'
 import { api, ApiError } from '@/lib/api-client'
@@ -236,6 +237,38 @@ function ManagerCleaningReportEditor({
     debounceRef.current = setTimeout(() => {
       void saveDraft(summaryMemo, nextAssetDrafts)
     }, 600)
+  }
+
+  if (isReadOnly) {
+    return (
+      <div className="animate-fade-up-fast flex min-h-[100svh] flex-col px-6 pt-6 pb-10">
+        <div className="-mb-1">
+          <MobileBackButton href={`/manager/cleanings/${id}`} mode="back" />
+        </div>
+        <CleaningReportReadOnly
+          propertyName={data.propertyName}
+          spaces={data.spaces}
+          assets={data.assets}
+          report={{
+            summaryMemo,
+            assets: data.assets.map((asset) => {
+              const draft = assetDrafts[asset.id] ?? { status: null, memo: '', photos: [] }
+
+              return {
+                assetId: asset.id,
+                status: draft.status,
+                memo: draft.memo || null,
+                photos: draft.photos.map((photo) => ({
+                  id: photo.storagePath,
+                  signedUrl: photo.previewUrl || null,
+                  thumbnailSignedUrl: photo.previewUrl || null,
+                })),
+              }
+            }),
+          }}
+        />
+      </div>
+    )
   }
 
   return (

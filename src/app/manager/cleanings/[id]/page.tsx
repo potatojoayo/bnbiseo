@@ -253,7 +253,7 @@ export default function ManagerCleaningDetailPage() {
                   signedUrl: photo.signedUrl,
                 }))}
                 emptyMessage="등록된 청소 사진이 없어요."
-                className="-mx-6 md:mx-0"
+                contentClassName="-mx-6 md:mx-0"
               />
             )
           )}
