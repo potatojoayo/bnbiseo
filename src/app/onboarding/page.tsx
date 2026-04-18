@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/drawer'
 import { LoadingButton } from '@/components/ui/loading-button'
 
-type Profile = { onboardingCompleted: boolean }
+type Profile = { onboardingCompleted: boolean; role: 'user' | 'admin' | 'manager' }
 type Property = { id: string }
 
 export default function OnboardingPage() {
@@ -28,9 +28,17 @@ export default function OnboardingPage() {
 
     async function check() {
       try {
-        const profile = await api.get<Profile>('/profiles/me').catch(() => null)
+        const [profile, properties] = await Promise.all([
+          api.get<Profile>('/profiles/me').catch(() => null),
+          api.get<Property[]>('/properties').catch(() => []),
+        ])
 
         if (!profile) {
+          router.replace('/login')
+          return
+        }
+
+        if (profile.role !== 'user') {
           router.replace('/login')
           return
         }
@@ -39,8 +47,6 @@ export default function OnboardingPage() {
           router.replace('/home')
           return
         }
-
-        const properties = await api.get<Property[]>('/properties').catch(() => [])
 
         if (properties.length > 0) {
           router.replace('/onboarding/complete')
@@ -72,8 +78,8 @@ export default function OnboardingPage() {
 
   return (
     <>
-      <div className="flex min-h-[calc(100dvh-48px)] flex-col">
-        <PropertyForm />
+      <div className="animate-fade-up-fast flex min-h-[calc(100dvh-48px)] flex-col">
+        <PropertyForm animated={false} />
 
         <div className="mt-8 flex justify-center pb-8">
           <button

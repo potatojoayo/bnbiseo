@@ -255,7 +255,9 @@ export function AuthForm() {
     setMessage(undefined)
   }
 
-  if (authLoading || (user && profileLoading)) {
+  const showBlockingLoader = !pending && (authLoading || (user && profileLoading))
+
+  if (showBlockingLoader) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-white px-6">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
