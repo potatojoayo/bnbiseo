@@ -163,7 +163,7 @@ export default function CleaningPage() {
           청소를 요청하려면 먼저 숙소를 등록해주세요
         </p>
         <Link
-          href="/properties/new"
+          href="/properties/new?from=cleaning"
           className="mt-6 px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
         >
           숙소 등록하기

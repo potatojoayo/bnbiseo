@@ -48,6 +48,7 @@ export default function HomePage() {
   const activeProperties = properties.filter((property) => property.status === 'active')
   const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
   const allProperties = [...activeProperties, ...pendingProperties]
+  const hasNoProperties = allProperties.length === 0
   const showPendingOnlyState = activeProperties.length === 0 && pendingProperties.length > 0
 
   function renderPropertyList() {
@@ -82,7 +83,11 @@ export default function HomePage() {
 
   const isPageLoading =
     authLoading ||
-    (!!user && (profileLoading || propertiesLoading || cleaningLoading))
+    profileLoading ||
+    propertiesLoading ||
+    cleaningLoading ||
+    !user ||
+    !profile
 
   if (isPageLoading) {
     return (
@@ -110,7 +115,27 @@ export default function HomePage() {
         <p className="text-[14px] text-ink-muted mt-1">{today}</p>
       </div>
 
-      {showPendingOnlyState ? (
+      {hasNoProperties ? (
+        <div className="flex flex-1 flex-col items-center justify-center px-6 pt-6 pb-10 text-center">
+          <Image
+            src="/images/empty.png"
+            alt="숙소 등록 안내"
+            width={220}
+            height={220}
+            priority
+            className="mb-6 object-contain"
+          />
+          <h2 className="mb-2 text-[18px] font-semibold text-ink">
+            등록된 숙소가 없어요
+          </h2>
+          <Link
+            href="/properties/new?from=home"
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] md:hover:-translate-y-0.5 md:hover:bg-brand/90 md:hover:shadow-[0_10px_24px_rgba(255,56,92,0.2)]"
+          >
+            숙소 등록하기
+          </Link>
+        </div>
+      ) : showPendingOnlyState ? (
         <div className="px-6 pt-6 pb-8">
           <PendingActivationPanel
             title="숙소 등록을 진행하고 있어요"
