@@ -281,7 +281,7 @@ export function AuthForm() {
         </div>
       )}
 
-      {user && profile?.role !== 'user' ? (
+      {user && profile && profile.role !== 'user' ? (
         <div className="flex flex-col gap-3">
           <p className="text-[14px] leading-relaxed text-ink-muted" style={font}>
             호스트 계정으로 로그인해주세요.
