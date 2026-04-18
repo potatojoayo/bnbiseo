@@ -13,7 +13,8 @@ import {
   PhoneIcon,
   UserIcon,
 } from 'lucide-react'
-import { useCleaningRequest, useInvalidateCleaning } from '@/lib/hooks/use-cleaning'
+import { CleaningReportReadOnly } from '@/components/cleaning-report-read-only'
+import { useCleaningRequest, useCleaningReport, useInvalidateCleaning } from '@/lib/hooks/use-cleaning'
 import { formatDateLabel, formatTimeKorean, cn } from '@/lib/utils'
 import { api } from '@/lib/api-client'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -48,6 +49,7 @@ export default function CleaningDetailPage() {
   const router = useRouter()
   const id = params.id as string
   const { data: cleaning, isLoading } = useCleaningRequest(id)
+  const { data: reportData } = useCleaningReport(id)
   const invalidateCleaning = useInvalidateCleaning()
 
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -236,20 +238,25 @@ export default function CleaningDetailPage() {
             photos={cleaningPhotos}
             emptyMessage="등록된 청소 사진이 없어요."
             titleClassName="mx-0"
-            contentClassName="-mx-6"
             emptyMessageClassName="text-center"
           />
-          <Link
-            href={`/cleaning/${id}/report`}
-            className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-outline-dim text-[14px] font-medium text-ink transition-colors active:bg-surface-soft"
-          >
-            시설물 점검 리포트
-          </Link>
+          {reportData && (
+            <section className="space-y-3">
+              <p className="text-[16px] font-semibold text-ink">시설물 점검 리포트</p>
+              <CleaningReportReadOnly
+                propertyName={reportData.propertyName}
+                spaces={reportData.spaces}
+                assets={reportData.assets}
+                report={reportData.report}
+                showHeader={false}
+              />
+            </section>
+          )}
         </div>
       )}
 
       {/* Process timeline */}
-      {cleaning.status !== 'cancelled' && (
+      {cleaning.status !== 'cancelled' && cleaning.status !== 'completed' && (
         <>
           <p className="text-[13px] font-medium text-ink-muted mb-3 px-1">진행 과정</p>
           <div className="flex flex-col gap-0 mb-6">

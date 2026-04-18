@@ -174,6 +174,7 @@ export function CleaningReportReadOnly({
   spaces,
   assets,
   report,
+  showHeader = true,
 }: {
   propertyName: string | null
   spaces: Space[]
@@ -182,6 +183,7 @@ export function CleaningReportReadOnly({
     summaryMemo: string
     assets: ReportAsset[]
   }
+  showHeader?: boolean
 }) {
   const groupedSpaces = spaces.map((space) => ({
     ...space,
@@ -204,12 +206,14 @@ export function CleaningReportReadOnly({
 
   return (
     <>
-      <div className="mt-2">
-        <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-ink">시설물 점검 리포트</h1>
-        <p className="mt-1 text-[14px] text-ink-muted">{propertyName || '숙소'}</p>
-      </div>
+      {showHeader && (
+        <div className="mt-2">
+          <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-ink">시설물 점검 리포트</h1>
+          <p className="mt-1 text-[14px] text-ink-muted">{propertyName || '숙소'}</p>
+        </div>
+      )}
 
-      <section className="mt-0">
+      <section className={showHeader ? 'mt-0' : 'mt-0'}>
         <div>
           <div className="mt-5 grid grid-cols-3 gap-2.5">
             <SummaryStat label="정상" value={`${reportCounts.normal}개`} dotClassName="bg-success/45" />
