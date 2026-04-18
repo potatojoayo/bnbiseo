@@ -104,6 +104,10 @@ export async function notifyCleaningRequested(input: {
   isUrgent: boolean
 }) {
   const managerRecipients = await getActiveManagerRecipientProfiles()
+  const managerNotificationType: NotificationType = input.isUrgent
+    ? 'cleaning_urgent_requested'
+    : 'cleaning_requested'
+  const managerNotificationTitle = input.isUrgent ? '긴급 청소 요청' : '새 청소 요청'
 
   return createNotifications([
     {
@@ -117,8 +121,8 @@ export async function notifyCleaningRequested(input: {
     },
     ...managerRecipients.map((recipient) => ({
       profileId: recipient.profileId,
-      type: input.isUrgent ? 'cleaning_urgent_requested' : 'cleaning_requested',
-      title: input.isUrgent ? '긴급 청소 요청' : '새 청소 요청',
+      type: managerNotificationType,
+      title: managerNotificationTitle,
       body: `${input.propertyName} · ${input.scheduledDate} ${input.scheduledTime}`,
       targetPath: '/manager/cleanings',
       entityType: 'cleaning_request',
