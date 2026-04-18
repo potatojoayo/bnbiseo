@@ -9,6 +9,7 @@ import {
   date,
   jsonb,
   pgEnum,
+  index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
@@ -90,6 +91,18 @@ export const inspectionStatusEnum = pgEnum('inspection_status', [
   'normal',
   'caution',
   'defective',
+])
+
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'property_submitted',
+  'property_activated',
+  'cleaning_requested',
+  'cleaning_urgent_requested',
+  'cleaning_assigned',
+  'cleaning_started',
+  'cleaning_completed',
+  'cleaning_cancelled_by_host',
+  'cleaning_cancelled_by_admin',
 ])
 
 // ─── Tables ──────────────────────────────────────────────────────────────────
@@ -341,11 +354,36 @@ export const cleaningInspectionAssetPhotos = pgTable('cleaning_inspection_asset_
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    type: notificationTypeEnum('type').notNull(),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    targetPath: text('target_path').notNull(),
+    entityType: text('entity_type'),
+    entityId: uuid('entity_id'),
+    payload: jsonb('payload'),
+    isRead: boolean('is_read').default(false).notNull(),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index('notifications_profile_created_at_idx').on(t.profileId, t.createdAt),
+    index('notifications_profile_is_read_idx').on(t.profileId, t.isRead),
+  ],
+)
+
 // ─── Relations ───────────────────────────────────────────────────────────────
 
 export const profilesRelations = relations(profiles, ({ many }) => ({
   properties: many(properties),
   cleaningRequests: many(cleaningRequests),
+  notifications: many(notifications),
 }))
 
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
@@ -474,5 +512,12 @@ export const cleaningInspectionAssetPhotosRelations = relations(cleaningInspecti
   assetReport: one(cleaningInspectionAssetReports, {
     fields: [cleaningInspectionAssetPhotos.assetReportId],
     references: [cleaningInspectionAssetReports.id],
+  }),
+}))
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  profile: one(profiles, {
+    fields: [notifications.profileId],
+    references: [profiles.id],
   }),
 }))

@@ -137,7 +137,7 @@ export default function MyPropertyAssetDetailPage() {
                     alt=""
                     fill
                     sizes="720px"
-                    className="object-cover"
+                    className="object-contain"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
@@ -165,7 +165,7 @@ export default function MyPropertyAssetDetailPage() {
                         alt=""
                         fill
                         sizes="(max-width: 768px) 100vw, 720px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">

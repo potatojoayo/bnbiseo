@@ -108,6 +108,8 @@ export function useCleaningRequest(id: string) {
     queryKey: ['cleaning-requests', id],
     queryFn: () => api.get<CleaningRequestDetail>(`/cleaning/${id}`),
     enabled: !!user && !!id,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -118,6 +120,8 @@ export function useCleaningReport(id: string) {
     queryKey: ['cleaning-requests', 'report', id],
     queryFn: () => api.get<CleaningRequestReport>(`/cleaning/${id}/report`),
     enabled: !!user && !!id,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

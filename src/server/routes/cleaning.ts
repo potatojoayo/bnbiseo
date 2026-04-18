@@ -18,6 +18,10 @@ import {
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
 import { summarizeSpaces } from '@/lib/property-space-summary'
+import {
+  notifyCleaningCancelledByHost,
+  notifyCleaningRequested,
+} from '../lib/notifications'
 
 const CleaningRequestSchema = z.object({
   propertyId: z.string().uuid(),
@@ -472,6 +476,15 @@ cleaningRoutes.post('/confirm', async (c) => {
       .where(eq(propertySpaces.propertyId, request.propertyId))
     : []
 
+  await notifyCleaningRequested({
+    cleaningRequestId: updated.id,
+    hostProfileId: updated.hostId,
+    propertyName: property?.name || '숙소',
+    scheduledDate: updated.scheduledDate,
+    scheduledTime: updated.scheduledTime,
+    isUrgent: updated.cleaningType === 'urgent',
+  })
+
   return c.json({
     ...updated,
     property: property
@@ -547,6 +560,19 @@ cleaningRoutes.post('/:id/cancel', async (c) => {
     })
     .where(eq(cleaningRequests.id, id))
     .returning()
+
+  const [property] = await db
+    .select({ name: properties.name })
+    .from(properties)
+    .where(eq(properties.id, request.propertyId))
+    .limit(1)
+
+  await notifyCleaningCancelledByHost({
+    cleaningRequestId: updated.id,
+    hostProfileId: updated.hostId,
+    managerId: updated.managerId,
+    propertyName: property?.name || '숙소',
+  })
 
   return c.json(updated)
 })

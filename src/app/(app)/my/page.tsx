@@ -9,6 +9,7 @@ import { supabase } from '@/lib/api-client'
 import {
   ClipboardListIcon,
   FileTextIcon,
+  HouseIcon,
   ShieldCheckIcon,
   ChevronRightIcon,
 } from 'lucide-react'
@@ -21,6 +22,7 @@ import {
 import { LoadingButton } from '@/components/ui/loading-button'
 
 const menuItems = [
+  { label: '숙소 관리', href: '/my/properties', icon: HouseIcon },
   { label: '청소 내역', href: '/my/cleaning-history', icon: ClipboardListIcon },
   { label: '이용약관', href: '/legal/terms', icon: FileTextIcon, external: true },
   { label: '개인정보처리방침', href: '/legal/privacy', icon: ShieldCheckIcon, external: true },

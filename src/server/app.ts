@@ -8,6 +8,7 @@ import { airroiRoutes } from './routes/airroi'
 import { cleaningRoutes } from './routes/cleaning'
 import { adminRoutes } from './routes/admin'
 import { managerRoutes } from './routes/manager'
+import { notificationRoutes } from './routes/notifications'
 
 const app = new Hono().basePath('/api')
 
@@ -29,6 +30,7 @@ app.route('/airroi', airroiRoutes)
 app.route('/cleaning', cleaningRoutes)
 app.route('/admin', adminRoutes)
 app.route('/manager', managerRoutes)
+app.route('/notifications', notificationRoutes)
 
 export type AppType = typeof app
 export default app

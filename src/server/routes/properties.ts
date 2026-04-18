@@ -13,6 +13,7 @@ import {
 } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
+import { notifyPropertySubmitted } from '../lib/notifications'
 
 const CreatePropertySchema = z.object({
   name: z.string().min(1, { message: '숙소 이름을 입력해주세요.' }).trim(),
@@ -201,6 +202,11 @@ propertiesRoutes.post('/', async (c) => {
     .insert(properties)
     .values({ hostId: profileId, ...validated.data })
     .returning()
+
+  await notifyPropertySubmitted({
+    propertyId: created.id,
+    propertyName: created.name,
+  })
 
   return c.json(created, 201)
 })

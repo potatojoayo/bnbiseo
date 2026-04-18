@@ -8,12 +8,12 @@ import { useProfile } from '@/lib/hooks/use-profile'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { Logo } from '@/components/logo'
-import { BellIcon } from 'lucide-react'
 import { HostCleaningRequestCard } from '@/components/host-cleaning-request-card'
 import { CLEANING_PROCESS_STEPS, PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { PropertyCard } from '@/components/property-card'
 import { PendingActivationPanel } from '@/components/pending-activation-panel'
 import { ProcessDrawer } from '@/components/process-drawer'
+import { NotificationBell } from '@/components/notification-bell'
 import { nowKST } from '@/lib/utils'
 
 export default function HomePage() {
@@ -102,9 +102,7 @@ export default function HomePage() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-6 pb-2">
         <Logo className="text-[20px]" />
-        <button className="text-ink">
-          <BellIcon size={20} strokeWidth={1.5} />
-        </button>
+        <NotificationBell href="/notifications" />
       </div>
 
       {/* Greeting */}

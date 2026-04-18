@@ -203,7 +203,7 @@ export default function MyPropertySpaceDetailPage() {
                         alt=""
                         fill
                         sizes="104px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">

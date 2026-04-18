@@ -163,6 +163,8 @@ function AssetReadOnlyCard({
             photos={photos}
             titleClassName="text-[14px] font-semibold"
             disableCarousel
+            imageClassName="object-contain"
+            useIntrinsicAspect
           />
         </div>
       )}

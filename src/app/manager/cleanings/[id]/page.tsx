@@ -19,7 +19,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { api, ApiError } from '@/lib/api-client'
-import { useManagerCleaning, useManagerCleaningReport, useInvalidateManager, type ManagerCleaningDetail } from '@/lib/hooks/use-manager'
+import { useManagerCleaning, useManagerCleaningReport, useInvalidateManager, type ManagerCleaningDetail, type ManagerCleaningReport } from '@/lib/hooks/use-manager'
 import type { UploadedManagerCleaningImage } from '@/lib/manager-cleaning-image-upload'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import { useEffect, useMemo, useState } from 'react'
@@ -164,7 +164,26 @@ export default function ManagerCleaningDetailPage() {
     setIsSubmitting(true)
     try {
       await api.post(`/manager/cleanings/${id}/status`, { status: actionStatus })
+      queryClient.setQueryData<ManagerCleaningDetail>(
+        ['manager', 'cleanings', 'detail', id],
+        (previous) => previous
+          ? {
+              ...previous,
+              status: actionStatus,
+            }
+          : previous,
+      )
+      queryClient.setQueryData(
+        ['manager', 'cleanings', 'report', id],
+        (previous: ManagerCleaningReport | undefined) => previous
+          ? {
+              ...previous,
+              status: actionStatus,
+            }
+          : previous,
+      )
       invalidateManager.cleaningDetail(id)
+      invalidateManager.cleaningReport(id)
       invalidateManager.myCleanings()
       invalidateManager.openCleanings()
       toast.success(actionStatus === 'in_progress' ? '청소를 시작했어요.' : '청소를 완료했어요.')
@@ -253,8 +272,10 @@ export default function ManagerCleaningDetailPage() {
                   signedUrl: photo.signedUrl,
                 }))}
                 emptyMessage="등록된 청소 사진이 없어요."
-                contentClassName="-mx-6 md:mx-0"
                 emptyMessageClassName="text-center"
+                disableCarousel
+                imageClassName="object-contain"
+                useIntrinsicAspect
               />
             )
           )}
@@ -388,7 +409,7 @@ export default function ManagerCleaningDetailPage() {
                         alt=""
                         fill
                         sizes="104px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">

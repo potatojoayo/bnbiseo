@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Building2Icon, CalendarIcon, WalletIcon } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
+import { NotificationBell } from '@/components/notification-bell'
 import { useAdminProperties, useAdminStats } from '@/lib/hooks/use-admin'
 import {
   Card,
@@ -31,6 +32,10 @@ export default function AdminDashboardPage() {
         </div>
       ) : (
         <div className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-4 p-6 max-md:animate-fade-up-fast max-md:gap-3">
+          <div className="flex items-center justify-between md:hidden">
+            <h1 className="text-[22px] font-semibold text-ink">대시보드</h1>
+            <NotificationBell href="/admin/notifications" />
+          </div>
           <Link href="/admin/properties" className="block transition-transform active:scale-[0.99]">
             <Card className="border-outline-dim">
               <CardHeader>

@@ -240,6 +240,8 @@ export default function CleaningDetailPage() {
             titleClassName="mx-0"
             emptyMessageClassName="text-center"
             disableCarousel
+            imageClassName="object-contain"
+            useIntrinsicAspect
           />
           {reportData && (
             <section className="space-y-3">

@@ -166,6 +166,8 @@ export function useManagerCleaning(id: string) {
     queryKey: ['manager', 'cleanings', 'detail', id],
     queryFn: () => api.get<ManagerCleaningDetail>(`/manager/cleanings/${id}`),
     enabled: !!user && !!id,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -176,6 +178,8 @@ export function useManagerCleaningReport(id: string) {
     queryKey: ['manager', 'cleanings', 'report', id],
     queryFn: () => api.get<ManagerCleaningReport>(`/manager/cleanings/${id}/report`),
     enabled: !!user && !!id,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

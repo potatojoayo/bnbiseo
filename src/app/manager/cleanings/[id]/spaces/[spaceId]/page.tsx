@@ -187,7 +187,7 @@ export default function ManagerCleaningSpaceDetailPage() {
                 <div className="flex items-stretch">
                   <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
                     {asset.photos[0]?.signedUrl ? (
-                      <ImageWithSkeleton src={asset.photos[0].signedUrl} alt="" fill sizes="104px" className="object-cover" />
+                      <ImageWithSkeleton src={asset.photos[0].signedUrl} alt="" fill sizes="104px" className="object-contain" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">사진 없음</div>
                     )}

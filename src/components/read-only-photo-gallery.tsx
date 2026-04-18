@@ -25,6 +25,8 @@ type ReadOnlyPhotoGalleryProps = {
   emptyMessageClassName?: string
   forceCarousel?: boolean
   disableCarousel?: boolean
+  imageClassName?: string
+  useIntrinsicAspect?: boolean
 }
 
 export function ReadOnlyPhotoGallery({
@@ -37,6 +39,8 @@ export function ReadOnlyPhotoGallery({
   emptyMessageClassName,
   forceCarousel = false,
   disableCarousel = false,
+  imageClassName = 'object-cover',
+  useIntrinsicAspect = false,
 }: ReadOnlyPhotoGalleryProps) {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
@@ -67,9 +71,26 @@ export function ReadOnlyPhotoGallery({
       ) : disableCarousel ? (
         <div className={cn('pt-4 flex flex-col gap-3', contentClassName)}>
           {photos.map((photo) => (
-            <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
+            <div
+              key={photo.id}
+              className={cn(
+                'relative w-full overflow-hidden rounded-2xl bg-surface-soft',
+                useIntrinsicAspect ? 'min-h-[180px]' : 'aspect-[4/3]',
+              )}
+            >
               {photo.signedUrl ? (
-                <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="100vw" className="object-cover" />
+                useIntrinsicAspect ? (
+                  <ImageWithSkeleton
+                    src={photo.signedUrl}
+                    alt=""
+                    width={1200}
+                    height={900}
+                    sizes="100vw"
+                    className={cn('h-auto w-full', imageClassName)}
+                  />
+                ) : (
+                  <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="100vw" className={imageClassName} />
+                )
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
               )}
@@ -80,9 +101,26 @@ export function ReadOnlyPhotoGallery({
         <div className={cn('pt-4', contentClassName)}>
           <div className={cn('hidden md:flex md:flex-col md:gap-3', forceCarousel && 'md:hidden')}>
             {photos.map((photo) => (
-              <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
+              <div
+                key={photo.id}
+                className={cn(
+                  'relative w-full overflow-hidden rounded-2xl bg-surface-soft',
+                  useIntrinsicAspect ? 'min-h-[180px]' : 'aspect-[4/3]',
+                )}
+              >
                 {photo.signedUrl ? (
-                  <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="720px" className="object-cover" />
+                  useIntrinsicAspect ? (
+                    <ImageWithSkeleton
+                      src={photo.signedUrl}
+                      alt=""
+                      width={1200}
+                      height={900}
+                      sizes="720px"
+                      className={cn('h-auto w-full', imageClassName)}
+                    />
+                  ) : (
+                    <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="720px" className={imageClassName} />
+                  )
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
                 )}
@@ -102,7 +140,7 @@ export function ReadOnlyPhotoGallery({
                           alt=""
                           fill
                           sizes="100vw"
-                          className="object-cover"
+                          className={imageClassName}
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>

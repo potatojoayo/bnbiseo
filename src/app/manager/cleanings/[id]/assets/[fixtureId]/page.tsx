@@ -131,7 +131,7 @@ export default function ManagerCleaningAssetDetailPage() {
             asset.photos.map((photo) => (
               <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
                 {photo.signedUrl ? (
-                  <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="720px" className="object-cover" />
+                  <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="720px" className="object-contain" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
                 )}
@@ -156,7 +156,7 @@ export default function ManagerCleaningAssetDetailPage() {
                           alt=""
                           fill
                         sizes="(max-width: 768px) 100vw, 720px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
