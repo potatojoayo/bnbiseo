@@ -428,10 +428,10 @@ export default function LandingPage() {
         <div className="max-w-[960px] mx-auto flex flex-col gap-4">
           {/* Business info */}
           <div className="flex flex-col gap-1 text-[12px] text-ink-faint">
-            <p>실버백 고릴라즈 | 대표 최정호</p>
-            <p>사업자등록번호 762-11-02534</p>
-            <p>서울특별시 영등포구 신풍로 28, 2층 청년쿡 푸드테크 센터</p>
-            <p>전화 010-2960-4676 | 이메일 potatojoayo@gmail.com</p>
+            <p>실버백 가디언즈 | 대표 최정호</p>
+            <p>사업자등록번호 267-28-01998</p>
+            <p>서울특별시 마포구 방울내로6길 14, 302호(망원동)</p>
+            <p>전화 010-2960-4676 | 이메일 bohemiantoday4676@naver.com</p>
           </div>
 
           {/* Links */}
@@ -447,7 +447,7 @@ export default function LandingPage() {
 
           {/* Copyright */}
           <p className="text-[11px] text-ink-faint">
-            © 2026 실버백 고릴라즈. All rights reserved.
+            © 2026 실버백 가디언즈. All rights reserved.
           </p>
         </div>
       </footer>

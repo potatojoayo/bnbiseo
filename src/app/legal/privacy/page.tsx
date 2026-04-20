@@ -5,7 +5,7 @@ export default function PrivacyPage() {
 
       <div className="flex flex-col gap-6 text-[14px] text-ink leading-relaxed">
         <p className="text-ink-muted">
-          비앤비서(이하 &quot;회사&quot;)는 개인정보보호법 등 관련 법령에 따라 이용자의 개인정보를 보호하고, 이와 관련한 고충을 신속하고 원활하게 처리하기 위하여 다음과 같이 개인정보처리방침을 수립합니다.
+          실버백 가디언즈(이하 &quot;회사&quot;)는 개인정보보호법 등 관련 법령에 따라 이용자의 개인정보를 보호하고, 이와 관련한 고충을 신속하고 원활하게 처리하기 위하여 다음과 같이 개인정보처리방침을 수립합니다.
         </p>
 
         <section>
@@ -90,8 +90,12 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-[16px] font-semibold mb-2">8. 개인정보 보호책임자</h2>
           <div className="rounded-lg bg-surface-soft px-4 py-3 text-[13px] text-ink-muted">
-            <p><span className="text-ink font-medium">성명:</span> 한효범</p>
-            <p><span className="text-ink font-medium">이메일:</span> potatojoayo@gmail.com</p>
+            <p><span className="text-ink font-medium">상호:</span> 실버백 가디언즈</p>
+            <p><span className="text-ink font-medium">성명:</span> 최정호</p>
+            <p><span className="text-ink font-medium">사업자등록번호:</span> 267-28-01998</p>
+            <p><span className="text-ink font-medium">주소:</span> 서울특별시 마포구 방울내로6길 14, 302호(망원동)</p>
+            <p><span className="text-ink font-medium">전화:</span> 010-2960-4676</p>
+            <p><span className="text-ink font-medium">이메일:</span> bohemiantoday4676@naver.com</p>
           </div>
         </section>
 
@@ -103,7 +107,7 @@ export default function PrivacyPage() {
         </section>
 
         <p className="text-[13px] text-ink-faint mt-4">
-          시행일: 2026년 4월 15일
+          시행일: 2026년 4월 18일
         </p>
       </div>
     </div>

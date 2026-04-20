@@ -7,7 +7,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-[16px] font-semibold mb-2">제1조 (목적)</h2>
           <p className="text-ink-muted">
-            본 약관은 비앤비서(이하 &quot;회사&quot;)가 제공하는 숙소 청소 및 시설관리 서비스(이하 &quot;서비스&quot;)의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+            본 약관은 실버백 가디언즈(이하 &quot;회사&quot;)가 제공하는 숙소 청소 및 시설관리 서비스(이하 &quot;서비스&quot;)의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
           </p>
         </section>
 
@@ -90,8 +90,20 @@ export default function TermsPage() {
           </p>
         </section>
 
+        <section>
+          <h2 className="text-[16px] font-semibold mb-2">사업자 정보</h2>
+          <div className="rounded-lg bg-surface-soft px-4 py-3 text-[13px] text-ink-muted">
+            <p><span className="text-ink font-medium">상호:</span> 실버백 가디언즈</p>
+            <p><span className="text-ink font-medium">대표자:</span> 최정호</p>
+            <p><span className="text-ink font-medium">사업자등록번호:</span> 267-28-01998</p>
+            <p><span className="text-ink font-medium">사업장 소재지:</span> 서울특별시 마포구 방울내로6길 14, 302호(망원동)</p>
+            <p><span className="text-ink font-medium">이메일:</span> bohemiantoday4676@naver.com</p>
+            <p><span className="text-ink font-medium">전화:</span> 010-2960-4676</p>
+          </div>
+        </section>
+
         <p className="text-[13px] text-ink-faint mt-4">
-          시행일: 2026년 4월 15일
+          시행일: 2026년 4월 18일
         </p>
       </div>
     </div>
