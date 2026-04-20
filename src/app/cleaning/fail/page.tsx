@@ -23,7 +23,7 @@ function FailContent() {
           : message}
       </p>
       <Link
-        href="/cleaning"
+        href="/cleaning/new"
         className="inline-flex h-12 items-center justify-center rounded-lg bg-ink px-6 text-[15px] font-semibold text-white transition-all active:scale-[0.98]"
       >
         {isCancelled ? '돌아가기' : '다시 시도하기'}

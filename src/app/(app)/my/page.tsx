@@ -7,8 +7,8 @@ import { useAuth } from '@/lib/auth-provider'
 import { useProfile } from '@/lib/hooks/use-profile'
 import { supabase } from '@/lib/api-client'
 import {
-  ClipboardListIcon,
   FileTextIcon,
+  HomeIcon,
   ShieldCheckIcon,
   ChevronRightIcon,
 } from 'lucide-react'
@@ -21,7 +21,7 @@ import {
 import { LoadingButton } from '@/components/ui/loading-button'
 
 const menuItems = [
-  { label: '청소 내역', href: '/my/cleaning-history', icon: ClipboardListIcon },
+  { label: '숙소 관리', href: '/my/properties', icon: HomeIcon },
   { label: '이용약관', href: '/legal/terms', icon: FileTextIcon, external: true },
   { label: '개인정보처리방침', href: '/legal/privacy', icon: ShieldCheckIcon, external: true },
 ]
