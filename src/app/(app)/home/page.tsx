@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { BellIcon } from 'lucide-react'
 import { HostCleaningRequestCard } from '@/components/host-cleaning-request-card'
 import { PropertyCard } from '@/components/property-card'
+import { PendingActivationPanel } from '@/components/pending-activation-panel'
 import { ProcessDrawer } from '@/components/process-drawer'
 import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { nowKST } from '@/lib/utils'
@@ -77,9 +78,39 @@ export default function HomePage() {
         <p className="text-[14px] text-ink-muted mt-1">{today}</p>
       </div>
 
-      <div className="px-6 pt-6 pb-8 flex flex-col gap-6">
-        {/* Property List */}
-        {allProperties.length > 0 ? (
+      {activeProperties.length === 0 ? (
+        <div className="px-6 pt-6 pb-8">
+          <PendingActivationPanel
+            title={pendingProperties.length > 0
+              ? '숙소 등록을 진행하고 있어요'
+              : '숙소를 등록하고 서비스를 시작하세요'}
+            description={pendingProperties.length > 0
+              ? '48시간 이내 직접 방문해 숙소 등록을 완료해드려요.'
+              : '청소, 수리 등 다양한 관리 서비스를 이용할 수 있어요'}
+            properties={pendingProperties}
+            action={
+              pendingProperties.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setRegistrationProcessOpen(true)}
+                  className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
+                >
+                  숙소 등록은 어떻게 진행되나요?
+                </button>
+              ) : (
+                <Link
+                  href="/properties/new"
+                  className="mt-5 px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+                >
+                  숙소 등록하기
+                </Link>
+              )
+            }
+          />
+        </div>
+      ) : (
+        <div className="px-6 pt-6 pb-8 flex flex-col gap-6">
+          {/* Property List */}
           <div className="flex flex-col gap-3">
             <p className="px-1 text-[13px] font-medium text-ink-muted">내 숙소</p>
             {allProperties.map((property) => (
@@ -103,47 +134,32 @@ export default function HomePage() {
               </div>
             )}
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center py-8">
-            <p className="text-[15px] font-semibold text-ink">
-              숙소를 등록하고 서비스를 시작하세요
-            </p>
-            <p className="text-[13px] text-ink-muted mt-1">
-              청소, 수리 등 다양한 관리 서비스를 이용할 수 있어요
-            </p>
-            <Link
-              href="/properties/new"
-              className="mt-5 px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
-            >
-              숙소 등록하기
-            </Link>
-          </div>
-        )}
 
-        {/* Upcoming Schedule */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between px-1">
-            <p className="text-[13px] font-medium text-ink-muted">다가오는 일정</p>
-            {upcomingCleanings.length > 3 && (
-              <Link
-                href="/cleaning"
-                className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-              >
-                더 보기
-              </Link>
+          {/* Upcoming Schedule */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[13px] font-medium text-ink-muted">다가오는 일정</p>
+              {upcomingCleanings.length > 3 && (
+                <Link
+                  href="/cleaning"
+                  className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+                >
+                  더 보기
+                </Link>
+              )}
+            </div>
+            {visibleUpcoming.length > 0 ? (
+              visibleUpcoming.map((r) => (
+                <HostCleaningRequestCard key={r.id} request={r} href={`/cleaning/${r.id}`} />
+              ))
+            ) : (
+              <div className="rounded-2xl border border-outline-dim bg-white px-4 py-6 text-center shadow-[0_6px_20px_rgba(0,0,0,0.04)]">
+                <p className="text-[14px] text-ink-muted">예정된 일정이 없어요</p>
+              </div>
             )}
           </div>
-          {visibleUpcoming.length > 0 ? (
-            visibleUpcoming.map((r) => (
-              <HostCleaningRequestCard key={r.id} request={r} href={`/cleaning/${r.id}`} />
-            ))
-          ) : (
-            <div className="rounded-2xl border border-outline-dim bg-white px-4 py-6 text-center shadow-[0_6px_20px_rgba(0,0,0,0.04)]">
-              <p className="text-[14px] text-ink-muted">예정된 일정이 없어요</p>
-            </div>
-          )}
         </div>
-      </div>
+      )}
 
       <ProcessDrawer
         open={registrationProcessOpen}

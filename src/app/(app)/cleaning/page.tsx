@@ -4,7 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/auth-provider'
+import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
+import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { HostCleaningRequestCard } from '@/components/host-cleaning-request-card'
 import { ProcessDrawer } from '@/components/process-drawer'
 import { CLEANING_PROCESS_STEPS } from '@/lib/process-steps'
@@ -12,11 +14,16 @@ import { nowKST } from '@/lib/utils'
 
 export default function CleaningPage() {
   const { user, loading: authLoading } = useAuth()
+  const { data: properties = [], isLoading: propertiesLoading } = useProperties()
   const { data: requests = [], isLoading } = useCleaningRequests()
 
   const [processOpen, setProcessOpen] = useState(false)
+  const [registrationProcessOpen, setRegistrationProcessOpen] = useState(false)
 
-  const isPageLoading = authLoading || (!!user && isLoading)
+  const activeProperties = properties.filter((p) => p.status === 'active')
+  const pendingProperties = properties.filter((p) => p.status === 'pending_activation')
+
+  const isPageLoading = authLoading || (!!user && (isLoading || propertiesLoading))
 
   if (isPageLoading) {
     return (
@@ -63,7 +70,44 @@ export default function CleaningPage() {
         )}
       </div>
 
-      {visible.length === 0 ? (
+      {properties.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+          <h2 className="mb-2 text-[18px] font-semibold text-ink">
+            등록된 숙소가 없어요
+          </h2>
+          <p className="text-[14px] text-ink-muted leading-relaxed">
+            청소를 요청하려면 먼저 숙소를 등록해주세요
+          </p>
+          <Link
+            href="/properties/new"
+            className="mt-6 px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+          >
+            숙소 등록하기
+          </Link>
+        </div>
+      ) : activeProperties.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+          <h2 className="mb-2 text-[18px] font-semibold text-ink">
+            숙소 등록 완료 후 청소를 요청할 수 있어요
+          </h2>
+          <p className="text-[14px] text-ink-muted leading-relaxed">
+            48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRegistrationProcessOpen(true)}
+            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
+          >
+            숙소 등록은 어떻게 진행되나요?
+          </button>
+          <ProcessDrawer
+            open={registrationProcessOpen}
+            onOpenChange={setRegistrationProcessOpen}
+            title="숙소 등록 진행 과정"
+            steps={PROPERTY_REGISTRATION_STEPS}
+          />
+        </div>
+      ) : visible.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
           <Image
             src="/images/cleaning-white.png"
