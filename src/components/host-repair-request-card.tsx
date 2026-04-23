@@ -78,11 +78,11 @@ export function HostRepairRequestCard({
       {request.quotedCost != null && (
         <p
           className={cn(
-            'mt-2 text-[13px] font-medium',
-            isCancelled ? 'text-ink-faint line-through' : 'text-ink',
+            'mt-2 text-[13px]',
+            isCancelled ? 'text-ink-faint line-through' : 'text-ink-muted',
           )}
         >
-          견적 {request.quotedCost.toLocaleString()}원
+          {request.quotedCost.toLocaleString()}원
         </p>
       )}
     </Link>
