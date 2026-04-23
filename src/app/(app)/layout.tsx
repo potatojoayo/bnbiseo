@@ -40,7 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user || !profile || profile.role !== 'user' || !profile.onboardingCompleted) return null
 
   return (
-    <div className="w-full flex flex-col mx-auto max-w-[480px] bg-white relative">
+    <div className="min-h-[100dvh] w-full flex flex-col mx-auto max-w-[480px] bg-white relative">
       <main className={showNav ? 'flex-1 pb-[80px]' : 'flex-1'}>
         {children}
       </main>

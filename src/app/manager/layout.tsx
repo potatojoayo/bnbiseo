@@ -46,7 +46,7 @@ export default function ManagerLayout({ children }: { children: React.ReactNode 
   if (!user || !managerMe) return null
 
   return (
-    <div className="relative mx-auto flex w-full max-w-[480px] flex-col bg-white">
+    <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-white">
       <main className={showNav ? 'flex-1 pb-[80px]' : 'flex-1'}>
         {children}
       </main>
