@@ -81,7 +81,7 @@ export default function ManagerRepairDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[100dvh]">
+      <div className="flex min-h-[100dvh] items-center justify-center">
         <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
       </div>
     )
@@ -89,7 +89,7 @@ export default function ManagerRepairDetailPage() {
 
   if (!repair) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
+      <div className="flex flex-col items-center justify-center px-6 text-center">
         <h2 className="text-[18px] font-semibold text-ink mb-2">수리 요청을 찾을 수 없어요</h2>
         <Link href="/manager/repairs" className="mt-4 text-[14px] text-ink-muted underline underline-offset-2">
           목록으로
@@ -99,7 +99,7 @@ export default function ManagerRepairDetailPage() {
   }
 
   return (
-    <div className="animate-fade-up-fast min-h-[100dvh] flex flex-col px-6 pt-6 pb-10">
+    <div className="animate-fade-up-fast flex flex-col px-6 pt-6 pb-10">
       <button
         type="button"
         onClick={() => router.back()}

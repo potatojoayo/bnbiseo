@@ -51,8 +51,8 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-white px-6 pb-[10vh]">
-      <div className="w-full max-w-[400px]">
+    <div className="flex items-center justify-center bg-white px-6 pb-[10vh]">
+      <div className="animate-fade-up-fast w-full max-w-[400px]">
         <div className="mb-8 text-center">
           <Logo size="lg" />
           <p className="mt-2 text-[14px] text-ink-muted">관리자 로그인</p>

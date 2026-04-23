@@ -63,7 +63,7 @@ export default function AdminDashboardLayout({
             '--header-height': 'calc(var(--spacing) * 12)',
           } as React.CSSProperties
         }
-        className="min-h-[100dvh] bg-white"
+        className="bg-white"
       >
         <AdminSidebar
           variant="inset"

@@ -82,7 +82,7 @@ export default function ManagerCleaningSpaceDetailPage() {
   const linkedAssets = data.assets.filter((asset) => isAssetLinkedToSpace(asset.location, space.name))
 
   return (
-    <div className="mx-auto flex min-h-[100svh] w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
+    <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
       <div className="-mb-1">
         <MobileBackButton href={`/manager/cleanings/${id}`} mode="back" />
         <h1 className="mt-2 text-[22px] font-semibold text-ink">{space.name}</h1>

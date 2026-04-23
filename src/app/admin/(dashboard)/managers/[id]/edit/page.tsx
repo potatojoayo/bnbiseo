@@ -177,7 +177,7 @@ export default function AdminManagerEditPage() {
 
   if (!manager) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center px-6 text-center text-[14px] text-ink-muted">
+      <div className="flex items-center justify-center px-6 text-center text-[14px] text-ink-muted">
         매니저를 찾을 수 없어요.
       </div>
     )

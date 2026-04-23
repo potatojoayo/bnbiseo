@@ -26,7 +26,7 @@ export default function CleaningReportPage() {
   }
 
   return (
-    <div className="animate-fade-up-fast flex min-h-[100svh] flex-col px-6 pt-6 pb-10">
+    <div className="animate-fade-up-fast flex flex-col px-6 pt-6 pb-10">
       <div className="-mb-1">
         <MobileBackButton href={`/cleaning/${id}`} mode="back" />
       </div>

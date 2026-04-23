@@ -63,15 +63,15 @@ export default function ManagerLoginPage() {
 
   if (authLoading || (user && managerLoading)) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-white px-6">
+      <div className="flex items-center justify-center bg-white px-6">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-[100dvh] bg-white px-6">
-      <main className="mx-auto flex min-h-[100dvh] w-full max-w-[440px] items-center justify-center">
+    <div className="bg-white px-6">
+      <main className="mx-auto flex w-full max-w-[440px] items-center justify-center">
         <div className="w-full animate-fade-up-fast">
           <div className="mb-8 text-center">
             <Link href="/" className="mb-6 inline-block">

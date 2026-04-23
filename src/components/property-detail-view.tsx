@@ -373,11 +373,17 @@ export function PropertyDetailView({
             )}
           </section>
 
+          <Link
+            href={editHref}
+            className="mt-7 inline-flex h-12 w-full items-center justify-center rounded-lg bg-ink text-[15px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+          >
+            정보 수정하기
+          </Link>
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}
             disabled={deleting}
-            className="mt-7 w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
+            className="mt-4 w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
           >
             숙소 삭제
           </button>

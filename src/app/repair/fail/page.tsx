@@ -13,7 +13,7 @@ function FailContent() {
   const isCancelled = code === 'PAY_PROCESS_CANCELED'
 
   return (
-    <div className="animate-fade-up-fast flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
+    <div className="animate-fade-up-fast flex flex-col items-center justify-center px-6 text-center">
       <h2 className="mb-2 text-[20px] font-semibold text-ink">
         {isCancelled ? '결제가 취소되었어요' : '결제에 실패했어요'}
       </h2>
@@ -35,7 +35,7 @@ function FailContent() {
 export default function RepairFailPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[100dvh]">
+      <div className="flex min-h-[100dvh] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     }>
