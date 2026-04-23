@@ -16,22 +16,26 @@ export function RepairCompletionReportReadOnly({
 
       {report.photos.length > 0 && (
         <div className="flex flex-col gap-3">
-          {report.photos.map((photo) => (
-            <div
-              key={photo.id}
-              className="relative aspect-[4/3] overflow-hidden rounded-xl border border-outline-dim bg-surface-subtle"
-            >
-              {photo.signedUrl ?? photo.thumbnailSignedUrl ? (
-                <Image
-                  src={photo.signedUrl ?? photo.thumbnailSignedUrl}
-                  alt="조치 사진"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 720px"
-                  className="object-cover"
-                />
-              ) : null}
-            </div>
-          ))}
+          {report.photos.map((photo) => {
+            const imageSrc = photo.signedUrl ?? photo.thumbnailSignedUrl
+
+            return (
+              <div
+                key={photo.id}
+                className="relative aspect-[4/3] overflow-hidden rounded-xl border border-outline-dim bg-surface-subtle"
+              >
+                {imageSrc ? (
+                  <Image
+                    src={imageSrc}
+                    alt="조치 사진"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 720px"
+                    className="object-cover"
+                  />
+                ) : null}
+              </div>
+            )
+          })}
         </div>
       )}
 
