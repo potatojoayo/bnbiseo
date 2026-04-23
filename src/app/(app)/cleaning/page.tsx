@@ -63,7 +63,7 @@ export default function CleaningPage() {
         {visible.length > 0 && (
           <Link
             href="/cleaning/new"
-            className="px-4 h-9 rounded-lg bg-brand text-white text-[13px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+            className="px-4 h-9 rounded-lg bg-brand text-white text-[13px] font-semibold inline-flex items-center justify-center shadow-[0_4px_14px_rgba(255,56,92,0.28)] active:scale-[0.98] transition-all"
           >
             청소 요청하기
           </Link>
