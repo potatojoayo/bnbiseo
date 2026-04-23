@@ -8,8 +8,8 @@ import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { useRepairRequests } from '@/lib/hooks/use-repair'
 import { Logo } from '@/components/logo'
 import { useState } from 'react'
-import { BellIcon } from 'lucide-react'
 import { HostCleaningRequestCard } from '@/components/host-cleaning-request-card'
+import { NotificationBell } from '@/components/notification-bell'
 import { HostRepairRequestCard } from '@/components/host-repair-request-card'
 import { PropertyCard } from '@/components/property-card'
 import { PendingActivationPanel } from '@/components/pending-activation-panel'
@@ -86,9 +86,7 @@ export default function HomePage() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-6 pb-2">
         <Logo className="text-[20px]" />
-        <button className="text-ink">
-          <BellIcon size={20} strokeWidth={1.5} />
-        </button>
+        <NotificationBell href="/notifications" />
       </div>
 
       {/* Greeting */}

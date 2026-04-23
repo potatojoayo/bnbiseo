@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useManagerMe, useManagerMyCleanings, useManagerMyRepairs } from '@/lib/hooks/use-manager'
 import { ManagerCleaningCard } from '@/components/manager-cleaning-card'
 import { ManagerRepairCard } from '@/components/manager-repair-card'
+import { NotificationBell } from '@/components/notification-bell'
 
 function getTodayKst() {
   return new Intl.DateTimeFormat('sv-SE', {
@@ -41,13 +42,16 @@ export default function ManagerHomePage() {
 
   return (
     <div className="animate-fade-up-fast flex min-h-[calc(100dvh-80px)] flex-col px-6 pt-6 pb-10">
-      <div className="pb-2">
-        <h1 className="text-[22px] font-semibold text-ink">
-          안녕하세요, {managerMe?.manager.name || managerMe?.profile.fullName || '매니저'}님
-        </h1>
-        <p className="mt-1 text-[14px] text-ink-muted">
-          예정된 일정을 확인해보세요.
-        </p>
+      <div className="flex items-start justify-between pb-2">
+        <div>
+          <h1 className="text-[22px] font-semibold text-ink">
+            안녕하세요, {managerMe?.manager.name || managerMe?.profile.fullName || '매니저'}님
+          </h1>
+          <p className="mt-1 text-[14px] text-ink-muted">
+            예정된 일정을 확인해보세요.
+          </p>
+        </div>
+        <NotificationBell href="/manager/notifications" />
       </div>
 
       <div className="mt-6 flex flex-col gap-7">

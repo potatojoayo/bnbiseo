@@ -4,6 +4,7 @@ import { createContext, useContext } from 'react'
 import { usePathname } from 'next/navigation'
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger, SidebarContext } from "@/components/ui/sidebar"
+import { NotificationBell } from '@/components/notification-bell'
 import { cn } from '@/lib/utils'
 
 export const SiteHeaderVisibilityContext = createContext(true)
@@ -21,7 +22,12 @@ export function SiteHeader({ title = "대시보드" }: { title?: string }) {
   if (!hasSidebar) {
     return (
       <div className={cn("px-6 pt-6 pb-2", isAdminRoute && "hidden md:block")}>
-        <h1 className="text-[22px] font-semibold text-ink">{title}</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-[22px] font-semibold text-ink">{title}</h1>
+          {isAdminRoute && (
+            <NotificationBell href="/admin/notifications" />
+          )}
+        </div>
       </div>
     )
   }
@@ -34,12 +40,17 @@ export function SiteHeader({ title = "대시보드" }: { title?: string }) {
       )}
     >
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4"
-        />
-        <h1 className="text-base font-medium">{title}</h1>
+        <div className="flex min-w-0 flex-1 items-center gap-1">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mx-2 data-[orientation=vertical]:h-4"
+          />
+          <h1 className="truncate text-base font-medium">{title}</h1>
+        </div>
+        {isAdminRoute && (
+          <NotificationBell href="/admin/notifications" />
+        )}
       </div>
     </header>
   )

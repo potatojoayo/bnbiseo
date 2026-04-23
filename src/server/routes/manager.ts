@@ -24,6 +24,11 @@ import {
 } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
+import {
+  notifyCleaningAssigned,
+  notifyCleaningCompleted,
+  notifyCleaningStarted,
+} from '../lib/notifications'
 
 type ManagerEnv = {
   Variables: AuthEnv['Variables'] & {
@@ -1020,8 +1025,11 @@ managerRoutes.post('/cleanings/:id/status', async (c) => {
     .select({
       id: cleaningRequests.id,
       status: cleaningRequests.status,
+      hostId: cleaningRequests.hostId,
+      propertyName: properties.name,
     })
     .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
     .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.managerId, managerId)))
     .limit(1)
 
@@ -1048,6 +1056,22 @@ managerRoutes.post('/cleanings/:id/status', async (c) => {
       id: cleaningRequests.id,
       status: cleaningRequests.status,
     })
+
+  if (updated.status === 'in_progress') {
+    await notifyCleaningStarted({
+      cleaningRequestId: updated.id,
+      hostProfileId: request.hostId,
+      propertyName: request.propertyName || '숙소',
+    })
+  }
+
+  if (updated.status === 'completed') {
+    await notifyCleaningCompleted({
+      cleaningRequestId: updated.id,
+      hostProfileId: request.hostId,
+      propertyName: request.propertyName || '숙소',
+    })
+  }
 
   return c.json(updated)
 })
@@ -1088,6 +1112,26 @@ managerRoutes.post('/cleanings/:id/claim', async (c) => {
 
   if (!claimed) {
     return c.json({ error: '다른 매니저가 먼저 배정했어요.' }, 409)
+  }
+
+  const [detail] = await db
+    .select({
+      hostId: cleaningRequests.hostId,
+      managerId: cleaningRequests.managerId,
+      propertyName: properties.name,
+    })
+    .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .where(eq(cleaningRequests.id, id))
+    .limit(1)
+
+  if (detail) {
+    await notifyCleaningAssigned({
+      cleaningRequestId: claimed.id,
+      hostProfileId: detail.hostId,
+      managerId: detail.managerId,
+      propertyName: detail.propertyName || '숙소',
+    })
   }
 
   return c.json({ success: true, id: claimed.id })

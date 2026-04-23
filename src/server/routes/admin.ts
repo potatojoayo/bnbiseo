@@ -15,6 +15,11 @@ import {
 } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
+import {
+  notifyCleaningAssigned,
+  notifyCleaningCancelledByAdmin,
+  notifyPropertyActivated,
+} from '../lib/notifications'
 
 export const adminRoutes = new Hono<AuthEnv>()
 
@@ -235,6 +240,26 @@ adminRoutes.post('/cleaning/:id/assign', async (c) => {
     return warnJson(c, { error: '청소 요청을 찾을 수 없어요' }, 404)
   }
 
+  const [detail] = await db
+    .select({
+      hostId: cleaningRequests.hostId,
+      managerId: cleaningRequests.managerId,
+      propertyName: properties.name,
+    })
+    .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .where(eq(cleaningRequests.id, id))
+    .limit(1)
+
+  if (detail) {
+    await notifyCleaningAssigned({
+      cleaningRequestId: updated.id,
+      hostProfileId: detail.hostId,
+      managerId: detail.managerId,
+      propertyName: detail.propertyName || '숙소',
+    })
+  }
+
   return c.json(updated)
 })
 
@@ -263,6 +288,28 @@ adminRoutes.post('/cleaning/:id/status', async (c) => {
 
   if (!updated) {
     return warnJson(c, { error: '청소 요청을 찾을 수 없어요' }, 404)
+  }
+
+  if (validated.data.status === 'cancelled') {
+    const [detail] = await db
+      .select({
+        hostId: cleaningRequests.hostId,
+        managerId: cleaningRequests.managerId,
+        propertyName: properties.name,
+      })
+      .from(cleaningRequests)
+      .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+      .where(eq(cleaningRequests.id, id))
+      .limit(1)
+
+    if (detail) {
+      await notifyCleaningCancelledByAdmin({
+        cleaningRequestId: updated.id,
+        hostProfileId: detail.hostId,
+        managerId: detail.managerId,
+        propertyName: detail.propertyName || '숙소',
+      })
+    }
   }
 
   return c.json(updated)
@@ -1178,7 +1225,7 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
   }
 
   const [property] = await db
-    .select({ id: properties.id })
+    .select({ id: properties.id, hostId: properties.hostId, name: properties.name })
     .from(properties)
     .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
     .limit(1)
@@ -1272,6 +1319,12 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
     }
   })
 
+  await notifyPropertyActivated({
+    hostProfileId: property.hostId,
+    propertyId: property.id,
+    propertyName: property.name,
+  })
+
   return c.json({ success: true })
 })
 
@@ -1288,6 +1341,8 @@ adminRoutes.post('/properties/:id/activate', async (c) => {
     .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
     .returning({
       id: properties.id,
+      hostId: properties.hostId,
+      name: properties.name,
       status: properties.status,
       activatedAt: properties.activatedAt,
     })
@@ -1295,6 +1350,12 @@ adminRoutes.post('/properties/:id/activate', async (c) => {
   if (!updated) {
     return warnJson(c, { error: '숙소를 찾을 수 없어요' }, 404)
   }
+
+  await notifyPropertyActivated({
+    hostProfileId: updated.hostId,
+    propertyId: updated.id,
+    propertyName: updated.name,
+  })
 
   return c.json(updated)
 })
