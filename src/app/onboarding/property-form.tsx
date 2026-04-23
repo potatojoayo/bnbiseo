@@ -476,8 +476,10 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         )}
 
         {mode === 'create' && (
-          <div className="rounded-xl border border-outline-dim bg-surface-subtle px-4 py-4 text-[13px] leading-relaxed text-ink-muted">
-            숙소 등록 후 48시간 이내에 비앤비서가 직접 방문해 운영 정보를 확인하고 등록을 완료해드려요.
+          <div className="rounded-xl border border-brand/25 bg-brand/8 px-4 py-4">
+            <p className="text-[13.5px] leading-relaxed text-on-surface">
+              숙소 등록 후 <span className="font-semibold text-brand">48시간 이내에 연락</span>을 드리고 직접 방문해 공간 스캔 후 등록을 완료해드려요.
+            </p>
           </div>
         )}
 
