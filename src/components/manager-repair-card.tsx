@@ -25,9 +25,6 @@ export function ManagerRepairCard({
           <p className="text-[15px] font-semibold text-ink">
             {repair.propertyName || '숙소'}
           </p>
-          {repair.hostName && (
-            <p className="mt-0.5 text-[12px] text-ink-muted">호스트 {repair.hostName}</p>
-          )}
         </div>
         {showStatus && <RepairStatusBadge status={repair.status} />}
       </div>

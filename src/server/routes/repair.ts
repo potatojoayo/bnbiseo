@@ -255,7 +255,6 @@ repairRoutes.get('/:id/report', async (c) => {
     .select({
       id: repairCompletionReports.id,
       actionNotes: repairCompletionReports.actionNotes,
-      additionalNotes: repairCompletionReports.additionalNotes,
       createdAt: repairCompletionReports.createdAt,
     })
     .from(repairCompletionReports)
@@ -288,7 +287,6 @@ repairRoutes.get('/:id/report', async (c) => {
     report: {
       id: report.id,
       actionNotes: report.actionNotes,
-      additionalNotes: report.additionalNotes,
       createdAt: report.createdAt,
       photos: photos
         .sort((a, b) => a.sortOrder - b.sortOrder)

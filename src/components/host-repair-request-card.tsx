@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { WrenchIcon } from 'lucide-react'
 import { RepairStatusBadge } from '@/components/repair-status-badge'
 import type { RepairStatus } from '@/lib/hooks/use-repair'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
@@ -17,12 +18,14 @@ type HostRepairRequestCardProps = {
   }
   href: string
   className?: string
+  showKindBadge?: boolean
 }
 
 export function HostRepairRequestCard({
   request,
   href,
   className,
+  showKindBadge = false,
 }: HostRepairRequestCardProps) {
   const isCancelled = request.status === 'cancelled'
 
@@ -45,6 +48,12 @@ export function HostRepairRequestCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
+          {showKindBadge && (
+            <span className="mb-2 inline-flex h-6 items-center gap-1 rounded-full bg-amber-50 px-2.5 text-[11px] font-medium text-amber-700 ring-1 ring-amber-100">
+              <WrenchIcon className="size-3" strokeWidth={2} />
+              수리
+            </span>
+          )}
           <span className={cn('block text-[16px] font-semibold leading-snug', isCancelled ? 'text-ink-faint' : 'text-ink')}>
             {request.propertyName || '숙소'}
           </span>

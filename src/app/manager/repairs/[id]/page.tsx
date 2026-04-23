@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -24,6 +24,7 @@ import {
   useManagerRepair,
 } from '@/lib/hooks/use-manager'
 import { RepairStatusBadge } from '@/components/repair-status-badge'
+import { AssetCard } from '@/components/asset-card'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { CompoundInput, FloatingInput, FloatingTextarea, CompoundField } from '@/components/ui/floating-input'
@@ -32,6 +33,21 @@ import { ALL_TIME_SLOTS, cn, formatDateLabel, formatTimeKorean, getAvailableTime
 import { uploadRepairCompletionImage, type UploadedRepairImage } from '@/lib/repair-image-upload'
 import { CheckIcon } from 'lucide-react'
 import { ReadOnlyPhotoGallery } from '@/components/read-only-photo-gallery'
+import type { ManagerRepairDetail } from '@/lib/hooks/use-manager'
+
+const ASSET_CATEGORY_LABELS: Record<ManagerRepairDetail['assets'][number]['category'], string> = {
+  lighting: '조명',
+  furniture: '가구',
+  faucet: '수도/배관',
+  boiler: '보일러',
+  appliance: '가전',
+  lock: '잠금장치',
+  ac: '에어컨',
+  washer: '세탁기',
+  dryer: '건조기',
+  vent: '환기',
+  other: '기타',
+}
 
 export default function ManagerRepairDetailPage() {
   const params = useParams()
@@ -179,45 +195,19 @@ export default function ManagerRepairDetailPage() {
           <p className="px-1 mb-2 text-[13px] font-medium text-ink-muted">관련 시설물</p>
           <div className="flex flex-col gap-2">
             {repair.assets.map((asset) => (
-              <div
+              <AssetCard
                 key={asset.id}
-                className="rounded-xl border border-outline-dim bg-white p-3"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-outline-dim bg-surface-subtle">
-                    {(asset.photos[0]?.signedUrl ?? asset.photos[0]?.thumbnailSignedUrl) ? (
-                      <Image
-                        src={asset.photos[0].signedUrl ?? asset.photos[0].thumbnailSignedUrl!}
-                        alt={asset.name}
-                        fill
-                        sizes="64px"
-                        className="object-contain"
-                      />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-semibold text-ink">{asset.name}</p>
-                    <p className="text-[12px] text-ink-muted">{asset.location}</p>
-                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-ink-muted">
-                      {asset.brand && <span>브랜드: {asset.brand}</span>}
-                      {asset.modelNumber && <span>모델: {asset.modelNumber}</span>}
-                    </div>
-                    {asset.purchaseUrl && (
-                      <a
-                        href={asset.purchaseUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-block text-[12px] text-brand underline underline-offset-2"
-                      >
-                        구매처 링크
-                      </a>
-                    )}
-                    {asset.notes && (
-                      <p className="mt-1 text-[12px] text-ink-muted">{asset.notes}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
+                name={asset.name}
+                category={ASSET_CATEGORY_LABELS[asset.category]}
+                location={asset.location}
+                brand={asset.brand}
+                modelNumber={asset.modelNumber}
+                purchaseUrl={asset.purchaseUrl}
+                notes={asset.notes}
+                imageUrl={asset.photos[0]?.signedUrl ?? asset.photos[0]?.thumbnailSignedUrl ?? null}
+                href={`/manager/repairs/${id}/assets/${asset.id}`}
+                className="bg-white"
+              />
             ))}
           </div>
         </section>
@@ -258,7 +248,7 @@ export default function ManagerRepairDetailPage() {
       {repair.completionReport && (
         <section className="mb-6">
           <p className="px-1 mb-2 text-[13px] font-medium text-ink-muted">작성한 조치 보고서</p>
-          <div className="rounded-xl border border-outline-dim p-4 space-y-3">
+          <div className="space-y-3">
             {repair.completionReport.photos.length > 0 && (
               <div className="flex flex-col gap-3">
                 {repair.completionReport.photos.map((photo) => (
@@ -279,20 +269,23 @@ export default function ManagerRepairDetailPage() {
                 ))}
               </div>
             )}
-            <div>
-              <p className="text-[12px] font-medium text-ink-muted mb-1">조치 내용</p>
-              <p className="whitespace-pre-wrap text-[14px] text-ink leading-relaxed">
-                {repair.completionReport.actionNotes}
-              </p>
-            </div>
-            {repair.completionReport.additionalNotes && (
+            <div className="rounded-xl border border-outline-dim bg-white p-4">
               <div>
-                <p className="text-[12px] font-medium text-ink-muted mb-1">추가 메모</p>
+                <p className="text-[12px] font-medium text-ink-muted mb-1">조치 내용</p>
                 <p className="whitespace-pre-wrap text-[14px] text-ink leading-relaxed">
-                  {repair.completionReport.additionalNotes}
+                  {repair.completionReport.actionNotes}
                 </p>
               </div>
-            )}
+              {repair.completionReport.additionalNotes && (
+                <>
+                  <div className="my-4 border-t border-dashed border-outline-strong" />
+                  <p className="text-[12px] font-medium text-ink-muted mb-1">추가 메모</p>
+                  <p className="whitespace-pre-wrap text-[14px] text-ink leading-relaxed">
+                    {repair.completionReport.additionalNotes}
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         </section>
       )}
@@ -358,6 +351,19 @@ export default function ManagerRepairDetailPage() {
           )
         }
 
+        if (['in_progress', 'completed'].includes(repair.status) && repair.completionReport) {
+          return (
+            <LoadingButton
+              type="button"
+              variant="primary"
+              loading={false}
+              onClick={() => setCompleteOpen(true)}
+            >
+              조치 보고서 수정
+            </LoadingButton>
+          )
+        }
+
         return null
       })()}
 
@@ -417,6 +423,13 @@ export default function ManagerRepairDetailPage() {
         open={completeOpen}
         onOpenChange={setCompleteOpen}
         repairId={id}
+        initialActionNotes={repair.completionReport?.actionNotes ?? ''}
+        initialAdditionalNotes={repair.completionReport?.additionalNotes ?? ''}
+        initialPhotos={(repair.completionReport?.photos ?? []).map((photo) => ({
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
+          previewUrl: photo.thumbnailSignedUrl ?? photo.signedUrl ?? '',
+        }))}
         onSuccess={async () => {
           await invalidate.repairDetail(id)
           await invalidate.myRepairs()
@@ -460,6 +473,11 @@ function QuoteDrawer({
     const slots = getAvailableTimeSlots(newDate)
     if (!slots.includes(time)) setTime(getDefaultTime(newDate))
     setTimeout(() => setDateOpen(false), 200)
+  }
+
+  function handleCostChange(value: string) {
+    const digits = value.replace(/[^\d]/g, '')
+    setCost(digits ? Number(digits).toLocaleString('ko-KR') : '')
   }
 
   async function handleSubmit() {
@@ -516,7 +534,7 @@ function QuoteDrawer({
                   type="text"
                   inputMode="numeric"
                   value={cost}
-                  onChange={(e) => setCost(e.target.value.replace(/[^\d]/g, ''))}
+                  onChange={(e) => handleCostChange(e.target.value)}
                   borderRadius="12px"
                 />
               </CompoundInput>
@@ -605,19 +623,32 @@ function CompleteReportDrawer({
   open,
   onOpenChange,
   repairId,
+  initialActionNotes,
+  initialAdditionalNotes,
+  initialPhotos,
   onSuccess,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   repairId: string
+  initialActionNotes: string
+  initialAdditionalNotes: string
+  initialPhotos: UploadedRepairImage[]
   onSuccess: () => void | Promise<void>
 }) {
-  const [actionNotes, setActionNotes] = useState('')
-  const [additionalNotes, setAdditionalNotes] = useState('')
-  const [photos, setPhotos] = useState<UploadedRepairImage[]>([])
+  const [actionNotes, setActionNotes] = useState(initialActionNotes)
+  const [additionalNotes, setAdditionalNotes] = useState(initialAdditionalNotes)
+  const [photos, setPhotos] = useState<UploadedRepairImage[]>(initialPhotos)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setActionNotes(initialActionNotes)
+    setAdditionalNotes(initialAdditionalNotes)
+    setPhotos(initialPhotos)
+  }, [open, initialActionNotes, initialAdditionalNotes, initialPhotos])
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
@@ -677,10 +708,12 @@ function CompleteReportDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <div className="w-full px-5 pb-8 max-h-[85dvh] overflow-y-auto">
-          <DrawerHeader className="px-0">
-            <DrawerTitle className="text-[18px] font-semibold text-ink">조치 보고서 작성</DrawerTitle>
-          </DrawerHeader>
+          <div className="w-full px-5 pb-8 max-h-[85dvh] overflow-y-auto">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">
+                {initialActionNotes || initialPhotos.length > 0 || initialAdditionalNotes ? '조치 보고서 수정' : '조치 보고서 작성'}
+              </DrawerTitle>
+            </DrawerHeader>
           <div className="flex flex-col gap-4">
             <div>
               <p className="px-1 mb-2 text-[13px] font-medium text-ink-muted">조치 사진 (최소 1장, 필수)</p>
@@ -751,7 +784,7 @@ function CompleteReportDrawer({
               disabled={uploading}
               onClick={handleSubmit}
             >
-              저장하고 완료
+              저장하기
             </LoadingButton>
           </div>
         </div>

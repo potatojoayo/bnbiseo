@@ -77,7 +77,6 @@ export type RepairCompletionReport = {
   report: {
     id: string
     actionNotes: string
-    additionalNotes: string | null
     createdAt: string
     photos: Array<{
       id: string
@@ -108,6 +107,8 @@ export function useRepairRequest(id: string) {
     queryKey: ['repair-requests', id],
     queryFn: () => api.get<RepairRequestDetail>(`/repair/${id}`),
     enabled: !!user && !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
 }
 
@@ -118,6 +119,8 @@ export function useRepairReport(id: string) {
     queryKey: ['repair-requests', 'report', id],
     queryFn: () => api.get<RepairCompletionReport>(`/repair/${id}/report`),
     enabled: !!user && !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
 }
 

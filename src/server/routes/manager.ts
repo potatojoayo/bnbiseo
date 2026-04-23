@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { createClient } from '@supabase/supabase-js'
-import { and, asc, desc, eq, inArray, isNull, ne } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, ne, or } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
 import {
@@ -131,8 +131,14 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     .innerJoin(properties, eq(cleaningRequests.propertyId, properties.id))
     .where(and(
       eq(cleaningRequests.id, id),
-      eq(cleaningRequests.managerId, managerId),
       isNull(properties.deletedAt),
+      or(
+        eq(cleaningRequests.managerId, managerId),
+        and(
+          eq(cleaningRequests.status, 'pending'),
+          isNull(cleaningRequests.managerId),
+        ),
+      ),
     ))
     .limit(1)
 
@@ -1522,8 +1528,8 @@ managerRoutes.post('/repairs/:id/complete-report/upload-url', async (c) => {
     return c.json({ error: '수리 요청을 찾을 수 없어요.' }, 404)
   }
 
-  if (request.status !== 'in_progress') {
-    return c.json({ error: '작업 진행 중일 때만 사진을 첨부할 수 있어요.' }, 400)
+  if (!['in_progress', 'completed'].includes(request.status)) {
+    return c.json({ error: '작업 진행 중이거나 완료된 요청만 사진을 첨부할 수 있어요.' }, 400)
   }
 
   const extension = validated.data.fileName.includes('.')
@@ -1550,7 +1556,7 @@ managerRoutes.post('/repairs/:id/complete-report/upload-url', async (c) => {
   })
 })
 
-// 완료 보고서 저장 (in_progress → completed)
+// 완료 보고서 저장/수정
 managerRoutes.post('/repairs/:id/complete', async (c) => {
   const id = c.req.param('id')
   const managerId = c.get('managerId')
@@ -1571,8 +1577,8 @@ managerRoutes.post('/repairs/:id/complete', async (c) => {
     return c.json({ error: '수리 요청을 찾을 수 없어요.' }, 404)
   }
 
-  if (request.status !== 'in_progress') {
-    return c.json({ error: '작업 진행 중일 때만 보고서를 작성할 수 있어요.' }, 400)
+  if (!['in_progress', 'completed'].includes(request.status)) {
+    return c.json({ error: '작업 진행 중이거나 완료된 요청만 보고서를 저장할 수 있어요.' }, 400)
   }
 
   const now = new Date()
@@ -1621,7 +1627,11 @@ managerRoutes.post('/repairs/:id/complete', async (c) => {
 
   const [updated] = await db
     .update(repairRequests)
-    .set({ status: 'completed', completedAt: now, updatedAt: now })
+    .set({
+      status: 'completed',
+      completedAt: request.status === 'completed' ? undefined : now,
+      updatedAt: now,
+    })
     .where(eq(repairRequests.id, id))
     .returning()
 

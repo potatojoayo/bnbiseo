@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { MobileBackButton } from '@/components/mobile-back-button'
-import { AssetCard } from '@/components/asset-card'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import {
   Carousel,
@@ -11,18 +10,12 @@ import {
   CarouselItem,
   type CarouselApi,
 } from '@/components/ui/carousel'
-import {
-  useManagerCleaning,
-  type ManagerCleaningDetail,
-} from '@/lib/hooks/use-manager'
+import { useManagerRepair, type ManagerRepairDetail } from '@/lib/hooks/use-manager'
 
-const SPACE_CATEGORY_LABELS: Record<ManagerCleaningDetail['spaces'][number]['category'], string> = {
-  living_room: '거실',
-  bedroom: '침실',
-  bathroom: '화장실',
-}
-
-const ASSET_CATEGORY_LABELS: Record<ManagerCleaningDetail['assets'][number]['category'], string> = {
+const ASSET_CATEGORY_LABELS: Record<
+  ManagerRepairDetail['assets'][number]['category'],
+  string
+> = {
   lighting: '조명',
   furniture: '가구',
   faucet: '수도/배관',
@@ -36,13 +29,9 @@ const ASSET_CATEGORY_LABELS: Record<ManagerCleaningDetail['assets'][number]['cat
   other: '기타',
 }
 
-function isAssetLinkedToSpace(location: string, spaceName: string) {
-  return location === spaceName || location.startsWith(`${spaceName} · `)
-}
-
-export default function ManagerCleaningSpaceDetailPage() {
-  const { id, spaceId } = useParams<{ id: string; spaceId: string }>()
-  const { data, isLoading } = useManagerCleaning(id)
+export default function ManagerRepairAssetDetailPage() {
+  const { id, fixtureId } = useParams<{ id: string; fixtureId: string }>()
+  const { data, isLoading } = useManagerRepair(id)
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [carouselApi, setCarouselApi] = useState<CarouselApi>()
 
@@ -61,6 +50,8 @@ export default function ManagerCleaningSpaceDetailPage() {
     }
   }, [carouselApi])
 
+  const asset = data?.assets.find((item) => item.id === fixtureId)
+
   if (isLoading) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
@@ -69,40 +60,52 @@ export default function ManagerCleaningSpaceDetailPage() {
     )
   }
 
-  const space = data?.spaces.find((item) => item.id === spaceId)
-  if (!space || !data) {
+  if (!asset || !data) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center px-6 text-center text-[14px] text-ink-muted">
-        공간 정보를 찾을 수 없어요.
+        시설물 정보를 찾을 수 없어요.
       </div>
     )
   }
 
-  const linkedAssets = data.assets.filter((asset) => isAssetLinkedToSpace(asset.location, space.name))
-
   return (
     <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
       <div className="-mb-1">
-        <MobileBackButton href={`/manager/cleanings/${id}`} mode="back" />
-        <h1 className="mt-2 text-[22px] font-semibold text-ink">{space.name}</h1>
+        <MobileBackButton href={`/manager/repairs/${id}`} mode="back" />
+        <h1 className="mt-2 text-[22px] font-semibold text-ink">{asset.name}</h1>
       </div>
 
       <section className="space-y-2">
         <p className="text-[14px] text-ink-muted">
-          {space.floor}층 · {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
+          {ASSET_CATEGORY_LABELS[asset.category]} · {asset.location}
         </p>
-        {space.notes && (
-          <p className="text-[14px] leading-relaxed text-ink-muted">{space.notes}</p>
+        {(asset.brand || asset.modelNumber) && (
+          <p className="text-[14px] text-ink-muted">
+            {[asset.brand, asset.modelNumber].filter(Boolean).join(' · ')}
+          </p>
+        )}
+        {asset.purchaseUrl && (
+          <a
+            href={asset.purchaseUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block text-[14px] text-brand underline underline-offset-2"
+          >
+            구매처 링크
+          </a>
+        )}
+        {asset.notes && (
+          <p className="text-[14px] leading-relaxed text-ink-muted">{asset.notes}</p>
         )}
       </section>
 
       <section className="-mx-5 space-y-4 md:mx-0">
         <div className="hidden md:flex md:flex-col md:gap-3">
-          {space.photos.length > 0 ? (
-            space.photos.map((photo) => (
-              <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
+          {asset.photos.length > 0 ? (
+            asset.photos.map((photo) => (
+              <div key={photo.storagePath} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
                 {photo.signedUrl ? (
-                  <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="720px" className="object-cover" />
+                  <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="720px" className="object-contain" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
                 )}
@@ -115,11 +118,11 @@ export default function ManagerCleaningSpaceDetailPage() {
           )}
         </div>
 
-        <Carousel setApi={setCarouselApi} opts={{ loop: space.photos.length > 1 }} className="w-full md:hidden">
+        <Carousel setApi={setCarouselApi} opts={{ loop: asset.photos.length > 1 }} className="w-full md:hidden">
           <CarouselContent className="-ml-0">
-            {space.photos.length > 0 ? (
-              space.photos.map((photo) => (
-                <CarouselItem key={photo.id} className="pl-0">
+            {asset.photos.length > 0 ? (
+              asset.photos.map((photo) => (
+                <CarouselItem key={photo.storagePath} className="pl-0">
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-soft">
                     {photo.signedUrl ? (
                       <ImageWithSkeleton
@@ -127,7 +130,7 @@ export default function ManagerCleaningSpaceDetailPage() {
                         alt=""
                         fill
                         sizes="(max-width: 768px) 100vw, 720px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
@@ -145,11 +148,11 @@ export default function ManagerCleaningSpaceDetailPage() {
           </CarouselContent>
         </Carousel>
 
-        {space.photos.length > 1 && (
+        {asset.photos.length > 1 && (
           <div className="flex items-center justify-center gap-1.5 px-5 md:hidden">
-            {space.photos.map((photo, index) => (
+            {asset.photos.map((photo, index) => (
               <button
-                key={photo.id}
+                key={photo.storagePath}
                 type="button"
                 onClick={() => {
                   carouselApi?.scrollTo(index)
@@ -159,35 +162,6 @@ export default function ManagerCleaningSpaceDetailPage() {
                 className={`h-1.5 rounded-full transition-all ${
                   selectedPhotoIndex === index ? 'w-5 bg-ink' : 'w-1.5 bg-outline-strong'
                 }`}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <p className="text-[16px] font-semibold text-ink">등록된 시설물</p>
-          <p className="mt-1 text-[13px] text-ink-muted">이 공간에 등록된 시설물을 함께 확인할 수 있어요.</p>
-        </div>
-
-        {linkedAssets.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
-            등록된 시설물이 없어요.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {linkedAssets.map((asset) => (
-              <AssetCard
-                key={asset.id}
-                name={asset.name}
-                category={ASSET_CATEGORY_LABELS[asset.category]}
-                location={asset.location}
-                brand={asset.brand}
-                modelNumber={asset.modelNumber}
-                notes={asset.notes}
-                imageUrl={asset.photos[0]?.signedUrl ?? asset.photos[0]?.thumbnailSignedUrl ?? null}
-                href={`/manager/cleanings/${id}/assets/${asset.id}`}
               />
             ))}
           </div>

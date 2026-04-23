@@ -63,13 +63,25 @@ export default function CompletePage() {
           숙소 등록 신청이
           <br />완료되었어요
         </h2>
-        <div className="mt-5 rounded-xl border border-brand/25 bg-brand/8 px-4 py-4 text-[13.5px] leading-relaxed">
-          <p className="text-on-surface">
-            숙소 등록 후 <span className="font-semibold text-brand">48시간 이내에 연락</span>을 드리고 직접 방문해요.
-          </p>
-          <p className="mt-1.5 font-semibold text-brand">
-            꼭 연락을 잘 받아주세요!
-          </p>
+        <div className="mt-5 rounded-xl border border-outline-dim bg-surface-subtle px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="flex items-start gap-3">
+            <svg
+              className="mt-0.5 size-5 shrink-0 text-ink"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97a15.485 15.485 0 0 1-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
+            </svg>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-semibold leading-snug text-ink">
+                48 시간 이내에 전화를 드려요
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+                직접 방문해 공간 스캔 후 등록을 완료해드립니다. 연락을 잘 받아주세요.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -77,7 +89,7 @@ export default function CompletePage() {
         {properties.map((property) => (
           <Link
             key={property.id}
-            href={`/onboarding/properties/${property.id}`}
+            href={`/onboarding/edit/${property.id}`}
             className="block"
           >
             <PropertyCard property={property} />

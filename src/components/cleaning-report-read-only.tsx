@@ -225,9 +225,10 @@ export function CleaningReportReadOnly({
           </div>
           {summaryMemo && (
             <div className="mt-5">
-              <p className="text-[13px] font-medium text-ink-muted">특이사항</p>
-              <div className="mt-2 rounded-2xl bg-surface-subtle px-4 py-4">
-                <p className="text-[15px] leading-relaxed text-ink">
+              <div className="rounded-xl border border-outline-dim bg-white p-4">
+                <p className="text-[12px] font-medium text-ink-muted">특이사항</p>
+                <div className="my-4 border-t border-dashed border-outline-strong" />
+                <p className="text-[14px] leading-relaxed text-ink">
                   {summaryMemo}
                 </p>
               </div>

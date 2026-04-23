@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BrushCleaningIcon } from 'lucide-react'
 import { CleaningStatusBadge, type CleaningStatus } from '@/components/cleaning-status-badge'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
 
@@ -14,12 +15,14 @@ type HostCleaningRequestCardProps = {
   }
   href: string
   className?: string
+  showKindBadge?: boolean
 }
 
 export function HostCleaningRequestCard({
   request,
   href,
   className,
+  showKindBadge = false,
 }: HostCleaningRequestCardProps) {
   const isCancelled = request.status === 'cancelled'
   const metaText = [
@@ -37,6 +40,12 @@ export function HostCleaningRequestCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
+          {showKindBadge && (
+            <span className="mb-2 inline-flex h-6 items-center gap-1 rounded-full bg-emerald-50 px-2.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100">
+              <BrushCleaningIcon className="size-3" strokeWidth={1.8} />
+              청소
+            </span>
+          )}
           <span className={cn('block text-[16px] font-semibold leading-snug', isCancelled ? 'text-ink-faint' : 'text-ink')}>
             {request.propertyName || '숙소'}
           </span>

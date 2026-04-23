@@ -33,13 +33,24 @@ type PropertyFormProps = {
   redirectTo?: string
   title?: string
   animated?: boolean
+  showDeleteAction?: boolean
 }
 
-export function PropertyForm({ backHref, mode = 'create', initialData, redirectTo, title, animated = true }: PropertyFormProps) {
+export function PropertyForm({
+  backHref,
+  mode = 'create',
+  initialData,
+  redirectTo,
+  title,
+  animated = true,
+  showDeleteAction = false,
+}: PropertyFormProps) {
   const router = useRouter()
   const invalidateProperties = useInvalidateProperties()
   const [isPending, setIsPending] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [message, setMessage] = useState<string | undefined>()
   const [focused, setFocused] = useState<string | null>(null)
@@ -199,6 +210,25 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         setMessage(mode === 'edit' ? '수정 중 문제가 생겼어요. 다시 시도해주세요' : '등록 중 문제가 생겼어요. 다시 시도해주세요')
       }
       setIsPending(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!initialData?.id) return
+
+    setIsDeleting(true)
+    setMessage(undefined)
+
+    try {
+      await api.delete(`/properties/${initialData.id}`)
+      await invalidateProperties()
+
+      const remaining = await api.get<{ id: string }[]>('/properties').catch(() => [])
+      router.push(remaining.length > 0 ? '/onboarding/complete' : '/onboarding', { scroll: false })
+    } catch {
+      setMessage('삭제 중 문제가 생겼어요. 다시 시도해주세요')
+      setIsDeleting(false)
+      setDeleteOpen(false)
     }
   }
 
@@ -476,10 +506,25 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         )}
 
         {mode === 'create' && (
-          <div className="rounded-xl border border-brand/25 bg-brand/8 px-4 py-4">
-            <p className="text-[13.5px] leading-relaxed text-on-surface">
-              숙소 등록 후 <span className="font-semibold text-brand">48시간 이내에 연락</span>을 드리고 직접 방문해 공간 스캔 후 등록을 완료해드려요.
-            </p>
+          <div className="rounded-xl border border-outline-dim bg-surface-subtle px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="flex items-start gap-3">
+              <svg
+                className="mt-0.5 size-5 shrink-0 text-ink"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+              </svg>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-semibold leading-snug text-ink">
+                  48시간 이내에 연락을 드려요
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+                  숙소 등록 신청 후 비앤비서에서 직접 방문해 공간 스캔 후 등록을 완료해드려요.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -491,7 +536,51 @@ export function PropertyForm({ backHref, mode = 'create', initialData, redirectT
         >
           {mode === 'edit' ? '저장하기' : '숙소 등록 신청하기'}
         </LoadingButton>
+
+        {showDeleteAction && mode === 'edit' && initialData?.id && (
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            disabled={isDeleting}
+            className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-destructive disabled:opacity-50"
+          >
+            숙소 삭제
+          </button>
+        )}
       </form>
+
+      <Drawer open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DrawerContent>
+          <div className="mx-auto w-full max-w-[440px] px-6 pb-8">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">
+                정말 삭제할까요?
+              </DrawerTitle>
+            </DrawerHeader>
+            <p className="mb-6 text-[14px] text-ink-muted">
+              삭제하면 되돌릴 수 없어요.
+            </p>
+            <div className="flex flex-col gap-3">
+              <LoadingButton
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                loading={isDeleting}
+                loadingText="삭제 중..."
+              >
+                삭제하기
+              </LoadingButton>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(false)}
+                className="w-full text-center text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

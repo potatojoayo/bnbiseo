@@ -5,14 +5,12 @@ import type { ManagerCleaning } from '@/lib/hooks/use-manager'
 
 type ManagerCleaningCardProps = {
   cleaning: ManagerCleaning
-  action?: React.ReactNode
   className?: string
   showStatus?: boolean
 }
 
 export function ManagerCleaningCard({
   cleaning,
-  action,
   className,
   showStatus = false,
 }: ManagerCleaningCardProps) {
@@ -86,12 +84,6 @@ export function ManagerCleaningCard({
           {cleaning.finalPrice.toLocaleString()}원
         </p>
       </div>
-
-      {action && (
-        <div className="mt-4">
-          {action}
-        </div>
-      )}
     </div>
   )
 }

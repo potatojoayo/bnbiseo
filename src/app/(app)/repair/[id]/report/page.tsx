@@ -43,7 +43,6 @@ export default function RepairReportPage() {
 
       <RepairCompletionReportReadOnly
         report={data.report}
-        propertyName={data.propertyName}
       />
     </div>
   )

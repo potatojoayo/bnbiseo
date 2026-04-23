@@ -39,7 +39,7 @@ export default function ManagerRepairHistoryPage() {
         <div className="flex flex-col gap-3">
           {repairs.map((repair) => (
             <Link key={repair.id} href={`/manager/repairs/${repair.id}`} className="block">
-              <ManagerRepairCard repair={repair} showStatus />
+              <ManagerRepairCard repair={repair} />
             </Link>
           ))}
         </div>

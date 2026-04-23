@@ -500,7 +500,7 @@ export default function NewRepairPage() {
                             alt={asset.name}
                             fill
                             sizes="48px"
-                            className="object-contain"
+                            className="object-cover"
                           />
                         ) : null}
                       </div>

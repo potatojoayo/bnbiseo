@@ -10,6 +10,7 @@ type AssetCardProps = {
   brand?: string | null
   modelNumber?: string | null
   notes?: string | null
+  purchaseUrl?: string | null
   imageUrl: string | null
   href?: string
   onRemove?: () => void
@@ -23,6 +24,7 @@ export function AssetCard({
   brand,
   modelNumber,
   notes,
+  purchaseUrl,
   imageUrl,
   href,
   onRemove,
@@ -55,6 +57,17 @@ export function AssetCard({
             <p className="mt-1 text-[13px] text-ink-muted">
               {[brand, modelNumber].filter(Boolean).join(' · ')}
             </p>
+          )}
+          {purchaseUrl && (
+            <a
+              href={purchaseUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(event) => event.stopPropagation()}
+              className="mt-1 inline-block text-[13px] text-brand underline underline-offset-2"
+            >
+              구매처 링크
+            </a>
           )}
           {notes && (
             <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{notes}</p>

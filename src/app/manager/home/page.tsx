@@ -107,7 +107,7 @@ function EmptySection({
       <p className="text-[14px] text-ink-muted">{message}</p>
       <Link
         href={href}
-        className="inline-flex h-9 items-center justify-center rounded-lg bg-ink px-4 text-[13px] font-semibold text-white transition-all active:scale-[0.98]"
+        className="inline-flex h-9 items-center justify-center rounded-lg bg-muted px-4 text-[13px] font-semibold text-ink-muted transition-colors hover:bg-outline-dim hover:text-ink active:scale-[0.98]"
       >
         {ctaLabel}
       </Link>

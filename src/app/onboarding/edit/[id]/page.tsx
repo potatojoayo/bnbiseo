@@ -52,6 +52,7 @@ export default function EditPropertyPage() {
       mode="edit"
       backHref="/onboarding/complete"
       initialData={property}
+      showDeleteAction
     />
   )
 }

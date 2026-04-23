@@ -65,7 +65,6 @@ export default function RepairDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [paying, setPaying] = useState(false)
-  const [currentTime] = useState(() => Date.now())
 
   async function handlePay() {
     if (!repair || !user || repair.quotedCost == null || !repair.orderId) return
@@ -132,16 +131,11 @@ export default function RepairDetailPage() {
   const showManagerSection = ['confirmed', 'in_progress', 'completed'].includes(repair.status)
   const showQuoteSection = ['quoted', 'confirmed', 'in_progress', 'completed'].includes(repair.status) && repair.quotedCost != null
 
-  // 취소 정책: submitted/quoted 항상 가능, confirmed 24시간 전까지
+  // 취소 정책: 결제 전(submitted/quoted) 상태에서만 가능
   let canCancel = false
   let cancelRefund: 'none' | 'full' = 'none'
   if (['submitted', 'quoted'].includes(repair.status)) {
     canCancel = true
-  } else if (repair.status === 'confirmed' && repair.scheduledDate && repair.scheduledTime) {
-    const scheduledAt = new Date(`${repair.scheduledDate}T${repair.scheduledTime}:00+09:00`)
-    const hoursUntil = (scheduledAt.getTime() - currentTime) / (1000 * 60 * 60)
-    canCancel = hoursUntil >= 24
-    cancelRefund = 'full'
   }
 
   return (
@@ -213,6 +207,7 @@ export default function RepairDetailPage() {
                 name={asset.name}
                 location={asset.location}
                 imageUrl={asset.signedUrl ?? asset.thumbnailSignedUrl}
+                href={`/my/properties/${repair.propertyId}/assets/${asset.id}`}
               />
             ))}
           </div>
@@ -300,7 +295,6 @@ export default function RepairDetailPage() {
         <section className="mb-6">
           <RepairCompletionReportReadOnly
             report={reportData.report}
-            propertyName={reportData.propertyName}
           />
         </section>
       )}

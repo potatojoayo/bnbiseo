@@ -168,12 +168,14 @@ export default function HomePage() {
                     key={`cleaning-${item.data.id}`}
                     request={item.data}
                     href={`/cleaning/${item.data.id}`}
+                    showKindBadge
                   />
                 ) : (
                   <HostRepairRequestCard
                     key={`repair-${item.data.id}`}
                     request={item.data}
                     href={`/repair/${item.data.id}`}
+                    showKindBadge
                   />
                 )
               ))

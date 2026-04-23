@@ -78,7 +78,7 @@ export default function OnboardingPage() {
 
   return (
     <>
-      <div className="animate-fade-up-fast flex min-h-[calc(100dvh-48px)] flex-col">
+      <div className="animate-fade-up-fast flex flex-col">
         <PropertyForm animated={false} />
 
         <div className="mt-8 flex justify-center pb-8">

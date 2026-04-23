@@ -304,6 +304,8 @@ export function useManagerRepair(id: string) {
     queryKey: ['manager', 'repairs', 'detail', id],
     queryFn: () => api.get<ManagerRepairDetail>(`/manager/repairs/${id}`),
     enabled: !!user && !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
 }
 

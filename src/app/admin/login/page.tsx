@@ -51,46 +51,48 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center bg-white px-6 pb-[10vh]">
-      <div className="animate-fade-up-fast w-full max-w-[400px]">
-        <div className="mb-8 text-center">
-          <Logo size="lg" />
-          <p className="mt-2 text-[14px] text-ink-muted">관리자 로그인</p>
+    <div className="min-h-[100dvh] bg-white flex flex-col">
+      <main className="flex-1 flex justify-center px-6 pt-[18vh] pb-10">
+        <div className="animate-fade-up-fast w-full max-w-[400px]">
+          <div className="mb-8 text-center">
+            <Logo size="lg" />
+            <p className="mt-2 text-[14px] text-ink-muted">관리자 로그인</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <CompoundInput>
+              <FloatingInput
+                label="이메일"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                borderRadius="12px 12px 0 0"
+              />
+              <FloatingInput
+                label="비밀번호"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                borderRadius="0 0 12px 12px"
+              />
+            </CompoundInput>
+
+            {error && (
+              <p className="text-center text-[13px] text-destructive">{error}</p>
+            )}
+
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              loading={loading}
+              loadingText="로그인 중..."
+              disabled={!email || !password}
+            >
+              로그인
+            </LoadingButton>
+          </form>
         </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <CompoundInput>
-            <FloatingInput
-              label="이메일"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              borderRadius="12px 12px 0 0"
-            />
-            <FloatingInput
-              label="비밀번호"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              borderRadius="0 0 12px 12px"
-            />
-          </CompoundInput>
-
-          {error && (
-            <p className="text-center text-[13px] text-destructive">{error}</p>
-          )}
-
-          <LoadingButton
-            type="submit"
-            variant="primary"
-            loading={loading}
-            loadingText="로그인 중..."
-            disabled={!email || !password}
-          >
-            로그인
-          </LoadingButton>
-        </form>
-      </div>
+      </main>
     </div>
   )
 }
