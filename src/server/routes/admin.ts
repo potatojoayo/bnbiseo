@@ -322,6 +322,9 @@ const PropertyRegistrationSchema = z.object({
   doorLockPassword: z.string().min(1),
   wifiSsid: z.string().optional(),
   wifiPassword: z.string().optional(),
+  cleaningClosetLocation: z.string().optional(),
+  extraLinenLocation: z.string().optional(),
+  trashDisposalLocation: z.string().optional(),
   fixtures: z.array(FixtureRegistrationSchema),
 })
 
@@ -330,6 +333,9 @@ const PropertyRegistrationDraftSchema = z.object({
   doorLockPassword: z.string().optional(),
   wifiSsid: z.string().optional(),
   wifiPassword: z.string().optional(),
+  cleaningClosetLocation: z.string().optional(),
+  extraLinenLocation: z.string().optional(),
+  trashDisposalLocation: z.string().optional(),
 })
 
 const CreateFixtureSchema = z.object({
@@ -690,6 +696,9 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       doorLockPassword: properties.doorLockPassword,
       wifiSsid: properties.wifiSsid,
       wifiPassword: properties.wifiPassword,
+      cleaningClosetLocation: properties.cleaningClosetLocation,
+      extraLinenLocation: properties.extraLinenLocation,
+      trashDisposalLocation: properties.trashDisposalLocation,
       hostName: profiles.fullName,
       hostEmail: profiles.email,
     })
@@ -885,6 +894,9 @@ adminRoutes.post('/properties/:id/registration/draft', async (c) => {
       doorLockPassword: validated.data.doorLockPassword?.trim() || null,
       wifiSsid: validated.data.wifiSsid?.trim() || null,
       wifiPassword: validated.data.wifiPassword?.trim() || null,
+      cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
+      extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
+      trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
       updatedAt: new Date(),
     })
     .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
@@ -1179,6 +1191,9 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
         doorLockPassword: validated.data.doorLockPassword,
         wifiSsid: validated.data.wifiSsid || null,
         wifiPassword: validated.data.wifiPassword || null,
+        cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
+        extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
+        trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
         status: 'active',
         activatedAt: new Date(),
         updatedAt: new Date(),

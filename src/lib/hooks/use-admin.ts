@@ -119,6 +119,9 @@ type RegistrationDetail = {
   doorLockPassword: string | null
   wifiSsid: string | null
   wifiPassword: string | null
+  cleaningClosetLocation: string | null
+  extraLinenLocation: string | null
+  trashDisposalLocation: string | null
   hostName: string | null
   hostEmail: string | null
   spaces: Array<{

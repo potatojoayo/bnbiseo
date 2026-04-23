@@ -72,12 +72,12 @@ export default function AdminDashboardLayout({
         <SidebarInset className={showBottomNav ? 'pb-[72px] md:pb-0' : undefined}>
           {children}
         </SidebarInset>
-        {showBottomNav && (
-          <div className="md:hidden">
-            <AdminBottomNav />
-          </div>
-        )}
       </SidebarProvider>
+      {showBottomNav && (
+        <div className="md:hidden">
+          <AdminBottomNav />
+        </div>
+      )}
     </SiteHeaderVisibilityContext.Provider>
   )
 }

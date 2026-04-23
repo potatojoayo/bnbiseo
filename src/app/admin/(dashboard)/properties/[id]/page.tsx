@@ -152,6 +152,9 @@ function AdminPropertyRegistrationForm({
     doorLockPassword: string | null
     wifiSsid: string | null
     wifiPassword: string | null
+    cleaningClosetLocation: string | null
+    extraLinenLocation: string | null
+    trashDisposalLocation: string | null
     hostName: string | null
     hostEmail: string | null
     spaces: RegistrationDetail['spaces']
@@ -167,18 +170,32 @@ function AdminPropertyRegistrationForm({
   const [doorLockPassword, setDoorLockPassword] = useState(initialData.doorLockPassword || '')
   const [wifiSsid, setWifiSsid] = useState(initialData.wifiSsid || '')
   const [wifiPassword, setWifiPassword] = useState(initialData.wifiPassword || '')
+  const [cleaningClosetLocation, setCleaningClosetLocation] = useState(initialData.cleaningClosetLocation || '')
+  const [extraLinenLocation, setExtraLinenLocation] = useState(initialData.extraLinenLocation || '')
+  const [trashDisposalLocation, setTrashDisposalLocation] = useState(initialData.trashDisposalLocation || '')
   const isEditingActive = mode === 'edit'
   const lastSavedRef = useRef({
     entrancePassword: initialData.entrancePassword || '',
     doorLockPassword: initialData.doorLockPassword || '',
     wifiSsid: initialData.wifiSsid || '',
     wifiPassword: initialData.wifiPassword || '',
+    cleaningClosetLocation: initialData.cleaningClosetLocation || '',
+    extraLinenLocation: initialData.extraLinenLocation || '',
+    trashDisposalLocation: initialData.trashDisposalLocation || '',
   })
   const readyToAutosaveRef = useRef(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const draftMutation = useMutation({
-    mutationFn: (payload: { entrancePassword?: string; doorLockPassword?: string; wifiSsid?: string; wifiPassword?: string }) =>
+    mutationFn: (payload: {
+      entrancePassword?: string
+      doorLockPassword?: string
+      wifiSsid?: string
+      wifiPassword?: string
+      cleaningClosetLocation?: string
+      extraLinenLocation?: string
+      trashDisposalLocation?: string
+    }) =>
       api.post(`/admin/properties/${propertyId}/registration/draft`, payload),
     onSuccess: (_, variables) => {
       queryClient.setQueryData(
@@ -191,6 +208,9 @@ function AdminPropertyRegistrationForm({
                 doorLockPassword: variables.doorLockPassword ?? null,
                 wifiSsid: variables.wifiSsid ?? null,
                 wifiPassword: variables.wifiPassword ?? null,
+                cleaningClosetLocation: variables.cleaningClosetLocation ?? null,
+                extraLinenLocation: variables.extraLinenLocation ?? null,
+                trashDisposalLocation: variables.trashDisposalLocation ?? null,
               }
             : previous,
       )
@@ -201,6 +221,9 @@ function AdminPropertyRegistrationForm({
         doorLockPassword: variables.doorLockPassword || '',
         wifiSsid: variables.wifiSsid || '',
         wifiPassword: variables.wifiPassword || '',
+        cleaningClosetLocation: variables.cleaningClosetLocation || '',
+        extraLinenLocation: variables.extraLinenLocation || '',
+        trashDisposalLocation: variables.trashDisposalLocation || '',
       }
     },
   })
@@ -229,6 +252,9 @@ function AdminPropertyRegistrationForm({
       doorLockPassword,
       wifiSsid,
       wifiPassword,
+      cleaningClosetLocation,
+      extraLinenLocation,
+      trashDisposalLocation,
     }
 
     if (
@@ -236,6 +262,9 @@ function AdminPropertyRegistrationForm({
       && nextDraft.doorLockPassword === lastSavedRef.current.doorLockPassword
       && nextDraft.wifiSsid === lastSavedRef.current.wifiSsid
       && nextDraft.wifiPassword === lastSavedRef.current.wifiPassword
+      && nextDraft.cleaningClosetLocation === lastSavedRef.current.cleaningClosetLocation
+      && nextDraft.extraLinenLocation === lastSavedRef.current.extraLinenLocation
+      && nextDraft.trashDisposalLocation === lastSavedRef.current.trashDisposalLocation
     ) {
       return
     }
@@ -246,6 +275,9 @@ function AdminPropertyRegistrationForm({
         doorLockPassword: nextDraft.doorLockPassword || undefined,
         wifiSsid: nextDraft.wifiSsid || undefined,
         wifiPassword: nextDraft.wifiPassword || undefined,
+        cleaningClosetLocation: nextDraft.cleaningClosetLocation || undefined,
+        extraLinenLocation: nextDraft.extraLinenLocation || undefined,
+        trashDisposalLocation: nextDraft.trashDisposalLocation || undefined,
       })
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '임시 저장에 실패했어요.')
@@ -268,7 +300,7 @@ function AdminPropertyRegistrationForm({
         clearTimeout(debounceRef.current)
       }
     }
-  }, [entrancePassword, doorLockPassword, wifiSsid, wifiPassword])
+  }, [entrancePassword, doorLockPassword, wifiSsid, wifiPassword, cleaningClosetLocation, extraLinenLocation, trashDisposalLocation])
 
   async function handleSubmit() {
     setSaving(true)
@@ -280,6 +312,9 @@ function AdminPropertyRegistrationForm({
         doorLockPassword,
         wifiSsid: wifiSsid || undefined,
         wifiPassword: wifiPassword || undefined,
+        cleaningClosetLocation: cleaningClosetLocation || undefined,
+        extraLinenLocation: extraLinenLocation || undefined,
+        trashDisposalLocation: trashDisposalLocation || undefined,
         fixtures: initialData.fixtures.map((fixture) => ({
           id: fixture.id,
           category: fixture.category,
@@ -352,6 +387,36 @@ function AdminPropertyRegistrationForm({
               value={wifiPassword}
               onChange={(e) => handleDraftChange(setWifiPassword, e.target.value)}
               placeholder="예: wifi1234"
+              borderRadius="0 0 12px 12px"
+            />
+          </CompoundInput>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
+            <p className="mt-1 text-[13px] text-ink-muted">매니저가 청소·수리 시 활용하는 위치 정보예요.</p>
+          </div>
+
+          <CompoundInput>
+            <FloatingInput
+              label="청소 도구함 위치 (선택)"
+              value={cleaningClosetLocation}
+              onChange={(e) => handleDraftChange(setCleaningClosetLocation, e.target.value)}
+              placeholder="예: 현관 신발장 오른쪽 하단"
+              borderRadius="12px 12px 0 0"
+            />
+            <FloatingInput
+              label="침구류 여분 위치 (선택)"
+              value={extraLinenLocation}
+              onChange={(e) => handleDraftChange(setExtraLinenLocation, e.target.value)}
+              placeholder="예: 안방 붙박이장 맨 위칸"
+            />
+            <FloatingInput
+              label="쓰레기 배출 장소 (선택)"
+              value={trashDisposalLocation}
+              onChange={(e) => handleDraftChange(setTrashDisposalLocation, e.target.value)}
+              placeholder="예: 건물 뒷편 분리수거장"
               borderRadius="0 0 12px 12px"
             />
           </CompoundInput>
@@ -537,6 +602,9 @@ function AdminPropertyDetailView({
     doorLockPassword: string | null
     wifiSsid: string | null
     wifiPassword: string | null
+    cleaningClosetLocation: string | null
+    extraLinenLocation: string | null
+    trashDisposalLocation: string | null
     hostName: string | null
     hostEmail: string | null
     spaces: RegistrationDetail['spaces']

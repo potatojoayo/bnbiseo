@@ -117,6 +117,9 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
       doorLockPassword: properties.doorLockPassword,
       wifiSsid: properties.wifiSsid,
       wifiPassword: properties.wifiPassword,
+      cleaningClosetLocation: properties.cleaningClosetLocation,
+      extraLinenLocation: properties.extraLinenLocation,
+      trashDisposalLocation: properties.trashDisposalLocation,
     })
     .from(cleaningRequests)
     .innerJoin(properties, eq(cleaningRequests.propertyId, properties.id))

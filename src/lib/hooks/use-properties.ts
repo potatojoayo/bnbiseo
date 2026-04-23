@@ -65,6 +65,9 @@ export type PropertyDetail = Property & {
   doorLockPassword: string | null
   wifiSsid: string | null
   wifiPassword: string | null
+  cleaningClosetLocation: string | null
+  extraLinenLocation: string | null
+  trashDisposalLocation: string | null
   spaces: PropertySpace[]
   assets: PropertyAsset[]
 }
