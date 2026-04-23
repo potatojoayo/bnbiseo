@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-provider'
 import { useProfile } from '@/lib/hooks/use-profile'
 import { BottomNav } from '@/components/bottom-nav'
 
-const NAV_PAGES = ['/home', '/cleaning', '/my']
+const NAV_PAGES = ['/home', '/cleaning', '/repair', '/my']
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth()

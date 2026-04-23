@@ -25,6 +25,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { MobileBackButton } from '@/components/mobile-back-button'
+import { AssetCard } from '@/components/asset-card'
 
 type PropertyDetailViewProps = {
   propertyId: string
@@ -341,45 +342,17 @@ export function PropertyDetailView({
             ) : (
               <div className="flex flex-col gap-3">
                 {property.assets.map((asset) => (
-                  <Link
+                  <AssetCard
                     key={asset.id}
+                    name={asset.name}
+                    category={ASSET_CATEGORY_LABELS[asset.category]}
+                    location={asset.location}
+                    brand={asset.brand}
+                    modelNumber={asset.modelNumber}
+                    notes={asset.notes}
+                    imageUrl={asset.photos[0]?.signedUrl ?? null}
                     href={`${detailBaseHref}/assets/${asset.id}`}
-                    className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
-                  >
-                    <div className="flex items-stretch">
-                      <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
-                        {asset.photos[0]?.signedUrl ? (
-                          <ImageWithSkeleton
-                            src={asset.photos[0].signedUrl}
-                            alt=""
-                            fill
-                            sizes="104px"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">
-                            사진 없음
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex min-w-0 flex-1 items-start px-4 py-3">
-                        <div className="min-w-0">
-                          <p className="text-[15px] font-semibold text-ink">{asset.name}</p>
-                          <p className="mt-1 text-[13px] text-ink-muted">
-                            {ASSET_CATEGORY_LABELS[asset.category]} · {asset.location}
-                          </p>
-                          {(asset.brand || asset.modelNumber) && (
-                            <p className="mt-1 text-[13px] text-ink-muted">
-                              {[asset.brand, asset.modelNumber].filter(Boolean).join(' · ')}
-                            </p>
-                          )}
-                          {asset.notes && (
-                            <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{asset.notes}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                  />
                 ))}
               </div>
             )}

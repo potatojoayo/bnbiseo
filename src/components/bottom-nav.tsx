@@ -3,7 +3,7 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { HomeIcon, BrushCleaningIcon, UserIcon } from 'lucide-react'
+import { HomeIcon, BrushCleaningIcon, WrenchIcon, UserIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const tabs = [
@@ -17,6 +17,12 @@ const tabs = [
     label: '청소',
     href: '/cleaning',
     icon: BrushCleaningIcon,
+    exact: false,
+  },
+  {
+    label: '수리',
+    href: '/repair',
+    icon: WrenchIcon,
     exact: false,
   },
   {

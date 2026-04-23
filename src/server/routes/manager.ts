@@ -16,6 +16,11 @@ import {
   propertyAssetPhotos,
   propertySpaces,
   propertySpacePhotos,
+  repairCompletionPhotos,
+  repairCompletionReports,
+  repairRequestAssets,
+  repairRequestPhotos,
+  repairRequests,
 } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
@@ -1080,4 +1085,495 @@ managerRoutes.post('/cleanings/:id/claim', async (c) => {
   }
 
   return c.json({ success: true, id: claimed.id })
+})
+
+// ─── 수리 요청 ─────────────────────────────────────────────────────────────
+
+const RepairQuoteSchema = z.object({
+  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  scheduledTime: z.string().regex(/^\d{2}:\d{2}$/),
+  quotedCost: z.number().int().positive(),
+  quoteNote: z.string().optional(),
+})
+
+const RepairCompletionPhotoUploadSchema = z.object({
+  fileName: z.string().min(1),
+})
+
+const RepairCompletionPhotoSchema = z.object({
+  storagePath: z.string().min(1),
+  thumbnailStoragePath: z.string().min(1),
+})
+
+const RepairCompletionSchema = z.object({
+  actionNotes: z.string().min(1, { message: '조치 내용을 입력해주세요.' }).trim(),
+  additionalNotes: z.string().optional(),
+  photos: z.array(RepairCompletionPhotoSchema).min(1, { message: '완료 사진을 최소 1장 첨부해주세요.' }),
+})
+
+async function getManagerRepairDetail(id: string) {
+  const [request] = await db
+    .select({
+      id: repairRequests.id,
+      propertyId: repairRequests.propertyId,
+      hostId: repairRequests.hostId,
+      managerId: repairRequests.managerId,
+      status: repairRequests.status,
+      description: repairRequests.description,
+      preferredScheduledDate: repairRequests.preferredScheduledDate,
+      preferredScheduledTime: repairRequests.preferredScheduledTime,
+      scheduledDate: repairRequests.scheduledDate,
+      scheduledTime: repairRequests.scheduledTime,
+      quotedCost: repairRequests.quotedCost,
+      quoteNote: repairRequests.quoteNote,
+      quotedAt: repairRequests.quotedAt,
+      confirmedAt: repairRequests.confirmedAt,
+      startedAt: repairRequests.startedAt,
+      completedAt: repairRequests.completedAt,
+      cancelledAt: repairRequests.cancelledAt,
+      createdAt: repairRequests.createdAt,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+      hostName: profiles.fullName,
+      hostPhone: profiles.phone,
+    })
+    .from(repairRequests)
+    .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
+    .leftJoin(profiles, eq(repairRequests.hostId, profiles.id))
+    .where(eq(repairRequests.id, id))
+    .limit(1)
+
+  if (!request) return null
+
+  const reqPhotos = await db
+    .select({
+      id: repairRequestPhotos.id,
+      storagePath: repairRequestPhotos.storagePath,
+      thumbnailStoragePath: repairRequestPhotos.thumbnailStoragePath,
+      sortOrder: repairRequestPhotos.sortOrder,
+    })
+    .from(repairRequestPhotos)
+    .where(eq(repairRequestPhotos.repairRequestId, id))
+
+  const linkedAssets = await db
+    .select({
+      id: propertyAssets.id,
+      category: propertyAssets.category,
+      name: propertyAssets.name,
+      location: propertyAssets.location,
+      brand: propertyAssets.brand,
+      modelNumber: propertyAssets.modelNumber,
+      purchaseUrl: propertyAssets.purchaseUrl,
+      notes: propertyAssets.notes,
+    })
+    .from(repairRequestAssets)
+    .innerJoin(propertyAssets, eq(repairRequestAssets.assetId, propertyAssets.id))
+    .where(eq(repairRequestAssets.repairRequestId, id))
+
+  const assetIds = linkedAssets.map((a) => a.id)
+  const assetPhotos = assetIds.length > 0
+    ? await db
+      .select({
+        fixtureId: propertyAssetPhotos.fixtureId,
+        storagePath: propertyAssetPhotos.storagePath,
+        thumbnailStoragePath: propertyAssetPhotos.thumbnailStoragePath,
+        sortOrder: propertyAssetPhotos.sortOrder,
+      })
+      .from(propertyAssetPhotos)
+      .where(inArray(propertyAssetPhotos.fixtureId, assetIds))
+    : []
+
+  const [report] = await db
+    .select({
+      id: repairCompletionReports.id,
+      actionNotes: repairCompletionReports.actionNotes,
+      additionalNotes: repairCompletionReports.additionalNotes,
+      createdAt: repairCompletionReports.createdAt,
+    })
+    .from(repairCompletionReports)
+    .where(eq(repairCompletionReports.repairRequestId, id))
+    .limit(1)
+
+  const reportPhotos = report
+    ? await db
+      .select({
+        id: repairCompletionPhotos.id,
+        storagePath: repairCompletionPhotos.storagePath,
+        thumbnailStoragePath: repairCompletionPhotos.thumbnailStoragePath,
+        sortOrder: repairCompletionPhotos.sortOrder,
+      })
+      .from(repairCompletionPhotos)
+      .where(eq(repairCompletionPhotos.completionReportId, report.id))
+    : []
+
+  const signedUrlMap = await createSignedUrlMap([
+    ...reqPhotos.map((p) => p.storagePath),
+    ...reqPhotos.map((p) => p.thumbnailStoragePath),
+    ...assetPhotos.map((p) => p.storagePath),
+    ...assetPhotos.map((p) => p.thumbnailStoragePath),
+    ...reportPhotos.map((p) => p.storagePath),
+    ...reportPhotos.map((p) => p.thumbnailStoragePath),
+  ])
+
+  return {
+    ...request,
+    photos: reqPhotos
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((photo) => ({
+        id: photo.id,
+        storagePath: photo.storagePath,
+        thumbnailStoragePath: photo.thumbnailStoragePath,
+        signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+        thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+      })),
+    assets: linkedAssets.map((asset) => ({
+      ...asset,
+      photos: assetPhotos
+        .filter((p) => p.fixtureId === asset.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((photo) => ({
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
+          signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+          thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+        })),
+    })),
+    completionReport: report
+      ? {
+          id: report.id,
+          actionNotes: report.actionNotes,
+          additionalNotes: report.additionalNotes,
+          createdAt: report.createdAt,
+          photos: reportPhotos
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((photo) => ({
+              id: photo.id,
+              storagePath: photo.storagePath,
+              thumbnailStoragePath: photo.thumbnailStoragePath,
+              signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+              thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+            })),
+        }
+      : null,
+  }
+}
+
+// 담당 없는 신규 수리 요청 (submitted, 자유 픽업)
+managerRoutes.get('/repairs/open', async (c) => {
+  const result = await db
+    .select({
+      id: repairRequests.id,
+      status: repairRequests.status,
+      description: repairRequests.description,
+      preferredScheduledDate: repairRequests.preferredScheduledDate,
+      preferredScheduledTime: repairRequests.preferredScheduledTime,
+      createdAt: repairRequests.createdAt,
+      propertyId: properties.id,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+      hostName: profiles.fullName,
+    })
+    .from(repairRequests)
+    .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
+    .leftJoin(profiles, eq(repairRequests.hostId, profiles.id))
+    .where(and(
+      eq(repairRequests.status, 'submitted'),
+      isNull(repairRequests.managerId),
+      isNull(properties.deletedAt),
+    ))
+    .orderBy(asc(repairRequests.preferredScheduledDate), asc(repairRequests.preferredScheduledTime), desc(repairRequests.createdAt))
+
+  return c.json(result)
+})
+
+// 내가 담당하는 수리 목록
+managerRoutes.get('/repairs/me', async (c) => {
+  const managerId = c.get('managerId')
+
+  const result = await db
+    .select({
+      id: repairRequests.id,
+      status: repairRequests.status,
+      description: repairRequests.description,
+      preferredScheduledDate: repairRequests.preferredScheduledDate,
+      preferredScheduledTime: repairRequests.preferredScheduledTime,
+      scheduledDate: repairRequests.scheduledDate,
+      scheduledTime: repairRequests.scheduledTime,
+      quotedCost: repairRequests.quotedCost,
+      createdAt: repairRequests.createdAt,
+      propertyId: properties.id,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+      hostName: profiles.fullName,
+    })
+    .from(repairRequests)
+    .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
+    .leftJoin(profiles, eq(repairRequests.hostId, profiles.id))
+    .where(and(
+      eq(repairRequests.managerId, managerId),
+      ne(repairRequests.status, 'cancelled'),
+    ))
+    .orderBy(desc(repairRequests.createdAt))
+
+  return c.json(result)
+})
+
+// 상세
+managerRoutes.get('/repairs/:id', async (c) => {
+  const id = c.req.param('id')
+  const detail = await getManagerRepairDetail(id)
+
+  if (!detail) {
+    return c.json({ error: '수리 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  return c.json(detail)
+})
+
+// 픽업 (submitted → 매니저 배정)
+managerRoutes.post('/repairs/:id/claim', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+
+  const [claimable] = await db
+    .select({ id: repairRequests.id })
+    .from(repairRequests)
+    .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
+    .where(and(
+      eq(repairRequests.id, id),
+      eq(repairRequests.status, 'submitted'),
+      isNull(repairRequests.managerId),
+      isNull(properties.deletedAt),
+    ))
+    .limit(1)
+
+  if (!claimable) {
+    return c.json({ error: '다른 매니저가 먼저 배정했어요.' }, 409)
+  }
+
+  const [claimed] = await db
+    .update(repairRequests)
+    .set({
+      managerId,
+      updatedAt: new Date(),
+    })
+    .where(and(
+      eq(repairRequests.id, id),
+      eq(repairRequests.status, 'submitted'),
+      isNull(repairRequests.managerId),
+    ))
+    .returning({ id: repairRequests.id })
+
+  if (!claimed) {
+    return c.json({ error: '다른 매니저가 먼저 배정했어요.' }, 409)
+  }
+
+  return c.json({ success: true, id: claimed.id })
+})
+
+// 견적 + 확정 일정 발송 (submitted/quoted → quoted)
+managerRoutes.post('/repairs/:id/quote', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+  const body = await c.req.json().catch(() => null)
+  const validated = RepairQuoteSchema.safeParse(body)
+
+  if (!validated.success) {
+    return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [request] = await db
+    .select({ id: repairRequests.id, status: repairRequests.status, orderId: repairRequests.orderId })
+    .from(repairRequests)
+    .where(and(eq(repairRequests.id, id), eq(repairRequests.managerId, managerId)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '수리 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  if (!['submitted', 'quoted'].includes(request.status)) {
+    return c.json({ error: '견적을 발송할 수 없는 상태에요.' }, 400)
+  }
+
+  const now = new Date()
+
+  // 처음 발송 시 orderId 생성 (재발송 시 기존 orderId 유지)
+  const orderId = request.orderId ?? `rep-${crypto.randomUUID().slice(0, 8)}-${Date.now()}`
+
+  const [updated] = await db
+    .update(repairRequests)
+    .set({
+      status: 'quoted',
+      scheduledDate: validated.data.scheduledDate,
+      scheduledTime: validated.data.scheduledTime,
+      quotedCost: validated.data.quotedCost,
+      quoteNote: validated.data.quoteNote || null,
+      orderId,
+      quotedAt: request.status === 'submitted' ? now : undefined,
+      updatedAt: now,
+    })
+    .where(eq(repairRequests.id, id))
+    .returning()
+
+  return c.json(updated)
+})
+
+// 작업 시작 (confirmed → in_progress)
+managerRoutes.post('/repairs/:id/start', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+
+  const [request] = await db
+    .select({ id: repairRequests.id, status: repairRequests.status })
+    .from(repairRequests)
+    .where(and(eq(repairRequests.id, id), eq(repairRequests.managerId, managerId)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '수리 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  if (request.status !== 'confirmed') {
+    return c.json({ error: '결제 완료된 요청만 시작할 수 있어요.' }, 400)
+  }
+
+  const now = new Date()
+  const [updated] = await db
+    .update(repairRequests)
+    .set({ status: 'in_progress', startedAt: now, updatedAt: now })
+    .where(eq(repairRequests.id, id))
+    .returning()
+
+  return c.json(updated)
+})
+
+// 완료 보고서 사진 업로드 URL
+managerRoutes.post('/repairs/:id/complete-report/upload-url', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+  const body = await c.req.json().catch(() => null)
+  const validated = RepairCompletionPhotoUploadSchema.safeParse(body)
+
+  if (!validated.success) {
+    return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [request] = await db
+    .select({ id: repairRequests.id, status: repairRequests.status })
+    .from(repairRequests)
+    .where(and(eq(repairRequests.id, id), eq(repairRequests.managerId, managerId)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '수리 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  if (request.status !== 'in_progress') {
+    return c.json({ error: '작업 진행 중일 때만 사진을 첨부할 수 있어요.' }, 400)
+  }
+
+  const extension = validated.data.fileName.includes('.')
+    ? validated.data.fileName.slice(validated.data.fileName.lastIndexOf('.')).toLowerCase()
+    : '.jpg'
+  const safeExtension = extension.match(/^\.[a-z0-9]+$/) ? extension : '.jpg'
+  const fileId = crypto.randomUUID()
+  const storagePath = `repairs/${id}/completion/original/${fileId}${safeExtension}`
+  const thumbnailStoragePath = `repairs/${id}/completion/thumb/${fileId}.jpg`
+
+  const supabaseAdmin = getSupabaseAdmin()
+  const [{ data: originalData, error: originalError }, { data: thumbnailData, error: thumbnailError }] = await Promise.all([
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(storagePath),
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(thumbnailStoragePath),
+  ])
+
+  if (originalError || thumbnailError || !originalData || !thumbnailData) {
+    return c.json({ error: originalError?.message || thumbnailError?.message || '업로드 URL을 만들 수 없어요.' }, 400)
+  }
+
+  return c.json({
+    original: { path: storagePath, token: originalData.token },
+    thumbnail: { path: thumbnailStoragePath, token: thumbnailData.token },
+  })
+})
+
+// 완료 보고서 저장 (in_progress → completed)
+managerRoutes.post('/repairs/:id/complete', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+  const body = await c.req.json().catch(() => null)
+  const validated = RepairCompletionSchema.safeParse(body)
+
+  if (!validated.success) {
+    return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [request] = await db
+    .select({ id: repairRequests.id, status: repairRequests.status })
+    .from(repairRequests)
+    .where(and(eq(repairRequests.id, id), eq(repairRequests.managerId, managerId)))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '수리 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  if (request.status !== 'in_progress') {
+    return c.json({ error: '작업 진행 중일 때만 보고서를 작성할 수 있어요.' }, 400)
+  }
+
+  const now = new Date()
+
+  // upsert: 기존 보고서 있으면 덮어씀
+  const [existingReport] = await db
+    .select({ id: repairCompletionReports.id })
+    .from(repairCompletionReports)
+    .where(eq(repairCompletionReports.repairRequestId, id))
+    .limit(1)
+
+  let reportId: string
+  if (existingReport) {
+    await db
+      .update(repairCompletionReports)
+      .set({
+        actionNotes: validated.data.actionNotes,
+        additionalNotes: validated.data.additionalNotes || null,
+        updatedAt: now,
+      })
+      .where(eq(repairCompletionReports.id, existingReport.id))
+    await db
+      .delete(repairCompletionPhotos)
+      .where(eq(repairCompletionPhotos.completionReportId, existingReport.id))
+    reportId = existingReport.id
+  } else {
+    const [created] = await db
+      .insert(repairCompletionReports)
+      .values({
+        repairRequestId: id,
+        actionNotes: validated.data.actionNotes,
+        additionalNotes: validated.data.additionalNotes || null,
+      })
+      .returning({ id: repairCompletionReports.id })
+    reportId = created.id
+  }
+
+  await db.insert(repairCompletionPhotos).values(
+    validated.data.photos.map((photo, index) => ({
+      completionReportId: reportId,
+      storagePath: photo.storagePath,
+      thumbnailStoragePath: photo.thumbnailStoragePath,
+      sortOrder: index,
+    })),
+  )
+
+  const [updated] = await db
+    .update(repairRequests)
+    .set({ status: 'completed', completedAt: now, updatedAt: now })
+    .where(eq(repairRequests.id, id))
+    .returning()
+
+  return c.json(updated)
 })

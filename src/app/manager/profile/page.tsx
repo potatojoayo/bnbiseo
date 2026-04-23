@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ClipboardListIcon, ChevronRightIcon, FileTextIcon, ShieldCheckIcon } from 'lucide-react'
+import { ClipboardListIcon, ChevronRightIcon, FileTextIcon, ShieldCheckIcon, WrenchIcon } from 'lucide-react'
 import { supabase } from '@/lib/api-client'
 import { useManagerMe } from '@/lib/hooks/use-manager'
 import { AvatarWithSkeleton } from '@/components/ui/avatar-with-skeleton'
@@ -84,6 +84,16 @@ export default function ManagerProfilePage() {
           <div className="flex items-center gap-3">
             <ClipboardListIcon size={20} className="text-ink-muted" strokeWidth={1.5} />
             <span className="text-[15px] text-ink">청소 내역</span>
+          </div>
+          <ChevronRightIcon size={18} className="text-ink-faint" strokeWidth={1.5} />
+        </Link>
+        <Link
+          href="/manager/repair-history"
+          className="flex items-center justify-between rounded-xl px-6 py-4 transition-all active:bg-surface-soft md:hover:bg-surface-subtle md:hover:translate-x-0.5"
+        >
+          <div className="flex items-center gap-3">
+            <WrenchIcon size={20} className="text-ink-muted" strokeWidth={1.5} />
+            <span className="text-[15px] text-ink">수리 내역</span>
           </div>
           <ChevronRightIcon size={18} className="text-ink-faint" strokeWidth={1.5} />
         </Link>

@@ -5,10 +5,12 @@ import { useAuth } from '@/lib/auth-provider'
 import { useProfile } from '@/lib/hooks/use-profile'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
+import { useRepairRequests } from '@/lib/hooks/use-repair'
 import { Logo } from '@/components/logo'
 import { useState } from 'react'
 import { BellIcon } from 'lucide-react'
 import { HostCleaningRequestCard } from '@/components/host-cleaning-request-card'
+import { HostRepairRequestCard } from '@/components/host-repair-request-card'
 import { PropertyCard } from '@/components/property-card'
 import { PendingActivationPanel } from '@/components/pending-activation-panel'
 import { ProcessDrawer } from '@/components/process-drawer'
@@ -20,6 +22,7 @@ export default function HomePage() {
   const { data: profile, isLoading: profileLoading } = useProfile()
   const { data: properties = [], isLoading: propertiesLoading } = useProperties()
   const { data: cleaningRequests = [], isLoading: cleaningLoading } = useCleaningRequests()
+  const { data: repairRequests = [], isLoading: repairLoading } = useRepairRequests()
 
   const displayName = profile?.fullName || user?.user_metadata?.full_name || ''
   const today = new Intl.DateTimeFormat('ko-KR', {
@@ -35,22 +38,40 @@ export default function HomePage() {
   const allProperties = [...activeProperties, ...pendingProperties]
 
   const now = nowKST()
-  const upcomingCleanings = cleaningRequests
+
+  type UpcomingItem =
+    | { kind: 'cleaning'; time: number; data: typeof cleaningRequests[number] }
+    | { kind: 'repair'; time: number; data: typeof repairRequests[number] }
+
+  const upcomingCleanings: UpcomingItem[] = cleaningRequests
     .filter((r) => ['pending', 'confirmed', 'in_progress'].includes(r.status))
-    .filter((r) => {
-      const scheduledAt = new Date(`${r.scheduledDate}T${r.scheduledTime}:00+09:00`)
-      return scheduledAt >= now
+    .map((r) => ({
+      kind: 'cleaning' as const,
+      time: new Date(`${r.scheduledDate}T${r.scheduledTime}:00+09:00`).getTime(),
+      data: r,
+    }))
+    .filter((item) => item.time >= now.getTime())
+
+  const upcomingRepairs: UpcomingItem[] = repairRequests
+    .filter((r) => ['submitted', 'quoted', 'confirmed', 'in_progress'].includes(r.status))
+    .map((r) => {
+      const dateStr = r.scheduledDate ?? r.preferredScheduledDate
+      const timeStr = r.scheduledTime ?? r.preferredScheduledTime
+      return {
+        kind: 'repair' as const,
+        time: new Date(`${dateStr}T${timeStr}:00+09:00`).getTime(),
+        data: r,
+      }
     })
-    .sort((a, b) => {
-      const aTime = new Date(`${a.scheduledDate}T${a.scheduledTime}:00+09:00`).getTime()
-      const bTime = new Date(`${b.scheduledDate}T${b.scheduledTime}:00+09:00`).getTime()
-      return aTime - bTime
-    })
-  const visibleUpcoming = upcomingCleanings.slice(0, 3)
+
+  const upcomingAll: UpcomingItem[] = [...upcomingCleanings, ...upcomingRepairs].sort(
+    (a, b) => a.time - b.time,
+  )
+  const visibleUpcoming = upcomingAll.slice(0, 3)
 
   const isPageLoading =
     authLoading ||
-    (!!user && (profileLoading || propertiesLoading || cleaningLoading))
+    (!!user && (profileLoading || propertiesLoading || cleaningLoading || repairLoading))
 
   if (isPageLoading) {
     return (
@@ -139,18 +160,22 @@ export default function HomePage() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between px-1">
               <p className="text-[13px] font-medium text-ink-muted">다가오는 일정</p>
-              {upcomingCleanings.length > 3 && (
-                <Link
-                  href="/cleaning"
-                  className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-                >
-                  더 보기
-                </Link>
-              )}
             </div>
             {visibleUpcoming.length > 0 ? (
-              visibleUpcoming.map((r) => (
-                <HostCleaningRequestCard key={r.id} request={r} href={`/cleaning/${r.id}`} />
+              visibleUpcoming.map((item) => (
+                item.kind === 'cleaning' ? (
+                  <HostCleaningRequestCard
+                    key={`cleaning-${item.data.id}`}
+                    request={item.data}
+                    href={`/cleaning/${item.data.id}`}
+                  />
+                ) : (
+                  <HostRepairRequestCard
+                    key={`repair-${item.data.id}`}
+                    request={item.data}
+                    href={`/repair/${item.data.id}`}
+                  />
+                )
               ))
             ) : (
               <div className="rounded-2xl border border-outline-dim bg-white px-4 py-6 text-center shadow-[0_6px_20px_rgba(0,0,0,0.04)]">

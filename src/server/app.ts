@@ -6,6 +6,7 @@ import { assetsRoutes } from './routes/assets'
 import { profilesRoutes } from './routes/profiles'
 import { airroiRoutes } from './routes/airroi'
 import { cleaningRoutes } from './routes/cleaning'
+import { repairRoutes } from './routes/repair'
 import { adminRoutes } from './routes/admin'
 import { managerRoutes } from './routes/manager'
 
@@ -27,6 +28,7 @@ app.route('/assets', assetsRoutes)
 app.route('/profiles', profilesRoutes)
 app.route('/airroi', airroiRoutes)
 app.route('/cleaning', cleaningRoutes)
+app.route('/repair', repairRoutes)
 app.route('/admin', adminRoutes)
 app.route('/manager', managerRoutes)
 
