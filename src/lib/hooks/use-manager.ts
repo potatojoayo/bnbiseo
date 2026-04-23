@@ -32,6 +32,7 @@ export type ManagerCleaning = {
   scheduledTime: string
   cleaningType: 'standard' | 'urgent'
   memo: string | null
+  linenWash: boolean
   finalPrice: number
   createdAt: string
   propertyId: string | null

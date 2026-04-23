@@ -27,6 +27,11 @@ export const propertyStatusEnum = pgEnum('property_status', [
   'active',
 ])
 
+export const linenWashLocationEnum = pgEnum('linen_wash_location', [
+  'in_house',
+  'external',
+])
+
 export const fixtureCategoryEnum = pgEnum('fixture_category', [
   'lighting',
   'furniture',
@@ -116,6 +121,7 @@ export const properties = pgTable('properties', {
   cleaningClosetLocation: text('cleaning_closet_location'),
   extraLinenLocation: text('extra_linen_location'),
   trashDisposalLocation: text('trash_disposal_location'),
+  linenWashLocation: linenWashLocationEnum('linen_wash_location'),
   qrToken: uuid('qr_token').defaultRandom().notNull(),
   activatedAt: timestamp('activated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -155,6 +161,7 @@ export const cleaningRequests = pgTable('cleaning_requests', {
   scheduledDate: text('scheduled_date').notNull(), // YYYY-MM-DD
   scheduledTime: text('scheduled_time').notNull(), // HH:MM
   memo: text('memo'),
+  linenWash: boolean('linen_wash').default(false).notNull(),
   price: integer('price').notNull(), // 스냅샷 금액 (원)
   discount: integer('discount').default(0).notNull(), // 할인 금액
   finalPrice: integer('final_price').notNull(), // 최종 결제 금액

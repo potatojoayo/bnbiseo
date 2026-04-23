@@ -162,6 +162,13 @@
       "when": 1776934879300,
       "tag": "0022_add_cleaning_prep_info",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1776947300126,
+      "tag": "0023_add_linen_wash",
+      "breakpoints": true
     }
   ]
 }

@@ -122,6 +122,7 @@ type RegistrationDetail = {
   cleaningClosetLocation: string | null
   extraLinenLocation: string | null
   trashDisposalLocation: string | null
+  linenWashLocation: 'in_house' | 'external' | null
   hostName: string | null
   hostEmail: string | null
   spaces: Array<{

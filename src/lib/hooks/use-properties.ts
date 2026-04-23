@@ -27,6 +27,7 @@ export type Property = {
   bedrooms: number | null
   bathrooms: number | null
   airbnbListingId: string | null
+  linenWashLocation: 'in_house' | 'external' | null
   activatedAt?: string | null
 }
 

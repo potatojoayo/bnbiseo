@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { CalendarPicker } from '@/components/calendar-picker'
 import { PropertyCard } from '@/components/property-card'
 import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
-import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
+import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT, LINEN_WASH_PRICING, LINEN_WASH_LABELS } from '@/lib/cleaning-pricing'
 import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
@@ -33,6 +33,7 @@ export default function NewCleaningPage() {
   const [date, setDate] = useState(searchParams.get('date') ?? getTomorrow())
   const [time, setTime] = useState(searchParams.get('time') ?? '11:00')
   const [memo, setMemo] = useState(searchParams.get('memo') ?? '')
+  const [linenWash, setLinenWash] = useState(searchParams.get('linenWash') === '1')
 
   const [dateDrawerOpen, setDateDrawerOpen] = useState(false)
   const [timeDrawerOpen, setTimeDrawerOpen] = useState(false)
@@ -52,6 +53,8 @@ export default function NewCleaningPage() {
         bedrooms: selectedProperty.bedrooms ?? 0,
         bathrooms: selectedProperty.bathrooms ?? 0,
         isUrgent,
+        linenWash,
+        linenWashLocation: selectedProperty.linenWashLocation,
       })
     : null
   const estimatedPrice = priceInfo
@@ -68,6 +71,13 @@ export default function NewCleaningPage() {
       setSelectedPropertyId(activeProperties[0]?.id ?? '')
     }
   }, [activeProperties, propertiesLoading, selectedPropertyId])
+
+  // If selected property doesn't support linen wash, auto-uncheck
+  useEffect(() => {
+    if (selectedProperty && !selectedProperty.linenWashLocation && linenWash) {
+      setLinenWash(false)
+    }
+  }, [selectedProperty, linenWash])
 
   // When date changes, validate time
   function handleDateSelect(newDate: string) {
@@ -99,6 +109,7 @@ export default function NewCleaningPage() {
       time,
     })
     if (memo) params.set('memo', memo)
+    if (linenWash) params.set('linenWash', '1')
     router.push(`/cleaning/new/review?${params.toString()}`)
   }
 
@@ -290,6 +301,43 @@ export default function NewCleaningPage() {
             borderRadius="12px"
           />
         </CompoundInput>
+
+        {/* Linen wash add-on — shown only if property has a configured location */}
+        {selectedProperty?.linenWashLocation && (
+          <div>
+            <p className="text-[13px] font-medium text-ink-muted mb-2 px-1">추가 옵션</p>
+            <button
+              type="button"
+              onClick={() => setLinenWash((prev) => !prev)}
+              className={cn(
+                'w-full flex items-center justify-between rounded-xl border px-4 py-3.5 text-left transition-colors',
+                linenWash ? 'border-ink bg-surface-soft' : 'border-ink-faint hover:bg-surface-soft',
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className={cn(
+                    'flex h-[22px] w-[22px] items-center justify-center rounded-md border-[1.5px] shrink-0 transition-colors',
+                    linenWash ? 'bg-ink border-ink' : 'border-outline',
+                  )}
+                >
+                  {linenWash && (
+                    <CheckIcon size={14} strokeWidth={3} className="text-white" />
+                  )}
+                </span>
+                <div>
+                  <p className="text-[14px] font-semibold text-ink">침구류 세탁·건조</p>
+                  <p className="text-[12px] text-ink-muted mt-0.5">
+                    {LINEN_WASH_LABELS[selectedProperty.linenWashLocation]}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[14px] font-semibold text-ink">
+                +{LINEN_WASH_PRICING[selectedProperty.linenWashLocation].toLocaleString()}원
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Price estimate */}
         {priceInfo && (

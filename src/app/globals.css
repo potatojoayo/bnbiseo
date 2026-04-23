@@ -147,6 +147,16 @@ body {
   100% { transform: scale(1); }
 }
 
+@keyframes collapsibleDown {
+  from { height: 0; }
+  to { height: var(--radix-collapsible-content-height); }
+}
+
+@keyframes collapsibleUp {
+  from { height: var(--radix-collapsible-content-height); }
+  to { height: 0; }
+}
+
 @theme inline {
   --font-heading: var(--font-body);
   --font-text: var(--font-body);
@@ -190,6 +200,8 @@ body {
   --animate-blink: blink 1s infinite;
   --animate-blink-2: blink 1s infinite 0.2s;
   --animate-blink-3: blink 1s infinite 0.4s;
+  --animate-collapsible-down: collapsibleDown 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-collapsible-up: collapsibleUp 0.55s cubic-bezier(0.16, 1, 0.3, 1);
   --font-sans: var(--font-body);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);

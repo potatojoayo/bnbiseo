@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronDownIcon, ChevronLeftIcon } from 'lucide-react'
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk'
 import { getToday } from '@/lib/utils'
-import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
+import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT, LINEN_WASH_LABELS } from '@/lib/cleaning-pricing'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { useAuth } from '@/lib/auth-provider'
@@ -107,6 +107,7 @@ export default function CleaningReviewPage() {
   const date = searchParams.get('date') ?? ''
   const time = searchParams.get('time') ?? ''
   const memo = searchParams.get('memo') ?? ''
+  const linenWash = searchParams.get('linenWash') === '1'
 
   const [submitting, setSubmitting] = useState(false)
 
@@ -132,6 +133,8 @@ export default function CleaningReviewPage() {
         bedrooms: selectedProperty.bedrooms ?? 0,
         bathrooms: selectedProperty.bathrooms ?? 0,
         isUrgent,
+        linenWash,
+        linenWashLocation: selectedProperty.linenWashLocation,
       })
     : null
   const estimatedPrice = priceInfo
@@ -152,6 +155,7 @@ export default function CleaningReviewPage() {
         scheduledTime: time,
         memo: memo || undefined,
         isUrgent,
+        linenWash,
       })
 
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY)
@@ -197,7 +201,7 @@ export default function CleaningReviewPage() {
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-0">
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() => router.replace(`/cleaning/new?${searchParams.toString()}`)}
         className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
       >
         <ChevronLeftIcon size={32} />
@@ -237,7 +241,7 @@ export default function CleaningReviewPage() {
                       className="text-ink-muted transition-transform duration-200 group-data-[state=open]:rotate-180"
                     />
                   </CollapsibleTrigger>
-                  <CollapsibleContent>
+                  <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
                     <div className="border-t border-outline-dim px-4 py-3 flex flex-col gap-3">
                       {term.items.map((item) => (
                         <div key={item.label}>
@@ -273,6 +277,11 @@ export default function CleaningReviewPage() {
                 </span>
               </div>
             </div>
+            {linenWash && selectedProperty.linenWashLocation && (
+              <p className="text-[12px] text-ink-muted mt-1.5 text-right">
+                침구류 세탁 · {LINEN_WASH_LABELS[selectedProperty.linenWashLocation]} +{priceInfo.linenWashCharge.toLocaleString()}원
+              </p>
+            )}
             {isFirstCleaning && (
               <p className="text-[12px] text-brand mt-1.5 text-right">
                 첫 청소 {FIRST_CLEANING_DISCOUNT.toLocaleString()}원 할인 적용

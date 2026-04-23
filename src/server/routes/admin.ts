@@ -325,6 +325,7 @@ const PropertyRegistrationSchema = z.object({
   cleaningClosetLocation: z.string().optional(),
   extraLinenLocation: z.string().optional(),
   trashDisposalLocation: z.string().optional(),
+  linenWashLocation: z.enum(['in_house', 'external']).nullable().optional(),
   fixtures: z.array(FixtureRegistrationSchema),
 })
 
@@ -336,6 +337,7 @@ const PropertyRegistrationDraftSchema = z.object({
   cleaningClosetLocation: z.string().optional(),
   extraLinenLocation: z.string().optional(),
   trashDisposalLocation: z.string().optional(),
+  linenWashLocation: z.enum(['in_house', 'external']).nullable().optional(),
 })
 
 const CreateFixtureSchema = z.object({
@@ -699,6 +701,7 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       cleaningClosetLocation: properties.cleaningClosetLocation,
       extraLinenLocation: properties.extraLinenLocation,
       trashDisposalLocation: properties.trashDisposalLocation,
+      linenWashLocation: properties.linenWashLocation,
       hostName: profiles.fullName,
       hostEmail: profiles.email,
     })
@@ -897,6 +900,7 @@ adminRoutes.post('/properties/:id/registration/draft', async (c) => {
       cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
       extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
       trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
+      linenWashLocation: validated.data.linenWashLocation ?? null,
       updatedAt: new Date(),
     })
     .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
@@ -1194,6 +1198,7 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
         cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
         extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
         trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
+        linenWashLocation: validated.data.linenWashLocation ?? null,
         status: 'active',
         activatedAt: new Date(),
         updatedAt: new Date(),
