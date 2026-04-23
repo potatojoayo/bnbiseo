@@ -13,8 +13,8 @@ type Step = 'email' | 'login' | 'signup'
 
 export function AuthForm() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
-  const { data: profile, isLoading: profileLoading } = useProfile()
+  const { user } = useAuth()
+  const { data: profile } = useProfile()
   const invalidateProfile = useInvalidateProfile()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
@@ -33,12 +33,6 @@ export function AuthForm() {
   const [visibleStep, setVisibleStep] = useState<Step>('email')
 
   const font = { fontFamily: 'var(--font-body)' }
-
-  useEffect(() => {
-    if (!authLoading && user && profile?.role === 'user') {
-      router.replace(profile.onboardingCompleted ? '/home' : '/onboarding')
-    }
-  }, [authLoading, profile, router, user])
 
   // When step changes, update visibleStep (for open) or start close animation
   useEffect(() => {

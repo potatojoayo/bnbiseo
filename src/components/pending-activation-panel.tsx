@@ -17,6 +17,8 @@ type PendingActivationPanelProps = {
   properties: PendingProperty[]
   className?: string
   action?: React.ReactNode
+  imageSrc?: string
+  imageAlt?: string
 }
 
 export function PendingActivationPanel({
@@ -25,13 +27,15 @@ export function PendingActivationPanel({
   properties,
   className,
   action,
+  imageSrc = '/images/register.png',
+  imageAlt = '숙소 등록 진행',
 }: PendingActivationPanelProps) {
   return (
     <div className={className}>
       <div className="flex flex-col items-center text-center px-1 pt-12">
         <Image
-          src="/images/register.png"
-          alt="숙소 등록 진행"
+          src={imageSrc}
+          alt={imageAlt}
           width={200}
           height={100}
           priority
@@ -40,9 +44,11 @@ export function PendingActivationPanel({
         <h2 className="text-[20px] font-semibold leading-tight text-ink">
           {title}
         </h2>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
-          {description}
-        </p>
+        {description && (
+          <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
+            {description}
+          </p>
+        )}
         {action}
       </div>
 

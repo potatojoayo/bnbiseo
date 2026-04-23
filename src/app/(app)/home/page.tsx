@@ -102,11 +102,13 @@ export default function HomePage() {
           <PendingActivationPanel
             title={pendingProperties.length > 0
               ? '숙소 등록을 진행하고 있어요'
-              : '숙소를 등록하고 서비스를 시작하세요'}
+              : '등록된 숙소가 없어요'}
             description={pendingProperties.length > 0
               ? '48시간 이내 직접 방문해 숙소 등록을 완료해드려요.'
-              : '청소, 수리 등 다양한 관리 서비스를 이용할 수 있어요'}
+              : ''}
             properties={pendingProperties}
+            imageSrc={pendingProperties.length > 0 ? '/images/register.png' : '/images/empty.png'}
+            imageAlt={pendingProperties.length > 0 ? '숙소 등록 진행' : '숙소 등록 안내'}
             action={
               pendingProperties.length > 0 ? (
                 <button
