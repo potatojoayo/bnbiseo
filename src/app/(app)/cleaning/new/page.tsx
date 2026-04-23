@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckIcon, ChevronLeftIcon } from 'lucide-react'
-import { loadTossPayments } from '@tosspayments/tosspayments-sdk'
 import { toast } from 'sonner'
 import { CalendarPicker } from '@/components/calendar-picker'
 import { PropertyCard } from '@/components/property-card'
@@ -14,13 +13,10 @@ import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { useAuth } from '@/lib/auth-provider'
-import { api } from '@/lib/api-client'
 import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { ProcessDrawer } from '@/components/process-drawer'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-
-const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
@@ -34,16 +30,14 @@ export default function NewCleaningPage() {
   const isFirstCleaning = cleaningHistory.length === 0
 
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>(searchParams.get('propertyId') ?? '')
-  const [date, setDate] = useState(getTomorrow())
-  const [time, setTime] = useState('11:00')
-  const [memo, setMemo] = useState('')
+  const [date, setDate] = useState(searchParams.get('date') ?? getTomorrow())
+  const [time, setTime] = useState(searchParams.get('time') ?? '11:00')
+  const [memo, setMemo] = useState(searchParams.get('memo') ?? '')
 
   const [dateDrawerOpen, setDateDrawerOpen] = useState(false)
   const [timeDrawerOpen, setTimeDrawerOpen] = useState(false)
   const [pricingDrawerOpen, setPricingDrawerOpen] = useState(false)
   const [registrationDrawerOpen, setRegistrationDrawerOpen] = useState(false)
-
-  const [submitting, setSubmitting] = useState(false)
 
   const isUrgent = date === getToday()
   const activeProperties = properties.filter((property) => property.status === 'active')
@@ -90,56 +84,22 @@ export default function NewCleaningPage() {
     setTimeout(() => setTimeDrawerOpen(false), 300)
   }
 
-  // Create cleaning request → open Toss payment popup
-  async function handleSubmit(e: React.FormEvent) {
+  // Form → Review page transition
+  function handleNext(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedPropertyId || !user) return
+    if (!selectedPropertyId) return
     const minTime = getMinTime(date)
     if (minTime && time < minTime) {
       setTime(minTime)
       return
     }
-    setSubmitting(true)
-    try {
-      // 1. 서버에 주문 생성 (pending_payment)
-      const created = await api.post<{
-        id: string
-        orderId: string
-        finalPrice: number
-      }>('/cleaning', {
-        propertyId: selectedPropertyId,
-        scheduledDate: date,
-        scheduledTime: time,
-        memo: memo || undefined,
-        isUrgent,
-      })
-
-      // 2. 토스 결제창 띄우기
-      const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY)
-      const payment = tossPayments.payment({ customerKey: user.id })
-
-      const propertyName = selectedProperty?.name || '숙소'
-      await payment.requestPayment({
-        method: 'CARD',
-        amount: { currency: 'KRW', value: created.finalPrice },
-        orderId: created.orderId,
-        orderName: `비앤비서 청소 · ${propertyName}`,
-        successUrl: `${window.location.origin}/cleaning/success`,
-        failUrl: `${window.location.origin}/cleaning/fail`,
-        customerEmail: user.email || undefined,
-        customerName: user.user_metadata?.full_name || undefined,
-        card: {
-          useEscrow: false,
-          flowMode: 'DEFAULT',
-          useCardPoint: false,
-          useAppCardOnly: false,
-        },
-      })
-    } catch {
-      // 결제창 닫기 or 에러 — submitting 해제
-    } finally {
-      setSubmitting(false)
-    }
+    const params = new URLSearchParams({
+      propertyId: selectedPropertyId,
+      date,
+      time,
+    })
+    if (memo) params.set('memo', memo)
+    router.push(`/cleaning/new/review?${params.toString()}`)
   }
 
   const isPageLoading =
@@ -236,7 +196,7 @@ export default function NewCleaningPage() {
         청소 요청
       </h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleNext} className="flex flex-col gap-5">
         {/* Property Selection */}
         {activeProperties.length >= 1 && (
           <div>
@@ -423,19 +383,13 @@ export default function NewCleaningPage() {
         </Drawer>
         </>}
 
-        {/* Submit */}
+        {/* Next */}
         <LoadingButton
           type="submit"
           variant="primary"
-          loading={submitting}
-          loadingText="결제 진행 중..."
           disabled={!selectedPropertyId && !propertiesLoading}
         >
-          {!selectedPropertyId
-            ? '숙소를 선택해주세요'
-            : estimatedPrice > 0
-              ? `${estimatedPrice.toLocaleString()}원 결제하기`
-              : '결제하기'}
+          {!selectedPropertyId ? '숙소를 선택해주세요' : '청소 요청하기'}
         </LoadingButton>
       </form>
 
