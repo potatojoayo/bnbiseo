@@ -63,7 +63,7 @@ export default function AdminDashboardLayout({
             '--header-height': 'calc(var(--spacing) * 12)',
           } as React.CSSProperties
         }
-        className="min-h-[100dvh] bg-white"
+        className="bg-white"
       >
         <AdminSidebar
           variant="inset"
@@ -72,12 +72,12 @@ export default function AdminDashboardLayout({
         <SidebarInset className={showBottomNav ? 'pb-[72px] md:pb-0' : undefined}>
           {children}
         </SidebarInset>
-        {showBottomNav && (
-          <div className="md:hidden">
-            <AdminBottomNav />
-          </div>
-        )}
       </SidebarProvider>
+      {showBottomNav && (
+        <div className="md:hidden">
+          <AdminBottomNav />
+        </div>
+      )}
     </SiteHeaderVisibilityContext.Provider>
   )
 }

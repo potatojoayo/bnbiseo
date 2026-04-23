@@ -248,7 +248,7 @@ adminRoutes.post('/cleaning/:id/assign', async (c) => {
     })
     .from(cleaningRequests)
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
-    .where(eq(cleaningRequests.id, updated.id))
+    .where(eq(cleaningRequests.id, id))
     .limit(1)
 
   if (detail) {
@@ -299,7 +299,7 @@ adminRoutes.post('/cleaning/:id/status', async (c) => {
       })
       .from(cleaningRequests)
       .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
-      .where(eq(cleaningRequests.id, updated.id))
+      .where(eq(cleaningRequests.id, id))
       .limit(1)
 
     if (detail) {
@@ -369,6 +369,10 @@ const PropertyRegistrationSchema = z.object({
   doorLockPassword: z.string().min(1),
   wifiSsid: z.string().optional(),
   wifiPassword: z.string().optional(),
+  cleaningClosetLocation: z.string().optional(),
+  extraLinenLocation: z.string().optional(),
+  trashDisposalLocation: z.string().optional(),
+  linenWashLocation: z.enum(['in_house', 'external']).nullable().optional(),
   fixtures: z.array(FixtureRegistrationSchema),
 })
 
@@ -377,6 +381,10 @@ const PropertyRegistrationDraftSchema = z.object({
   doorLockPassword: z.string().optional(),
   wifiSsid: z.string().optional(),
   wifiPassword: z.string().optional(),
+  cleaningClosetLocation: z.string().optional(),
+  extraLinenLocation: z.string().optional(),
+  trashDisposalLocation: z.string().optional(),
+  linenWashLocation: z.enum(['in_house', 'external']).nullable().optional(),
 })
 
 const CreateFixtureSchema = z.object({
@@ -737,6 +745,10 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       doorLockPassword: properties.doorLockPassword,
       wifiSsid: properties.wifiSsid,
       wifiPassword: properties.wifiPassword,
+      cleaningClosetLocation: properties.cleaningClosetLocation,
+      extraLinenLocation: properties.extraLinenLocation,
+      trashDisposalLocation: properties.trashDisposalLocation,
+      linenWashLocation: properties.linenWashLocation,
       hostName: profiles.fullName,
       hostEmail: profiles.email,
     })
@@ -932,6 +944,10 @@ adminRoutes.post('/properties/:id/registration/draft', async (c) => {
       doorLockPassword: validated.data.doorLockPassword?.trim() || null,
       wifiSsid: validated.data.wifiSsid?.trim() || null,
       wifiPassword: validated.data.wifiPassword?.trim() || null,
+      cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
+      extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
+      trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
+      linenWashLocation: validated.data.linenWashLocation ?? null,
       updatedAt: new Date(),
     })
     .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
@@ -1209,11 +1225,7 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
   }
 
   const [property] = await db
-    .select({
-      id: properties.id,
-      hostId: properties.hostId,
-      name: properties.name,
-    })
+    .select({ id: properties.id, hostId: properties.hostId, name: properties.name })
     .from(properties)
     .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
     .limit(1)
@@ -1230,6 +1242,10 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
         doorLockPassword: validated.data.doorLockPassword,
         wifiSsid: validated.data.wifiSsid || null,
         wifiPassword: validated.data.wifiPassword || null,
+        cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
+        extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
+        trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
+        linenWashLocation: validated.data.linenWashLocation ?? null,
         status: 'active',
         activatedAt: new Date(),
         updatedAt: new Date(),

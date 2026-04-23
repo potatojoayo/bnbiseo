@@ -152,8 +152,29 @@
     {
       "idx": 21,
       "version": "7",
-      "when": 1776504359865,
-      "tag": "0021_heavy_invaders",
+      "when": 1776749180969,
+      "tag": "0021_repair_feature_redesign",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1776934879300,
+      "tag": "0022_add_cleaning_prep_info",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1776947300126,
+      "tag": "0023_add_linen_wash",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1776952310166,
+      "tag": "0024_add_notifications",
       "breakpoints": true
     }
   ]

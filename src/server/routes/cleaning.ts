@@ -29,6 +29,7 @@ const CleaningRequestSchema = z.object({
   scheduledTime: z.string().regex(/^\d{2}:\d{2}$/),
   memo: z.string().optional(),
   isUrgent: z.boolean().default(false),
+  linenWash: z.boolean().default(false),
 })
 
 const ConfirmPaymentSchema = z.object({
@@ -78,6 +79,7 @@ cleaningRoutes.get('/', async (c) => {
       scheduledDate: cleaningRequests.scheduledDate,
       scheduledTime: cleaningRequests.scheduledTime,
       memo: cleaningRequests.memo,
+      linenWash: cleaningRequests.linenWash,
       price: cleaningRequests.price,
       discount: cleaningRequests.discount,
       finalPrice: cleaningRequests.finalPrice,
@@ -110,6 +112,7 @@ cleaningRoutes.get('/:id', async (c) => {
       scheduledDate: cleaningRequests.scheduledDate,
       scheduledTime: cleaningRequests.scheduledTime,
       memo: cleaningRequests.memo,
+      linenWash: cleaningRequests.linenWash,
       price: cleaningRequests.price,
       discount: cleaningRequests.discount,
       finalPrice: cleaningRequests.finalPrice,
@@ -304,7 +307,7 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
   }
 
-  const { propertyId, scheduledDate, scheduledTime, memo, isUrgent } = validated.data
+  const { propertyId, scheduledDate, scheduledTime, memo, isUrgent, linenWash } = validated.data
 
   // Verify property ownership
   const [property] = await db
@@ -335,6 +338,11 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ error: '숙소 면적 정보가 필요해요' }, 400)
   }
 
+  // Guard: linenWash requires the property to have a configured linen wash location
+  if (linenWash && !property.linenWashLocation) {
+    return c.json({ error: '이 숙소는 침구류 세탁 옵션이 설정되어 있지 않아요.' }, 400)
+  }
+
   // Calculate price
   const priceResult = calculateCleaningPrice({
     pyeong: summary.pyeong,
@@ -342,6 +350,8 @@ cleaningRoutes.post('/', async (c) => {
     bedrooms: summary.bedrooms ?? 0,
     bathrooms: summary.bathrooms ?? 0,
     isUrgent,
+    linenWash,
+    linenWashLocation: property.linenWashLocation,
   })
 
   // Check if first cleaning
@@ -369,6 +379,7 @@ cleaningRoutes.post('/', async (c) => {
       scheduledDate,
       scheduledTime,
       memo: memo || null,
+      linenWash,
       price: priceResult.total,
       discount,
       finalPrice,
@@ -564,7 +575,7 @@ cleaningRoutes.post('/:id/cancel', async (c) => {
   const [property] = await db
     .select({ name: properties.name })
     .from(properties)
-    .where(eq(properties.id, request.propertyId))
+    .where(eq(properties.id, updated.propertyId))
     .limit(1)
 
   await notifyCleaningCancelledByHost({

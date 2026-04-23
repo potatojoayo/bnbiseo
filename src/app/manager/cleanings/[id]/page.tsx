@@ -344,6 +344,21 @@ export default function ManagerCleaningDetailPage() {
       </section>
 
       <section className="mt-7 space-y-4">
+        <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
+        <CompoundInput>
+          <CompoundField label="청소 도구함 위치" borderRadius="12px 12px 0 0">
+            <span className="block w-full text-[16px] text-ink">{cleaning.cleaningClosetLocation || '-'}</span>
+          </CompoundField>
+          <CompoundField label="침구류 여분 위치">
+            <span className="block w-full text-[16px] text-ink">{cleaning.extraLinenLocation || '-'}</span>
+          </CompoundField>
+          <CompoundField label="쓰레기 배출 장소" borderRadius="0 0 12px 12px">
+            <span className="block w-full text-[16px] text-ink">{cleaning.trashDisposalLocation || '-'}</span>
+          </CompoundField>
+        </CompoundInput>
+      </section>
+
+      <section className="mt-7 space-y-4">
         <p className="text-[16px] font-semibold text-ink">공간 정보</p>
         {cleaning.spaces.length === 0 ? (
           <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">

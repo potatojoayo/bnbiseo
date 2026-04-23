@@ -29,6 +29,11 @@ export const propertyStatusEnum = pgEnum('property_status', [
   'active',
 ])
 
+export const linenWashLocationEnum = pgEnum('linen_wash_location', [
+  'in_house',
+  'external',
+])
+
 export const fixtureCategoryEnum = pgEnum('fixture_category', [
   'lighting',
   'furniture',
@@ -49,15 +54,6 @@ export const propertySpaceCategoryEnum = pgEnum('property_space_category', [
   'bathroom',
 ])
 
-export const repairSourceEnum = pgEnum('repair_source', ['host', 'guest'])
-
-export const repairPriorityEnum = pgEnum('repair_priority', [
-  'low',
-  'normal',
-  'high',
-  'urgent',
-])
-
 export const cleaningStatusEnum = pgEnum('cleaning_status', [
   'pending_payment', // 결제 대기
   'pending',      // 요청 접수 (결제 완료)
@@ -73,17 +69,13 @@ export const cleaningTypeEnum = pgEnum('cleaning_type', [
 ])
 
 export const repairStatusEnum = pgEnum('repair_status', [
-  'submitted',
-  'reviewing',
-  'scheduled',
-  'in_progress',
-  'completed',
+  'submitted',     // 호스트 요청 접수 (매니저 유선 협의 대기)
+  'quoted',        // 매니저가 일정+견적 발송 (호스트 결제 대기)
+  'confirmed',     // 호스트 결제 완료 (방문 일정 최종 확정)
+  'in_progress',   // 매니저 현장 작업 시작
+  'completed',     // 조치 보고서 작성 완료
   'cancelled',
 ])
-
-export const photoTypeEnum = pgEnum('photo_type', ['defect', 'before', 'after'])
-
-export const uploadedByEnum = pgEnum('uploaded_by', ['host', 'guest'])
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin', 'manager'])
 
@@ -140,6 +132,10 @@ export const properties = pgTable('properties', {
   doorLockPassword: text('door_lock_password'),
   wifiSsid: text('wifi_ssid'),
   wifiPassword: text('wifi_password'),
+  cleaningClosetLocation: text('cleaning_closet_location'),
+  extraLinenLocation: text('extra_linen_location'),
+  trashDisposalLocation: text('trash_disposal_location'),
+  linenWashLocation: linenWashLocationEnum('linen_wash_location'),
   qrToken: uuid('qr_token').defaultRandom().notNull(),
   activatedAt: timestamp('activated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -179,6 +175,7 @@ export const cleaningRequests = pgTable('cleaning_requests', {
   scheduledDate: text('scheduled_date').notNull(), // YYYY-MM-DD
   scheduledTime: text('scheduled_time').notNull(), // HH:MM
   memo: text('memo'),
+  linenWash: boolean('linen_wash').default(false).notNull(),
   price: integer('price').notNull(), // 스냅샷 금액 (원)
   discount: integer('discount').default(0).notNull(), // 할인 금액
   finalPrice: integer('final_price').notNull(), // 최종 결제 금액
@@ -264,50 +261,80 @@ export const repairRequests = pgTable('repair_requests', {
   propertyId: uuid('property_id')
     .notNull()
     .references(() => properties.id, { onDelete: 'cascade' }),
-  fixtureId: uuid('fixture_id').references(() => propertyAssets.id, {
+  hostId: uuid('host_id')
+    .notNull()
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  managerId: uuid('manager_id').references(() => managers.id, {
     onDelete: 'set null',
   }),
-  source: repairSourceEnum('source').default('host').notNull(),
-  title: text('title').notNull(),
-  description: text('description'),
-  aiDiagnosis: text('ai_diagnosis'),
-  aiPartsEstimate: jsonb('ai_parts_estimate'),
-  aiCostEstimate: integer('ai_cost_estimate'),
-  priority: repairPriorityEnum('priority').default('normal').notNull(),
   status: repairStatusEnum('status').default('submitted').notNull(),
-  scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
-  assignedTo: text('assigned_to'),
-  actualCost: integer('actual_cost'),
-  completionNotes: text('completion_notes'),
+  description: text('description').notNull(),
+  preferredScheduledDate: text('preferred_scheduled_date').notNull(), // YYYY-MM-DD
+  preferredScheduledTime: text('preferred_scheduled_time').notNull(), // HH:MM
+  scheduledDate: text('scheduled_date'), // 매니저가 확정한 방문 날짜
+  scheduledTime: text('scheduled_time'),
+  quotedCost: integer('quoted_cost'), // 견적 금액 (원)
+  quoteNote: text('quote_note'),      // 견적서 부가 설명
+  orderId: text('order_id'),          // 토스페이먼츠 주문번호
+  paymentKey: text('payment_key'),
+  quotedAt: timestamp('quoted_at', { withTimezone: true }),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  startedAt: timestamp('started_at', { withTimezone: true }),
   completedAt: timestamp('completed_at', { withTimezone: true }),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-export const repairPhotos = pgTable('repair_photos', {
+export const repairRequestPhotos = pgTable('repair_request_photos', {
   id: uuid('id').primaryKey().defaultRandom(),
   repairRequestId: uuid('repair_request_id')
     .notNull()
     .references(() => repairRequests.id, { onDelete: 'cascade' }),
   storagePath: text('storage_path').notNull(),
-  photoType: photoTypeEnum('photo_type').notNull(),
-  caption: text('caption'),
-  uploadedBy: uploadedByEnum('uploaded_by').default('host').notNull(),
+  thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
+  sortOrder: smallint('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-export const repairParts = pgTable('repair_parts', {
+export const repairRequestAssets = pgTable(
+  'repair_request_assets',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    repairRequestId: uuid('repair_request_id')
+      .notNull()
+      .references(() => repairRequests.id, { onDelete: 'cascade' }),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => propertyAssets.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('repair_request_assets_request_asset_idx').on(t.repairRequestId, t.assetId)],
+)
+
+export const repairCompletionReports = pgTable(
+  'repair_completion_reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    repairRequestId: uuid('repair_request_id')
+      .notNull()
+      .references(() => repairRequests.id, { onDelete: 'cascade' }),
+    actionNotes: text('action_notes').notNull(),       // 조치 내용 (필수)
+    additionalNotes: text('additional_notes'),          // 추가 메모 (선택)
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('repair_completion_reports_repair_request_id_idx').on(t.repairRequestId)],
+)
+
+export const repairCompletionPhotos = pgTable('repair_completion_photos', {
   id: uuid('id').primaryKey().defaultRandom(),
-  repairRequestId: uuid('repair_request_id')
+  completionReportId: uuid('completion_report_id')
     .notNull()
-    .references(() => repairRequests.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  brand: text('brand'),
-  modelNumber: text('model_number'),
-  quantity: smallint('quantity').default(1).notNull(),
-  unitPrice: integer('unit_price').notNull(),
-  purchaseSource: text('purchase_source'),
-  notes: text('notes'),
+    .references(() => repairCompletionReports.id, { onDelete: 'cascade' }),
+  storagePath: text('storage_path').notNull(),
+  thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
+  sortOrder: smallint('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
@@ -383,6 +410,7 @@ export const notifications = pgTable(
 export const profilesRelations = relations(profiles, ({ many }) => ({
   properties: many(properties),
   cleaningRequests: many(cleaningRequests),
+  repairRequests: many(repairRequests),
   notifications: many(notifications),
 }))
 
@@ -400,6 +428,7 @@ export const managersRelations = relations(managers, ({ one, many }) => ({
     references: [profiles.id],
   }),
   cleaningRequests: many(cleaningRequests),
+  repairRequests: many(repairRequests),
 }))
 
 export const cleaningRequestsRelations = relations(cleaningRequests, ({ one, many }) => ({
@@ -435,7 +464,7 @@ export const propertyAssetsRelations = relations(propertyAssets, ({ one, many })
     references: [properties.id],
   }),
   photos: many(propertyAssetPhotos),
-  repairRequests: many(repairRequests),
+  repairRequestAssets: many(repairRequestAssets),
   inspectionReports: many(cleaningInspectionAssetReports),
 }))
 
@@ -466,25 +495,52 @@ export const repairRequestsRelations = relations(repairRequests, ({ one, many })
     fields: [repairRequests.propertyId],
     references: [properties.id],
   }),
-  fixture: one(propertyAssets, {
-    fields: [repairRequests.fixtureId],
+  host: one(profiles, {
+    fields: [repairRequests.hostId],
+    references: [profiles.id],
+  }),
+  manager: one(managers, {
+    fields: [repairRequests.managerId],
+    references: [managers.id],
+  }),
+  photos: many(repairRequestPhotos),
+  assets: many(repairRequestAssets),
+  completionReport: one(repairCompletionReports, {
+    fields: [repairRequests.id],
+    references: [repairCompletionReports.repairRequestId],
+  }),
+}))
+
+export const repairRequestPhotosRelations = relations(repairRequestPhotos, ({ one }) => ({
+  repairRequest: one(repairRequests, {
+    fields: [repairRequestPhotos.repairRequestId],
+    references: [repairRequests.id],
+  }),
+}))
+
+export const repairRequestAssetsRelations = relations(repairRequestAssets, ({ one }) => ({
+  repairRequest: one(repairRequests, {
+    fields: [repairRequestAssets.repairRequestId],
+    references: [repairRequests.id],
+  }),
+  asset: one(propertyAssets, {
+    fields: [repairRequestAssets.assetId],
     references: [propertyAssets.id],
   }),
-  photos: many(repairPhotos),
-  parts: many(repairParts),
 }))
 
-export const repairPhotosRelations = relations(repairPhotos, ({ one }) => ({
+export const repairCompletionReportsRelations = relations(repairCompletionReports, ({ one, many }) => ({
   repairRequest: one(repairRequests, {
-    fields: [repairPhotos.repairRequestId],
+    fields: [repairCompletionReports.repairRequestId],
     references: [repairRequests.id],
   }),
+  photos: many(repairCompletionPhotos),
 }))
 
-export const repairPartsRelations = relations(repairParts, ({ one }) => ({
-  repairRequest: one(repairRequests, {
-    fields: [repairParts.repairRequestId],
-    references: [repairRequests.id],
+export const repairCompletionPhotosRelations = relations(repairCompletionPhotos, ({ one }) => ({
+  completionReport: one(repairCompletionReports, {
+    fields: [repairCompletionPhotos.completionReportId],
+    references: [repairCompletionReports.id],
   }),
 }))
 
@@ -512,12 +568,5 @@ export const cleaningInspectionAssetPhotosRelations = relations(cleaningInspecti
   assetReport: one(cleaningInspectionAssetReports, {
     fields: [cleaningInspectionAssetPhotos.assetReportId],
     references: [cleaningInspectionAssetReports.id],
-  }),
-}))
-
-export const notificationsRelations = relations(notifications, ({ one }) => ({
-  profile: one(profiles, {
-    fields: [notifications.profileId],
-    references: [profiles.id],
   }),
 }))

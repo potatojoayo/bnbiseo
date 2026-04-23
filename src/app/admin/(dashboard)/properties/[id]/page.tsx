@@ -9,7 +9,9 @@ import { MapPinIcon, PlusIcon } from 'lucide-react'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
+import { AssetCard } from '@/components/asset-card'
 import { api, ApiError } from '@/lib/api-client'
+import { cn } from '@/lib/utils'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { CompoundField, CompoundInput, FloatingInput } from '@/components/ui/floating-input'
@@ -152,6 +154,10 @@ function AdminPropertyRegistrationForm({
     doorLockPassword: string | null
     wifiSsid: string | null
     wifiPassword: string | null
+    cleaningClosetLocation: string | null
+    extraLinenLocation: string | null
+    trashDisposalLocation: string | null
+    linenWashLocation: 'in_house' | 'external' | null
     hostName: string | null
     hostEmail: string | null
     spaces: RegistrationDetail['spaces']
@@ -167,18 +173,44 @@ function AdminPropertyRegistrationForm({
   const [doorLockPassword, setDoorLockPassword] = useState(initialData.doorLockPassword || '')
   const [wifiSsid, setWifiSsid] = useState(initialData.wifiSsid || '')
   const [wifiPassword, setWifiPassword] = useState(initialData.wifiPassword || '')
+  const [cleaningClosetLocation, setCleaningClosetLocation] = useState(initialData.cleaningClosetLocation || '')
+  const [extraLinenLocation, setExtraLinenLocation] = useState(initialData.extraLinenLocation || '')
+  const [trashDisposalLocation, setTrashDisposalLocation] = useState(initialData.trashDisposalLocation || '')
+  const [linenWashLocation, setLinenWashLocation] = useState<'in_house' | 'external' | null>(initialData.linenWashLocation)
   const isEditingActive = mode === 'edit'
-  const lastSavedRef = useRef({
+  const lastSavedRef = useRef<{
+    entrancePassword: string
+    doorLockPassword: string
+    wifiSsid: string
+    wifiPassword: string
+    cleaningClosetLocation: string
+    extraLinenLocation: string
+    trashDisposalLocation: string
+    linenWashLocation: 'in_house' | 'external' | null
+  }>({
     entrancePassword: initialData.entrancePassword || '',
     doorLockPassword: initialData.doorLockPassword || '',
     wifiSsid: initialData.wifiSsid || '',
     wifiPassword: initialData.wifiPassword || '',
+    cleaningClosetLocation: initialData.cleaningClosetLocation || '',
+    extraLinenLocation: initialData.extraLinenLocation || '',
+    trashDisposalLocation: initialData.trashDisposalLocation || '',
+    linenWashLocation: initialData.linenWashLocation,
   })
   const readyToAutosaveRef = useRef(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const draftMutation = useMutation({
-    mutationFn: (payload: { entrancePassword?: string; doorLockPassword?: string; wifiSsid?: string; wifiPassword?: string }) =>
+    mutationFn: (payload: {
+      entrancePassword?: string
+      doorLockPassword?: string
+      wifiSsid?: string
+      wifiPassword?: string
+      cleaningClosetLocation?: string
+      extraLinenLocation?: string
+      trashDisposalLocation?: string
+      linenWashLocation?: 'in_house' | 'external' | null
+    }) =>
       api.post(`/admin/properties/${propertyId}/registration/draft`, payload),
     onSuccess: (_, variables) => {
       queryClient.setQueryData(
@@ -191,6 +223,10 @@ function AdminPropertyRegistrationForm({
                 doorLockPassword: variables.doorLockPassword ?? null,
                 wifiSsid: variables.wifiSsid ?? null,
                 wifiPassword: variables.wifiPassword ?? null,
+                cleaningClosetLocation: variables.cleaningClosetLocation ?? null,
+                extraLinenLocation: variables.extraLinenLocation ?? null,
+                trashDisposalLocation: variables.trashDisposalLocation ?? null,
+                linenWashLocation: variables.linenWashLocation ?? null,
               }
             : previous,
       )
@@ -201,6 +237,10 @@ function AdminPropertyRegistrationForm({
         doorLockPassword: variables.doorLockPassword || '',
         wifiSsid: variables.wifiSsid || '',
         wifiPassword: variables.wifiPassword || '',
+        cleaningClosetLocation: variables.cleaningClosetLocation || '',
+        extraLinenLocation: variables.extraLinenLocation || '',
+        trashDisposalLocation: variables.trashDisposalLocation || '',
+        linenWashLocation: variables.linenWashLocation ?? null,
       }
     },
   })
@@ -229,6 +269,10 @@ function AdminPropertyRegistrationForm({
       doorLockPassword,
       wifiSsid,
       wifiPassword,
+      cleaningClosetLocation,
+      extraLinenLocation,
+      trashDisposalLocation,
+      linenWashLocation,
     }
 
     if (
@@ -236,6 +280,10 @@ function AdminPropertyRegistrationForm({
       && nextDraft.doorLockPassword === lastSavedRef.current.doorLockPassword
       && nextDraft.wifiSsid === lastSavedRef.current.wifiSsid
       && nextDraft.wifiPassword === lastSavedRef.current.wifiPassword
+      && nextDraft.cleaningClosetLocation === lastSavedRef.current.cleaningClosetLocation
+      && nextDraft.extraLinenLocation === lastSavedRef.current.extraLinenLocation
+      && nextDraft.trashDisposalLocation === lastSavedRef.current.trashDisposalLocation
+      && nextDraft.linenWashLocation === lastSavedRef.current.linenWashLocation
     ) {
       return
     }
@@ -246,6 +294,10 @@ function AdminPropertyRegistrationForm({
         doorLockPassword: nextDraft.doorLockPassword || undefined,
         wifiSsid: nextDraft.wifiSsid || undefined,
         wifiPassword: nextDraft.wifiPassword || undefined,
+        cleaningClosetLocation: nextDraft.cleaningClosetLocation || undefined,
+        extraLinenLocation: nextDraft.extraLinenLocation || undefined,
+        trashDisposalLocation: nextDraft.trashDisposalLocation || undefined,
+        linenWashLocation: nextDraft.linenWashLocation,
       })
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '임시 저장에 실패했어요.')
@@ -268,7 +320,7 @@ function AdminPropertyRegistrationForm({
         clearTimeout(debounceRef.current)
       }
     }
-  }, [entrancePassword, doorLockPassword, wifiSsid, wifiPassword])
+  }, [entrancePassword, doorLockPassword, wifiSsid, wifiPassword, cleaningClosetLocation, extraLinenLocation, trashDisposalLocation, linenWashLocation])
 
   async function handleSubmit() {
     setSaving(true)
@@ -280,6 +332,10 @@ function AdminPropertyRegistrationForm({
         doorLockPassword,
         wifiSsid: wifiSsid || undefined,
         wifiPassword: wifiPassword || undefined,
+        cleaningClosetLocation: cleaningClosetLocation || undefined,
+        extraLinenLocation: extraLinenLocation || undefined,
+        trashDisposalLocation: trashDisposalLocation || undefined,
+        linenWashLocation,
         fixtures: initialData.fixtures.map((fixture) => ({
           id: fixture.id,
           category: fixture.category,
@@ -355,6 +411,82 @@ function AdminPropertyRegistrationForm({
               borderRadius="0 0 12px 12px"
             />
           </CompoundInput>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
+            <p className="mt-1 text-[13px] text-ink-muted">매니저가 청소·수리 시 활용하는 위치 정보예요.</p>
+          </div>
+
+          <CompoundInput>
+            <FloatingInput
+              label="청소 도구함 위치 (선택)"
+              value={cleaningClosetLocation}
+              onChange={(e) => handleDraftChange(setCleaningClosetLocation, e.target.value)}
+              placeholder="예: 현관 신발장 오른쪽 하단"
+              borderRadius="12px 12px 0 0"
+            />
+            <FloatingInput
+              label="침구류 여분 위치 (선택)"
+              value={extraLinenLocation}
+              onChange={(e) => handleDraftChange(setExtraLinenLocation, e.target.value)}
+              placeholder="예: 안방 붙박이장 맨 위칸"
+            />
+            <FloatingInput
+              label="쓰레기 배출 장소 (선택)"
+              value={trashDisposalLocation}
+              onChange={(e) => handleDraftChange(setTrashDisposalLocation, e.target.value)}
+              placeholder="예: 건물 뒷편 분리수거장"
+              borderRadius="0 0 12px 12px"
+            />
+          </CompoundInput>
+
+          <div>
+            <p className="text-[13px] font-semibold text-ink mb-2">침구류 세탁 위치 (선택)</p>
+            <p className="text-[12px] text-ink-muted mb-2.5">호스트가 청소 요청 시 침구류 세탁 옵션을 선택할 수 있어요. 설정하지 않으면 옵션이 노출되지 않아요.</p>
+            <div className="grid grid-cols-1 gap-2">
+              {([
+                { value: 'in_house' as const, label: '숙소 내 세탁기/건조기', price: 10000 },
+                { value: 'external' as const, label: '외부 코인 세탁기/건조기', price: 20000 },
+              ]).map((option) => {
+                const selected = linenWashLocation === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setLinenWashLocation(selected ? null : option.value)
+                      if (message) setMessage(null)
+                    }}
+                    className={cn(
+                      'flex items-center justify-between rounded-xl border-[1.5px] px-4 py-3.5 text-left transition-colors',
+                      selected
+                        ? 'border-ink bg-surface-soft'
+                        : 'border-outline-dim hover:bg-surface-soft',
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          'flex h-[18px] w-[18px] items-center justify-center rounded-full border-[1.5px] shrink-0 transition-colors',
+                          selected ? 'border-ink' : 'border-outline-strong',
+                        )}
+                      >
+                        {selected && <span className="h-[10px] w-[10px] rounded-full bg-ink" />}
+                      </span>
+                      <span className={cn('text-[14px]', selected ? 'font-semibold text-ink' : 'font-medium text-ink')}>
+                        {option.label}
+                      </span>
+                    </div>
+                    <span className="text-[13px] text-ink-muted">
+                      +{option.price.toLocaleString()}원
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </section>
 
         <section className="space-y-4">
@@ -442,49 +574,21 @@ function AdminPropertyRegistrationForm({
           ) : (
             <div className="flex flex-col gap-3">
               {initialData.fixtures.map((fixture) => (
-                <Link
+                <AssetCard
                   key={fixture.id}
                   href={
                     isEditingActive
                       ? `/admin/properties/${propertyId}/assets/${fixture.id}/edit`
                       : `/admin/properties/${propertyId}/assets/${fixture.id}`
                   }
-                  className="overflow-hidden rounded-xl border border-outline-dim transition-transform active:scale-[0.99]"
-                >
-                  <div className="flex items-stretch">
-                    <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
-                      {fixture.photos[0]?.signedUrl ? (
-                          <ImageWithSkeleton
-                            src={fixture.photos[0].signedUrl}
-                            alt=""
-                            fill
-                          sizes="104px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">
-                          사진 없음
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex min-w-0 flex-1 items-start px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="text-[15px] font-semibold text-ink">{fixture.name}</p>
-                        <p className="mt-1 text-[13px] text-ink-muted">
-                          {CATEGORY_LABELS[fixture.category]} · {fixture.location}
-                        </p>
-                        {(fixture.brand || fixture.modelNumber) && (
-                          <p className="mt-1 text-[13px] text-ink-muted">
-                            {[fixture.brand, fixture.modelNumber].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                        {fixture.notes && (
-                          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{fixture.notes}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                  name={fixture.name}
+                  category={CATEGORY_LABELS[fixture.category]}
+                  location={fixture.location}
+                  brand={fixture.brand}
+                  modelNumber={fixture.modelNumber}
+                  notes={fixture.notes}
+                  imageUrl={fixture.photos[0]?.signedUrl ?? null}
+                />
               ))}
             </div>
           )}
@@ -537,6 +641,10 @@ function AdminPropertyDetailView({
     doorLockPassword: string | null
     wifiSsid: string | null
     wifiPassword: string | null
+    cleaningClosetLocation: string | null
+    extraLinenLocation: string | null
+    trashDisposalLocation: string | null
+    linenWashLocation: 'in_house' | 'external' | null
     hostName: string | null
     hostEmail: string | null
     spaces: RegistrationDetail['spaces']
@@ -623,6 +731,32 @@ function AdminPropertyDetailView({
 
         <section className="space-y-4">
           <div>
+            <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
+          </div>
+          <CompoundInput>
+            <CompoundField label="청소 도구함 위치" borderRadius="12px 12px 0 0">
+              <span className="block w-full text-[16px] text-ink">{property.cleaningClosetLocation || '-'}</span>
+            </CompoundField>
+            <CompoundField label="침구류 여분 위치">
+              <span className="block w-full text-[16px] text-ink">{property.extraLinenLocation || '-'}</span>
+            </CompoundField>
+            <CompoundField label="쓰레기 배출 장소">
+              <span className="block w-full text-[16px] text-ink">{property.trashDisposalLocation || '-'}</span>
+            </CompoundField>
+            <CompoundField label="침구류 세탁 위치" borderRadius="0 0 12px 12px">
+              <span className="block w-full text-[16px] text-ink">
+                {property.linenWashLocation
+                  ? property.linenWashLocation === 'in_house'
+                    ? '숙소 내 세탁기/건조기 (+10,000원)'
+                    : '외부 코인 세탁기/건조기 (+20,000원)'
+                  : '-'}
+              </span>
+            </CompoundField>
+          </CompoundInput>
+        </section>
+
+        <section className="space-y-4">
+          <div>
             <p className="text-[16px] font-semibold text-ink">공간 정보</p>
           </div>
           {property.spaces.length === 0 ? (
@@ -678,45 +812,17 @@ function AdminPropertyDetailView({
           ) : (
             <div className="flex flex-col gap-3">
               {property.fixtures.map((fixture) => (
-                <Link
+                <AssetCard
                   key={fixture.id}
                   href={`/admin/properties/${propertyId}/assets/${fixture.id}`}
-                  className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
-                >
-                  <div className="flex items-stretch">
-                    <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
-                      {fixture.photos[0]?.signedUrl ? (
-                        <ImageWithSkeleton
-                          src={fixture.photos[0].signedUrl}
-                          alt=""
-                          fill
-                          sizes="104px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">
-                          사진 없음
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex min-w-0 flex-1 items-start px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="text-[15px] font-semibold text-ink">{fixture.name}</p>
-                        <p className="mt-1 text-[13px] text-ink-muted">
-                          {CATEGORY_LABELS[fixture.category]} · {fixture.location}
-                        </p>
-                        {(fixture.brand || fixture.modelNumber) && (
-                          <p className="mt-1 text-[13px] text-ink-muted">
-                            {[fixture.brand, fixture.modelNumber].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                        {fixture.notes && (
-                          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{fixture.notes}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                  name={fixture.name}
+                  category={CATEGORY_LABELS[fixture.category]}
+                  location={fixture.location}
+                  brand={fixture.brand}
+                  modelNumber={fixture.modelNumber}
+                  notes={fixture.notes}
+                  imageUrl={fixture.photos[0]?.signedUrl ?? null}
+                />
               ))}
             </div>
           )}

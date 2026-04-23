@@ -27,6 +27,7 @@ export type Property = {
   bedrooms: number | null
   bathrooms: number | null
   airbnbListingId: string | null
+  linenWashLocation: 'in_house' | 'external' | null
   activatedAt?: string | null
 }
 
@@ -65,6 +66,9 @@ export type PropertyDetail = Property & {
   doorLockPassword: string | null
   wifiSsid: string | null
   wifiPassword: string | null
+  cleaningClosetLocation: string | null
+  extraLinenLocation: string | null
+  trashDisposalLocation: string | null
   spaces: PropertySpace[]
   assets: PropertyAsset[]
 }

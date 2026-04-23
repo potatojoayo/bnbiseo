@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-provider'
 import { useManagerMe } from '@/lib/hooks/use-manager'
 import { ManagerBottomNav } from '@/components/manager-bottom-nav'
 
-const NAV_PAGES = ['/manager/home', '/manager/cleanings', '/manager/profile']
+const NAV_PAGES = ['/manager/home', '/manager/cleanings', '/manager/repairs', '/manager/profile']
 
 export default function ManagerLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth()

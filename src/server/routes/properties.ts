@@ -29,16 +29,19 @@ const CreatePropertySchema = z.object({
 })
 
 const UpdatePropertySchema = z.object({
+  // Editable only while status is 'pending_activation' (used by onboarding edit flow)
   name: z.string().min(1, { message: '숙소 이름을 입력해주세요.' }).trim().optional(),
   address: z.string().min(1, { message: '주소를 입력해주세요.' }).trim().optional(),
   addressDetail: z.string().optional(),
-  propertyType: z.enum(['apartment', 'house', 'studio', 'villa', 'other']).optional(),
-  description: z.string().optional(),
-  nearbyInfo: z.string().optional(),
-  checkinInfo: z.string().optional(),
-  wifiSsid: z.string().optional(),
-  wifiPassword: z.string().optional(),
   airbnbListingId: z.string().optional(),
+  // Editable anytime by the host (출입·와이파이, 청소 준비 정보)
+  entrancePassword: z.string().nullable().optional(),
+  doorLockPassword: z.string().nullable().optional(),
+  wifiSsid: z.string().nullable().optional(),
+  wifiPassword: z.string().nullable().optional(),
+  cleaningClosetLocation: z.string().nullable().optional(),
+  extraLinenLocation: z.string().nullable().optional(),
+  trashDisposalLocation: z.string().nullable().optional(),
 })
 
 export const propertiesRoutes = new Hono<AuthEnv>()
@@ -238,16 +241,48 @@ propertiesRoutes.patch('/:id', async (c) => {
   if (
     existing.status === 'active'
     && (
-      validated.data.address !== undefined
+      validated.data.name !== undefined
+      || validated.data.address !== undefined
       || validated.data.addressDetail !== undefined
+      || validated.data.airbnbListingId !== undefined
     )
   ) {
-    return c.json({ error: '등록 완료 후에는 주소를 수정할 수 없어요.' }, 400)
+    return c.json({ error: '등록 완료 후에는 숙소 이름·주소·에어비앤비 링크를 수정할 수 없어요.' }, 400)
+  }
+
+  const trimToNullable = (value: string | null | undefined) => {
+    if (value === undefined) return undefined
+    if (value === null) return null
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : null
+  }
+
+  const updatePayload: Record<string, unknown> = { updatedAt: new Date() }
+  if (validated.data.name !== undefined) updatePayload.name = validated.data.name
+  if (validated.data.address !== undefined) updatePayload.address = validated.data.address
+  if (validated.data.addressDetail !== undefined) {
+    updatePayload.addressDetail = trimToNullable(validated.data.addressDetail)
+  }
+  if (validated.data.airbnbListingId !== undefined) {
+    updatePayload.airbnbListingId = trimToNullable(validated.data.airbnbListingId)
+  }
+  const anytimeFields = [
+    'entrancePassword',
+    'doorLockPassword',
+    'wifiSsid',
+    'wifiPassword',
+    'cleaningClosetLocation',
+    'extraLinenLocation',
+    'trashDisposalLocation',
+  ] as const
+  for (const field of anytimeFields) {
+    const next = trimToNullable(validated.data[field])
+    if (next !== undefined) updatePayload[field] = next
   }
 
   const [updated] = await db
     .update(properties)
-    .set({ ...validated.data, updatedAt: new Date() })
+    .set(updatePayload)
     .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
     .returning()
 

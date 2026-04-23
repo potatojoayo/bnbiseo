@@ -255,16 +255,6 @@ export function AuthForm() {
     setMessage(undefined)
   }
 
-  const showBlockingLoader = !pending && (authLoading || (user && profileLoading))
-
-  if (showBlockingLoader) {
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-white px-6">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
-      </div>
-    )
-  }
-
   return (
     <>
       {/* Error banner */}
@@ -283,7 +273,7 @@ export function AuthForm() {
         </div>
       )}
 
-      {user && profile && profile.role !== 'user' ? (
+      {user && profile?.role !== 'user' ? (
         <div className="flex flex-col gap-3">
           <p className="text-[14px] leading-relaxed text-ink-muted" style={font}>
             호스트 계정으로 로그인해주세요.

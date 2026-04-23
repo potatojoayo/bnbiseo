@@ -39,7 +39,7 @@ const steps = [
 export default function CleaningSuccessPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[100dvh]">
+      <div className="flex min-h-[100dvh] items-center justify-center">
         <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
       </div>
     }>
@@ -90,7 +90,7 @@ function SuccessContent() {
 
   if (status === 'confirming') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center">
         <div className="w-8 h-8 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin mb-5" />
         <p className="text-[15px] text-ink-muted">결제를 확인하고 있어요...</p>
       </div>
@@ -99,25 +99,27 @@ function SuccessContent() {
 
   if (status === 'error') {
     return (
-      <div className="animate-fade-up-fast flex flex-col items-center justify-center min-h-[100dvh] px-6 text-center">
-        <h2 className="text-[20px] font-semibold text-ink mb-2">
-          결제 승인에 실패했어요
-        </h2>
-        <p className="text-[14px] text-ink-muted leading-relaxed mb-8">
-          {errorMessage}
-        </p>
-        <Link
-          href="/cleaning"
-          className="px-6 h-12 rounded-lg bg-ink text-white text-[15px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
-        >
-          다시 시도하기
-        </Link>
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center">
+        <div className="animate-fade-up-fast flex flex-col items-center">
+          <h2 className="text-[20px] font-semibold text-ink mb-2">
+            결제 승인에 실패했어요
+          </h2>
+          <p className="text-[14px] text-ink-muted leading-relaxed mb-8">
+            {errorMessage}
+          </p>
+          <Link
+            href="/cleaning"
+            className="px-6 h-12 rounded-lg bg-ink text-white text-[15px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+          >
+            다시 시도하기
+          </Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="animate-fade-up-fast min-h-[100dvh] flex flex-col px-6 pt-6 pb-10 mx-auto max-w-[480px]">
+    <div className="animate-fade-up-fast flex flex-col px-6 pt-6 pb-10 w-full mx-auto max-w-[480px]">
       {/* Title */}
       <h1 className="text-[22px] font-semibold text-ink mb-2">
         청소 요청이 완료되었어요
@@ -212,7 +214,6 @@ function SuccessContent() {
             <div className="pb-5">
               <p className="text-[15px] font-semibold text-ink">
                 {step.title}
-                {i === 0 && <span className="text-brand ml-1.5 text-[12px] font-normal">완료</span>}
               </p>
               <p className="text-[13px] text-ink-muted mt-0.5 leading-relaxed">
                 {step.desc}

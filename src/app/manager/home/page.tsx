@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useManagerMe, useManagerMyCleanings } from '@/lib/hooks/use-manager'
+import { useManagerMe, useManagerMyCleanings, useManagerMyRepairs } from '@/lib/hooks/use-manager'
 import { ManagerCleaningCard } from '@/components/manager-cleaning-card'
+import { ManagerRepairCard } from '@/components/manager-repair-card'
 import { NotificationBell } from '@/components/notification-bell'
 
 function getTodayKst() {
@@ -16,14 +17,22 @@ function getTodayKst() {
 
 export default function ManagerHomePage() {
   const { data: managerMe, isLoading: managerMeLoading } = useManagerMe()
-  const { data: cleanings = [], isLoading } = useManagerMyCleanings()
+  const { data: cleanings = [], isLoading: cleaningsLoading } = useManagerMyCleanings()
+  const { data: repairs = [], isLoading: repairsLoading } = useManagerMyRepairs()
   const todayDate = getTodayKst()
+
   const visibleCleanings = cleanings.filter((cleaning) =>
     cleaning.scheduledDate >= todayDate &&
     ['confirmed', 'in_progress', 'completed'].includes(cleaning.status),
   )
 
-  if (managerMeLoading || isLoading) {
+  const visibleRepairs = repairs.filter((repair) => {
+    if (['completed', 'cancelled'].includes(repair.status)) return false
+    const date = repair.scheduledDate ?? repair.preferredScheduledDate
+    return date >= todayDate
+  })
+
+  if (managerMeLoading || cleaningsLoading || repairsLoading) {
     return (
       <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
@@ -39,36 +48,69 @@ export default function ManagerHomePage() {
             안녕하세요, {managerMe?.manager.name || managerMe?.profile.fullName || '매니저'}님
           </h1>
           <p className="mt-1 text-[14px] text-ink-muted">
-            예정된 청소를 확인해보세요.
+            예정된 일정을 확인해보세요.
           </p>
         </div>
         <NotificationBell href="/manager/notifications" />
       </div>
 
-      {visibleCleanings.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <h2 className="text-[18px] font-semibold text-ink">
-            아직 맡은 청소가 없어요
-          </h2>
-          <Link
-            href="/manager/cleanings"
-            className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-[14px] font-semibold text-white transition-all active:scale-[0.98]"
-          >
-            청소 요청 보기
-          </Link>
-        </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-7">
-          <section className="flex flex-col gap-3">
-            <p className="px-1 text-[13px] font-medium text-ink-muted">청소 내역</p>
-            {visibleCleanings.map((cleaning) => (
+      <div className="mt-6 flex flex-col gap-7">
+        <section className="flex flex-col gap-3">
+          <p className="px-1 text-[13px] font-medium text-ink-muted">청소</p>
+          {visibleCleanings.length > 0 ? (
+            visibleCleanings.map((cleaning) => (
               <Link key={cleaning.id} href={`/manager/cleanings/${cleaning.id}`} className="block">
                 <ManagerCleaningCard cleaning={cleaning} showStatus />
               </Link>
-            ))}
-          </section>
-        </div>
-      )}
+            ))
+          ) : (
+            <EmptySection
+              message="예정된 청소가 없어요"
+              href="/manager/cleanings"
+              ctaLabel="청소 요청 보러가기"
+            />
+          )}
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <p className="px-1 text-[13px] font-medium text-ink-muted">수리</p>
+          {visibleRepairs.length > 0 ? (
+            visibleRepairs.map((repair) => (
+              <Link key={repair.id} href={`/manager/repairs/${repair.id}`} className="block">
+                <ManagerRepairCard repair={repair} showStatus />
+              </Link>
+            ))
+          ) : (
+            <EmptySection
+              message="예정된 수리가 없어요"
+              href="/manager/repairs"
+              ctaLabel="수리 요청 보러가기"
+            />
+          )}
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function EmptySection({
+  message,
+  href,
+  ctaLabel,
+}: {
+  message: string
+  href: string
+  ctaLabel: string
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-outline-dim bg-white px-4 py-6 text-center">
+      <p className="text-[14px] text-ink-muted">{message}</p>
+      <Link
+        href={href}
+        className="inline-flex h-9 items-center justify-center rounded-lg bg-ink px-4 text-[13px] font-semibold text-white transition-all active:scale-[0.98]"
+      >
+        {ctaLabel}
+      </Link>
     </div>
   )
 }

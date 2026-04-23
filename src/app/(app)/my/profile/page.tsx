@@ -60,14 +60,14 @@ export default function ProfilePage() {
 
   if (authLoading || profileLoading) {
     return (
-      <div className="flex min-h-[calc(100dvh-80px)] items-center justify-center">
+      <div className="flex min-h-[100dvh] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
       </div>
     )
   }
 
   return (
-    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-6">
+    <div className="animate-fade-up-fast min-h-[100dvh] flex flex-col px-6 pt-6 pb-6">
       {/* Header */}
       <button
         type="button"
@@ -108,8 +108,11 @@ export default function ProfilePage() {
         </LoadingButton>
       </div>
 
+      {/* Spacer pushes the delete button to the bottom */}
+      <div className="flex-1" />
+
       {/* Delete account */}
-      <div className="mt-auto flex justify-center">
+      <div className="flex justify-center pt-8">
         <button
           type="button"
           onClick={() => setDeleteOpen(true)}

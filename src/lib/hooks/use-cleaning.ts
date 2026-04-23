@@ -11,6 +11,7 @@ type CleaningRequest = {
   scheduledDate: string
   scheduledTime: string
   memo: string | null
+  linenWash: boolean
   price: number
   discount: number
   finalPrice: number

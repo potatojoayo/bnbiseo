@@ -92,7 +92,7 @@ export default function MyPropertyAssetDetailPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[100svh] w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
+    <div className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 p-6 animate-fade-up-fast max-md:p-5">
       <div className="-mb-1">
         <MobileBackButton href={`/my/properties/${id}`} mode="back" />
         <h1 className="mt-2 text-[22px] font-semibold text-ink">{asset.name}</h1>

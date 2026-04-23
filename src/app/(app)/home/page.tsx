@@ -1,19 +1,20 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useAuth } from '@/lib/auth-provider'
 import { useProfile } from '@/lib/hooks/use-profile'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
+import { useRepairRequests } from '@/lib/hooks/use-repair'
 import { Logo } from '@/components/logo'
+import { useState } from 'react'
 import { HostCleaningRequestCard } from '@/components/host-cleaning-request-card'
-import { CLEANING_PROCESS_STEPS, PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
+import { NotificationBell } from '@/components/notification-bell'
+import { HostRepairRequestCard } from '@/components/host-repair-request-card'
 import { PropertyCard } from '@/components/property-card'
 import { PendingActivationPanel } from '@/components/pending-activation-panel'
 import { ProcessDrawer } from '@/components/process-drawer'
-import { NotificationBell } from '@/components/notification-bell'
+import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { nowKST } from '@/lib/utils'
 
 export default function HomePage() {
@@ -21,8 +22,7 @@ export default function HomePage() {
   const { data: profile, isLoading: profileLoading } = useProfile()
   const { data: properties = [], isLoading: propertiesLoading } = useProperties()
   const { data: cleaningRequests = [], isLoading: cleaningLoading } = useCleaningRequests()
-  const [processOpen, setProcessOpen] = useState(false)
-  const [registrationProcessOpen, setRegistrationProcessOpen] = useState(false)
+  const { data: repairRequests = [], isLoading: repairLoading } = useRepairRequests()
 
   const displayName = profile?.fullName || user?.user_metadata?.full_name || ''
   const today = new Intl.DateTimeFormat('ko-KR', {
@@ -31,63 +31,47 @@ export default function HomePage() {
     weekday: 'long',
   }).format(new Date())
 
-  const now = nowKST()
-  const homeCleanings = cleaningRequests
-    .filter((r) => ['pending', 'confirmed', 'in_progress', 'completed'].includes(r.status))
-    .filter((r) => {
-      if (r.status === 'completed') return true
-      const scheduledAt = new Date(`${r.scheduledDate}T${r.scheduledTime}:00+09:00`)
-      return scheduledAt >= now
-    })
-    .sort((a, b) => {
-      const aTime = new Date(`${a.scheduledDate}T${a.scheduledTime}:00+09:00`).getTime()
-      const bTime = new Date(`${b.scheduledDate}T${b.scheduledTime}:00+09:00`).getTime()
-      return aTime - bTime
-    })
-  const visibleHomeCleanings = homeCleanings.slice(0, 3)
-  const activeProperties = properties.filter((property) => property.status === 'active')
-  const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
-  const allProperties = [...activeProperties, ...pendingProperties]
-  const hasNoProperties = allProperties.length === 0
-  const showPendingOnlyState = activeProperties.length === 0 && pendingProperties.length > 0
+  const [registrationProcessOpen, setRegistrationProcessOpen] = useState(false)
 
-  function renderPropertyList() {
-    return (
-      <div className="mt-5">
-        <div className="flex flex-col gap-3">
-          <p className="px-1 text-left text-[13px] font-medium text-ink-muted">내 숙소</p>
-          {allProperties.map((property) => (
-            <Link
-              key={property.id}
-              href={`/my/properties/${property.id}?from=home`}
-              className="block transition-transform active:scale-[0.99]"
-            >
-              <PropertyCard property={property} />
-            </Link>
-          ))}
-        </div>
-        {pendingProperties.length > 0 && (
-          <div className="mt-4 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setRegistrationProcessOpen(true)}
-              className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-            >
-              숙소 등록은 어떻게 진행되나요?
-            </button>
-          </div>
-        )}
-      </div>
-    )
-  }
+  const activeProperties = properties.filter((p) => p.status === 'active')
+  const pendingProperties = properties.filter((p) => p.status === 'pending_activation')
+  const allProperties = [...activeProperties, ...pendingProperties]
+
+  const now = nowKST()
+
+  type UpcomingItem =
+    | { kind: 'cleaning'; time: number; data: typeof cleaningRequests[number] }
+    | { kind: 'repair'; time: number; data: typeof repairRequests[number] }
+
+  const upcomingCleanings: UpcomingItem[] = cleaningRequests
+    .filter((r) => ['pending', 'confirmed', 'in_progress'].includes(r.status))
+    .map((r) => ({
+      kind: 'cleaning' as const,
+      time: new Date(`${r.scheduledDate}T${r.scheduledTime}:00+09:00`).getTime(),
+      data: r,
+    }))
+    .filter((item) => item.time >= now.getTime())
+
+  const upcomingRepairs: UpcomingItem[] = repairRequests
+    .filter((r) => ['submitted', 'quoted', 'confirmed', 'in_progress'].includes(r.status))
+    .map((r) => {
+      const dateStr = r.scheduledDate ?? r.preferredScheduledDate
+      const timeStr = r.scheduledTime ?? r.preferredScheduledTime
+      return {
+        kind: 'repair' as const,
+        time: new Date(`${dateStr}T${timeStr}:00+09:00`).getTime(),
+        data: r,
+      }
+    })
+
+  const upcomingAll: UpcomingItem[] = [...upcomingCleanings, ...upcomingRepairs].sort(
+    (a, b) => a.time - b.time,
+  )
+  const visibleUpcoming = upcomingAll.slice(0, 3)
 
   const isPageLoading =
     authLoading ||
-    profileLoading ||
-    propertiesLoading ||
-    cleaningLoading ||
-    !user ||
-    !profile
+    (!!user && (profileLoading || propertiesLoading || cleaningLoading || repairLoading))
 
   if (isPageLoading) {
     return (
@@ -113,117 +97,98 @@ export default function HomePage() {
         <p className="text-[14px] text-ink-muted mt-1">{today}</p>
       </div>
 
-      {hasNoProperties ? (
-        <div className="flex flex-1 flex-col items-center justify-center px-6 pt-6 pb-10 text-center">
-          <Image
-            src="/images/empty.png"
-            alt="숙소 등록 안내"
-            width={220}
-            height={220}
-            priority
-            className="mb-6 object-contain"
-          />
-          <h2 className="mb-2 text-[18px] font-semibold text-ink">
-            등록된 숙소가 없어요
-          </h2>
-          <Link
-            href="/properties/new?from=home"
-            className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] md:hover:-translate-y-0.5 md:hover:bg-brand/90 md:hover:shadow-[0_10px_24px_rgba(255,56,92,0.2)]"
-          >
-            숙소 등록하기
-          </Link>
-        </div>
-      ) : showPendingOnlyState ? (
+      {activeProperties.length === 0 ? (
         <div className="px-6 pt-6 pb-8">
           <PendingActivationPanel
-            title="숙소 등록을 진행하고 있어요"
-            description="48시간 이내 직접 방문해 숙소 등록을 완료해드려요."
+            title={pendingProperties.length > 0
+              ? '숙소 등록을 진행하고 있어요'
+              : '숙소를 등록하고 서비스를 시작하세요'}
+            description={pendingProperties.length > 0
+              ? '48시간 이내 직접 방문해 숙소 등록을 완료해드려요.'
+              : '청소, 수리 등 다양한 관리 서비스를 이용할 수 있어요'}
             properties={pendingProperties}
             action={
-              <button
-                type="button"
-                onClick={() => setRegistrationProcessOpen(true)}
-                className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
-              >
-                숙소 등록은 어떻게 진행되나요?
-              </button>
+              pendingProperties.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setRegistrationProcessOpen(true)}
+                  className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
+                >
+                  숙소 등록은 어떻게 진행되나요?
+                </button>
+              ) : (
+                <Link
+                  href="/properties/new"
+                  className="mt-5 px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+                >
+                  숙소 등록하기
+                </Link>
+              )
             }
           />
         </div>
       ) : (
-        <div className="px-6 pt-6 pb-8 flex flex-col gap-3">
-          {homeCleanings.length > 0 ? (
-            <>
-              <p className="px-1 text-[13px] font-medium text-ink-muted">청소 내역</p>
-              {visibleHomeCleanings.map((r) => (
-                <HostCleaningRequestCard
-                  key={r.id}
-                  request={r}
-                  href={`/cleaning/${r.id}`}
-                />
-              ))}
-              {homeCleanings.length > 3 && (
-                <div className="flex justify-center pt-1">
-                  <Link
-                    href="/my/cleaning-history"
-                    className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-                  >
-                    더 보기
-                  </Link>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center text-center py-8">
-              <Image
-                src="/images/cleaning-white.png"
-                alt="청소 서비스"
-                width={240}
-                height={120}
-                priority
-                className="mb-5 object-contain"
-              />
-              <h2 className="mb-2 text-[18px] font-semibold text-ink">
-                처음 오셨나요?
-              </h2>
-              <p className="text-[14px] leading-relaxed text-ink-muted">
-                10,000원 할인을 받고 첫 청소를 요청해보세요!
-              </p>
+        <div className="px-6 pt-6 pb-8 flex flex-col gap-6">
+          {/* Property List */}
+          <div className="flex flex-col gap-3">
+            <p className="px-1 text-[13px] font-medium text-ink-muted">내 숙소</p>
+            {allProperties.map((property) => (
               <Link
-                href="/cleaning"
-                className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-[14px] font-semibold text-white transition-all active:scale-[0.98] md:hover:-translate-y-0.5 md:hover:bg-brand/90 md:hover:shadow-[0_10px_24px_rgba(255,56,92,0.2)]"
+                key={property.id}
+                href={`/my/properties/${property.id}?from=home`}
+                className="block transition-transform active:scale-[0.99]"
               >
-                청소 요청하기
+                <PropertyCard property={property} />
               </Link>
-              <button
-                type="button"
-                onClick={() => setProcessOpen(true)}
-                className="mt-4 text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-              >
-                청소는 어떻게 진행되나요?
-              </button>
-            </div>
-          )}
+            ))}
+            {pendingProperties.length > 0 && (
+              <div className="flex justify-center mt-1">
+                <button
+                  type="button"
+                  onClick={() => setRegistrationProcessOpen(true)}
+                  className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+                >
+                  숙소 등록은 어떻게 진행되나요?
+                </button>
+              </div>
+            )}
+          </div>
 
-          {allProperties.length > 0 && (
-            renderPropertyList()
-          )}
+          {/* Upcoming Schedule */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[13px] font-medium text-ink-muted">다가오는 일정</p>
+            </div>
+            {visibleUpcoming.length > 0 ? (
+              visibleUpcoming.map((item) => (
+                item.kind === 'cleaning' ? (
+                  <HostCleaningRequestCard
+                    key={`cleaning-${item.data.id}`}
+                    request={item.data}
+                    href={`/cleaning/${item.data.id}`}
+                  />
+                ) : (
+                  <HostRepairRequestCard
+                    key={`repair-${item.data.id}`}
+                    request={item.data}
+                    href={`/repair/${item.data.id}`}
+                  />
+                )
+              ))
+            ) : (
+              <div className="rounded-2xl border border-outline-dim bg-white px-4 py-6 text-center shadow-[0_6px_20px_rgba(0,0,0,0.04)]">
+                <p className="text-[14px] text-ink-muted">예정된 일정이 없어요</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Process Drawer */}
       <ProcessDrawer
         open={registrationProcessOpen}
         onOpenChange={setRegistrationProcessOpen}
         title="숙소 등록 진행 과정"
         steps={PROPERTY_REGISTRATION_STEPS}
-      />
-
-      <ProcessDrawer
-        open={processOpen}
-        onOpenChange={setProcessOpen}
-        title="청소 진행 과정"
-        steps={CLEANING_PROCESS_STEPS}
       />
     </div>
   )

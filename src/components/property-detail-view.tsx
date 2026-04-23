@@ -25,6 +25,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { MobileBackButton } from '@/components/mobile-back-button'
+import { AssetCard } from '@/components/asset-card'
 
 type PropertyDetailViewProps = {
   propertyId: string
@@ -271,7 +272,15 @@ export function PropertyDetailView({
           )}
 
           <section className="mt-7 space-y-4">
-            <p className="text-[16px] font-semibold text-ink">출입 및 와이파이 정보</p>
+            <div className="flex items-center justify-between">
+              <p className="text-[16px] font-semibold text-ink">출입 및 와이파이 정보</p>
+              <Link
+                href={`${detailBaseHref}/edit/access`}
+                className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                수정하기
+              </Link>
+            </div>
             <CompoundInput>
               <CompoundField label="현관 비밀번호" borderRadius="12px 12px 0 0">
                 <span className="block w-full text-[16px] text-ink">{property.entrancePassword || '-'}</span>
@@ -284,6 +293,29 @@ export function PropertyDetailView({
               </CompoundField>
               <CompoundField label="와이파이 비밀번호" borderRadius="0 0 12px 12px">
                 <span className="block w-full text-[16px] text-ink">{property.wifiPassword || '-'}</span>
+              </CompoundField>
+            </CompoundInput>
+          </section>
+
+          <section className="mt-7 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
+              <Link
+                href={`${detailBaseHref}/edit/cleaning-prep`}
+                className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
+              >
+                수정하기
+              </Link>
+            </div>
+            <CompoundInput>
+              <CompoundField label="청소 도구함 위치" borderRadius="12px 12px 0 0">
+                <span className="block w-full text-[16px] text-ink">{property.cleaningClosetLocation || '-'}</span>
+              </CompoundField>
+              <CompoundField label="침구류 여분 위치">
+                <span className="block w-full text-[16px] text-ink">{property.extraLinenLocation || '-'}</span>
+              </CompoundField>
+              <CompoundField label="쓰레기 배출 장소" borderRadius="0 0 12px 12px">
+                <span className="block w-full text-[16px] text-ink">{property.trashDisposalLocation || '-'}</span>
               </CompoundField>
             </CompoundInput>
           </section>
@@ -341,45 +373,17 @@ export function PropertyDetailView({
             ) : (
               <div className="flex flex-col gap-3">
                 {property.assets.map((asset) => (
-                  <Link
+                  <AssetCard
                     key={asset.id}
+                    name={asset.name}
+                    category={ASSET_CATEGORY_LABELS[asset.category]}
+                    location={asset.location}
+                    brand={asset.brand}
+                    modelNumber={asset.modelNumber}
+                    notes={asset.notes}
+                    imageUrl={asset.photos[0]?.signedUrl ?? null}
                     href={`${detailBaseHref}/assets/${asset.id}`}
-                    className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
-                  >
-                    <div className="flex items-stretch">
-                      <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
-                        {asset.photos[0]?.signedUrl ? (
-                          <ImageWithSkeleton
-                            src={asset.photos[0].signedUrl}
-                            alt=""
-                            fill
-                            sizes="104px"
-                            className="object-contain"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">
-                            사진 없음
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex min-w-0 flex-1 items-start px-4 py-3">
-                        <div className="min-w-0">
-                          <p className="text-[15px] font-semibold text-ink">{asset.name}</p>
-                          <p className="mt-1 text-[13px] text-ink-muted">
-                            {ASSET_CATEGORY_LABELS[asset.category]} · {asset.location}
-                          </p>
-                          {(asset.brand || asset.modelNumber) && (
-                            <p className="mt-1 text-[13px] text-ink-muted">
-                              {[asset.brand, asset.modelNumber].filter(Boolean).join(' · ')}
-                            </p>
-                          )}
-                          {asset.notes && (
-                            <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{asset.notes}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                  />
                 ))}
               </div>
             )}

@@ -1,6 +1,6 @@
 export default function TermsPage() {
   return (
-    <div className="min-h-[100dvh] bg-white px-6 pt-8 pb-12 mx-auto max-w-[560px]">
+    <div className="animate-fade-up-fast bg-white px-6 pt-8 pb-12 mx-auto max-w-[560px]">
       <h1 className="text-[22px] font-semibold text-ink mb-6">이용약관</h1>
 
       <div className="flex flex-col gap-6 text-[14px] text-ink leading-relaxed">
