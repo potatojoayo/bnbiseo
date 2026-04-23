@@ -553,9 +553,9 @@ export default function ManagerCleaningDetailPage() {
               한 번 배정받은 요청은 취소할 수 없어요. 일정을 다시 확인한 뒤 배정받아주세요.
             </p>
             <div className="mt-4 rounded-xl border border-outline-dim px-4 py-4">
-              <p className="text-[15px] font-semibold text-ink">{cleaning.propertyName || '숙소'}</p>
+              <p className="text-[15px] font-semibold text-ink">{previewCleaning.propertyName || '숙소'}</p>
               <p className="mt-1 text-[13px] text-ink-muted">
-                {formatDateLabel(cleaning.scheduledDate)} · {formatTimeKorean(cleaning.scheduledTime)}
+                {formatDateLabel(previewCleaning.scheduledDate)} · {formatTimeKorean(previewCleaning.scheduledTime)}
               </p>
             </div>
             <div className="mt-6 grid grid-cols-2 gap-4">
@@ -595,9 +595,9 @@ export default function ManagerCleaningDetailPage() {
                 : '청소를 완료하면 완료 상태로 바뀌고 다시 되돌릴 수 없어요.'}
             </p>
             <div className="mt-4 rounded-xl border border-outline-dim px-4 py-4">
-              <p className="text-[15px] font-semibold text-ink">{cleaning.propertyName || '숙소'}</p>
+              <p className="text-[15px] font-semibold text-ink">{previewCleaning.propertyName || '숙소'}</p>
               <p className="mt-1 text-[13px] text-ink-muted">
-                {formatDateLabel(cleaning.scheduledDate)} · {formatTimeKorean(cleaning.scheduledTime)}
+                {formatDateLabel(previewCleaning.scheduledDate)} · {formatTimeKorean(previewCleaning.scheduledTime)}
               </p>
             </div>
             <div className="mt-6 grid grid-cols-2 gap-4">
