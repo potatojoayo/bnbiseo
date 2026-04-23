@@ -133,7 +133,6 @@ export default function RepairDetailPage() {
 
   // 취소 정책: 결제 전(submitted/quoted) 상태에서만 가능
   let canCancel = false
-  let cancelRefund: 'none' | 'full' = 'none'
   if (['submitted', 'quoted'].includes(repair.status)) {
     canCancel = true
   }
@@ -377,20 +376,9 @@ export default function RepairDetailPage() {
               </DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-1.5 mb-6">
-              {cancelRefund === 'full' ? (
-                <>
-                  <p className="text-[14px] text-ink-muted">
-                    취소하면 결제 금액이 전액 환불돼요.
-                  </p>
-                  <p className="text-[13px] text-ink-faint">
-                    방문 예정일 24시간 이내에는 취소가 불가해요.
-                  </p>
-                </>
-              ) : (
-                <p className="text-[14px] text-ink-muted">
-                  수리 요청을 취소해요. 언제든 다시 요청하실 수 있어요.
-                </p>
-              )}
+              <p className="text-[14px] text-ink-muted">
+                수리 요청을 취소해요. 언제든 다시 요청하실 수 있어요.
+              </p>
             </div>
             <div className="flex flex-col gap-2">
               <LoadingButton
