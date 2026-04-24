@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
 import {
   listNotifications,
   markAllNotificationsRead,
@@ -15,6 +15,7 @@ const BulkReadSchema = z.object({
 })
 
 notificationRoutes.use('*', authMiddleware)
+notificationRoutes.use('*', requireProfile)
 
 notificationRoutes.get('/', async (c) => {
   const profileId = c.get('profileId')

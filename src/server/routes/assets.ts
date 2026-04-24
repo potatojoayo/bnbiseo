@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
 import { db } from '@/db'
 import { propertyAssets, propertyAssetPhotos, properties } from '@/db/schema'
-import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
 
 const AssetSchema = z.object({
   propertyId: z.string().uuid(),
@@ -36,6 +36,7 @@ async function verifyPropertyOwnership(propertyId: string, profileId: string) {
 export const assetsRoutes = new Hono<AuthEnv>()
 
 assetsRoutes.use('*', authMiddleware)
+assetsRoutes.use('*', requireProfile)
 
 // Get single fixture with photos
 assetsRoutes.get('/:id', async (c) => {

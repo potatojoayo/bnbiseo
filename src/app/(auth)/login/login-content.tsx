@@ -4,13 +4,11 @@ import Link from 'next/link'
 import { AuthForm } from './auth-form'
 import { Logo } from '@/components/logo'
 import { useAuth } from '@/lib/auth-provider'
-import { useProfile } from '@/lib/hooks/use-profile'
 
 export function LoginContent() {
-  const { user, loading: authLoading } = useAuth()
-  const { isLoading: profileLoading } = useProfile()
+  const { loading: authLoading } = useAuth()
 
-  if (authLoading || (user && profileLoading)) {
+  if (authLoading) {
     return (
       <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
     )

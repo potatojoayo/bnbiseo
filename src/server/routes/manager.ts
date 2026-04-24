@@ -22,7 +22,7 @@ import {
   repairRequestPhotos,
   repairRequests,
 } from '@/db/schema'
-import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 import {
   notifyCleaningAssigned,
@@ -79,6 +79,7 @@ const ManagerCleaningReportDraftSchema = z.object({
 })
 
 managerRoutes.use('*', authMiddleware)
+managerRoutes.use('*', requireProfile)
 
 function getSupabaseAdmin() {
   return createClient(

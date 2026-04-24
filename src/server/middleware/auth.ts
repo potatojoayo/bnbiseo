@@ -47,3 +47,13 @@ export const authMiddleware = createMiddleware<AuthEnv>(async (c, next) => {
 
   await next()
 })
+
+// Must run AFTER authMiddleware. Rejects requests from authenticated users
+// who don't have a profile yet (e.g. right after phone OTP verify, before
+// /auth/signup has created their profile row).
+export const requireProfile = createMiddleware<AuthEnv>(async (c, next) => {
+  if (!c.get('profileId')) {
+    return c.json({ error: '프로필을 먼저 생성해주세요.' }, 404)
+  }
+  await next()
+})

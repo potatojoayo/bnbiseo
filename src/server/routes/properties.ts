@@ -11,7 +11,7 @@ import {
   propertySpaces,
   propertySpacePhotos,
 } from '@/db/schema'
-import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 import { notifyPropertySubmitted } from '../lib/notifications'
 
@@ -47,6 +47,7 @@ const UpdatePropertySchema = z.object({
 export const propertiesRoutes = new Hono<AuthEnv>()
 
 propertiesRoutes.use('*', authMiddleware)
+propertiesRoutes.use('*', requireProfile)
 
 function getSupabaseAdmin() {
   return createClient(

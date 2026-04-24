@@ -1,231 +1,186 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/api-client'
-import { api } from '@/lib/api-client'
+import { supabase, api, ApiError } from '@/lib/api-client'
 import { useAuth } from '@/lib/auth-provider'
 import { useInvalidateProfile, useProfile } from '@/lib/hooks/use-profile'
-import { CompoundInput, CompoundField, FloatingInput } from '@/components/ui/floating-input'
+import { CompoundField } from '@/components/ui/floating-input'
 import { LoadingButton } from '@/components/ui/loading-button'
 
-type Step = 'email' | 'login' | 'signup'
+type Step = 'phone' | 'otp' | 'profile'
+
+const RESEND_COOLDOWN_SECONDS = 60
 
 export function AuthForm() {
   const router = useRouter()
   const { user } = useAuth()
-  const { data: profile } = useProfile()
+  const { data: profile, isPending: profilePending } = useProfile()
   const invalidateProfile = useInvalidateProfile()
-  const [step, setStep] = useState<Step>('email')
-  const [email, setEmail] = useState('')
-  const [pending, setPending] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [message, setMessage] = useState<string | undefined>()
-  const [focused, setFocused] = useState<string | null>(null)
 
+  const [step, setStep] = useState<Step>('phone')
+  const [phone, setPhone] = useState('')
+  const [otp, setOtp] = useState('')
   const [name, setName] = useState('')
-  const [password, setPassword] = useState('')
+  const [pending, setPending] = useState(false)
+  const [message, setMessage] = useState<string | undefined>()
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [focused, setFocused] = useState<string | null>(null)
   const [agreedTerms, setAgreedTerms] = useState(false)
   const [agreedPrivacy, setAgreedPrivacy] = useState(false)
+  const [resendIn, setResendIn] = useState(0)
   const allAgreed = agreedTerms && agreedPrivacy
-  const extraRef = useRef<HTMLDivElement>(null)
-  const [extraHeight, setExtraHeight] = useState(0)
-  const [visibleStep, setVisibleStep] = useState<Step>('email')
+  const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const font = { fontFamily: 'var(--font-body)' }
 
-  // When step changes, update visibleStep (for open) or start close animation
   useEffect(() => {
-    if (step !== 'email') {
-      setVisibleStep(step)
-    } else {
-      setExtraHeight(0)
-      const timer = setTimeout(() => setVisibleStep('email'), 350)
-      return () => clearTimeout(timer)
+    return () => {
+      if (cooldownTimer.current) clearInterval(cooldownTimer.current)
     }
-  }, [step])
+  }, [])
 
-  // After visibleStep renders new fields, measure and animate open
+  // Auto-verify when 6 digits are entered.
   useEffect(() => {
-    if (visibleStep !== 'email' && step !== 'email') {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (extraRef.current) {
-            setExtraHeight(extraRef.current.scrollHeight)
-          }
-        })
+    if (step === 'otp' && otp.length === 6 && !pending) {
+      handleOtpSubmit()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp, step])
+
+  function startCooldown() {
+    setOtp('')
+    setResendIn(RESEND_COOLDOWN_SECONDS)
+    if (cooldownTimer.current) clearInterval(cooldownTimer.current)
+    cooldownTimer.current = setInterval(() => {
+      setResendIn((n) => {
+        if (n <= 1) {
+          if (cooldownTimer.current) clearInterval(cooldownTimer.current)
+          setOtp('')
+          return 0
+        }
+        return n - 1
       })
-      const timer = setTimeout(() => {
-        const id = step === 'login' ? 'password' : 'fullName'
-        document.getElementById(id)?.focus()
-      }, 350)
-      return () => clearTimeout(timer)
-    }
-  }, [visibleStep, step])
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (step === 'email') return handleEmailSubmit()
-    if (step === 'login') return handleLogin()
-    if (step === 'signup') return handleSignup()
+    }, 1000)
   }
 
-  async function handleEmailSubmit() {
+  function formatPhone(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 11)
+    if (digits.length < 4) return digits
+    if (digits.length < 8) return `${digits.slice(0, 3)}-${digits.slice(3)}`
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
+  }
+
+  function toE164(value: string) {
+    const digits = value.replace(/\D/g, '')
+    if (digits.startsWith('0')) return `+82${digits.slice(1)}`
+    return `+${digits}`
+  }
+
+  function validatePhone(value: string) {
+    const digits = value.replace(/\D/g, '')
+    if (!/^01\d{8,9}$/.test(digits)) return '010-0000-0000 형식으로 입력해주세요.'
+    return ''
+  }
+
+  async function sendOtp() {
+    const err = validatePhone(phone)
+    if (err) {
+      setErrors({ phone: err })
+      return false
+    }
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: toE164(phone),
+      options: { shouldCreateUser: true },
+    })
+    if (error) {
+      setMessage(
+        error.status === 429
+          ? '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
+          : '인증번호 전송에 실패했습니다. 잠시 후 다시 시도해주세요.',
+      )
+      return false
+    }
+    startCooldown()
+    return true
+  }
+
+  async function handlePhoneSubmit() {
     setPending(true)
     setMessage(undefined)
     setErrors({})
+    const ok = await sendOtp()
+    if (ok) setStep('otp')
+    setPending(false)
+  }
 
-    const emailErr = validateEmail(email)
-    if (emailErr) {
-      setErrors({ email: emailErr })
+  async function handleResend() {
+    if (resendIn > 0 || pending) return
+    setPending(true)
+    setMessage(undefined)
+    await sendOtp()
+    setPending(false)
+  }
+
+  async function handleOtpSubmit() {
+    if (pending) return
+    setPending(true)
+    setMessage(undefined)
+    setErrors({})
+    const digits = otp.replace(/\D/g, '')
+    if (digits.length !== 6) {
+      setErrors({ otp: '6자리 인증번호를 입력해주세요.' })
+      setPending(false)
+      return
+    }
+
+    const { error } = await supabase.auth.verifyOtp({
+      phone: toE164(phone),
+      token: digits,
+      type: 'sms',
+    })
+    if (error) {
+      setMessage('인증번호가 올바르지 않습니다. 다시 입력해주세요.')
+      setOtp('')
       setPending(false)
       return
     }
 
     try {
-      const { exists } = await api.post<{ exists: boolean }>('/auth/check-email', { email: email.trim() })
-      setStep(exists ? 'login' : 'signup')
-    } catch {
-      setMessage('이메일 확인 중 오류가 발생했습니다.')
+      const profile = await api.get<{
+        onboardingCompleted: boolean
+        fullName: string | null
+      }>('/profiles/me')
+      await invalidateProfile()
+      if (profile.fullName) {
+        router.push(profile.onboardingCompleted ? '/home' : '/onboarding')
+        return
+      }
+      setStep('profile')
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        setStep('profile')
+      } else {
+        setMessage('프로필 확인 중 오류가 발생했습니다.')
+      }
     } finally {
       setPending(false)
     }
   }
 
-  function validateEmail(v: string) {
-    if (!v.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())) return '유효한 이메일 주소를 입력해주세요.'
-    return ''
-  }
-
-  function validateName(v: string) {
-    if (!v.trim() || v.trim().length < 2) return '이름은 2자 이상 입력해주세요.'
-    return ''
-  }
-
-  function validatePassword(v: string) {
-    if (!v || v.length < 8) return '비밀번호는 8자 이상이어야 합니다.'
-    if (!/[a-zA-Z]/.test(v)) return '영문자를 포함해야 합니다.'
-    if (!/[0-9]/.test(v)) return '숫자를 포함해야 합니다.'
-    return ''
-  }
-
-  function onEmailChange(v: string) {
-    setEmail(v)
-    if (step !== 'email') {
-      setStep('email')
-      setName('')
-      setPassword('')
-      setMessage(undefined)
-      setErrors({})
-      return
-    }
-    if (errors.email) {
-      const err = validateEmail(v)
-      setErrors((prev) => err ? { ...prev, email: err } : Object.fromEntries(Object.entries(prev).filter(([k]) => k !== 'email')))
-    }
-  }
-
-  function onNameChange(v: string) {
-    setName(v)
-    if (errors.fullName) {
-      const err = validateName(v)
-      setErrors((prev) => err ? { ...prev, fullName: err } : Object.fromEntries(Object.entries(prev).filter(([k]) => k !== 'fullName')))
-    }
-  }
-
-  function onPasswordChange(v: string) {
-    setPassword(v)
-    if (errors.password) {
-      const err = step === 'signup' ? validatePassword(v) : ''
-      setErrors((prev) => err ? { ...prev, password: err } : Object.fromEntries(Object.entries(prev).filter(([k]) => k !== 'password')))
-    }
-  }
-
-  async function handleLogin() {
-    setPending(true)
-    setMessage(undefined)
-
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-
-    if (error) {
-      setMessage('비밀번호가 올바르지 않습니다.')
-      setPending(false)
-      return
-    }
-
-    await invalidateProfile()
-    try {
-      const profile = await api.get<{ onboardingCompleted: boolean }>('/profiles/me')
-      router.push(profile.onboardingCompleted ? '/home' : '/onboarding')
-    } catch {
-      router.push('/onboarding')
-    }
-  }
-
-  async function handleSignup() {
+  async function handleProfileSubmit() {
     setPending(true)
     setMessage(undefined)
     setErrors({})
-
-    const newErrors: Record<string, string> = {}
-    const nameErr = validateName(name)
-    if (nameErr) newErrors.fullName = nameErr
-    const pwErr = validatePassword(password)
-    if (pwErr) newErrors.password = pwErr
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
+    const trimmed = name.trim()
+    if (trimmed.length < 2) {
+      setErrors({ name: '이름은 2자 이상 입력해주세요.' })
       setPending(false)
       return
     }
-
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: { data: { full_name: name.trim() } },
-      })
-
-      if (error) {
-        // Already registered — sign in instead
-        if (error.message.toLowerCase().includes('already registered')) {
-          const { error: loginError } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password,
-          })
-          if (loginError) {
-            setMessage('이미 가입된 이메일입니다. 비밀번호를 확인해주세요.')
-            setPending(false)
-            return
-          }
-          // Fall through to profile creation below
-        } else {
-          setMessage('회원가입 중 오류가 발생했습니다.')
-          setPending(false)
-          return
-        }
-      }
-
-      // Wait for session to be set before calling authenticated API
-      await new Promise<void>((resolve) => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-          if (event === 'SIGNED_IN') {
-            subscription.unsubscribe()
-            resolve()
-          }
-        })
-        // Already signed in — resolve immediately
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session) {
-            subscription.unsubscribe()
-            resolve()
-          }
-        })
-      })
-
-      await api.post('/auth/signup', { fullName: name.trim(), email: email.trim() }).catch(() => {})
+      await api.post('/auth/signup', { fullName: trimmed })
       await invalidateProfile()
-
       router.push('/onboarding')
     } catch {
       setMessage('회원가입 중 오류가 발생했습니다.')
@@ -233,25 +188,53 @@ export function AuthForm() {
     }
   }
 
-  function handleBack() {
-    setStep('email')
-    setName('')
-    setPassword('')
-    setMessage(undefined)
-    setErrors({})
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (step === 'phone') return handlePhoneSubmit()
+    if (step === 'otp') return handleOtpSubmit()
+    if (step === 'profile') return handleProfileSubmit()
   }
-
-  const isExpanded = step !== 'email'
-  const emailRadius = isExpanded ? '12px 12px 0 0' : '12px'
 
   async function handleSignOut() {
     await supabase.auth.signOut()
     setMessage(undefined)
   }
 
+  function handleChangePhone() {
+    setStep('phone')
+    setOtp('')
+    setMessage(undefined)
+    setErrors({})
+  }
+
+  if (user && profile && profile.role !== 'user') {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-[14px] leading-relaxed text-ink-muted" style={font}>
+          호스트 계정으로 로그인해주세요.
+        </p>
+        <LoadingButton type="button" variant="primary" onClick={handleSignOut}>
+          다른 계정으로 로그인
+        </LoadingButton>
+      </div>
+    )
+  }
+
+  // User is authenticated and profile query is still in flight — wait before
+  // deciding which step to show (avoids flashing the phone input).
+  if (user && profilePending) {
+    return (
+      <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+    )
+  }
+
+  const submitLabel =
+    step === 'phone' ? '인증번호 받기' : step === 'otp' ? '확인' : '가입하기'
+  const loadingLabel =
+    step === 'phone' ? '전송 중...' : step === 'otp' ? '확인 중...' : '가입 중...'
+
   return (
     <>
-      {/* Error banner */}
       {message && (
         <div
           className="mb-4 flex items-center gap-3 rounded-xl border border-danger-border bg-danger-soft px-4 py-3 text-[13px] text-danger"
@@ -267,135 +250,131 @@ export function AuthForm() {
         </div>
       )}
 
-      {user && profile?.role !== 'user' ? (
-        <div className="flex flex-col gap-3">
-          <p className="text-[14px] leading-relaxed text-ink-muted" style={font}>
-            호스트 계정으로 로그인해주세요.
-          </p>
-          <LoadingButton type="button" variant="primary" onClick={handleSignOut}>
-            다른 계정으로 로그인
-          </LoadingButton>
-        </div>
-      ) : (
       <form onSubmit={handleSubmit} noValidate>
-        {/* Outer container — no divide-y here because extra fields slide in */}
         <div className="rounded-xl border border-ink-faint overflow-hidden">
-          {/* Email — always visible */}
-          <CompoundField
-            label="이메일"
-            focused={focused === 'email'}
-            borderRadius={emailRadius}
-          >
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
-              onFocus={() => setFocused('email')}
-              onBlur={() => setFocused(null)}
-              className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
-              style={font}
-              autoFocus
-            />
-            {errors.email && (
-              <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.email}</p>
-            )}
-          </CompoundField>
+          {step === 'phone' && (
+            <CompoundField label="휴대폰 번호" focused={focused === 'phone'} borderRadius="12px">
+              <input
+                id="phone"
+                type="tel"
+                autoComplete="tel"
+                inputMode="numeric"
+                placeholder="010-0000-0000"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(formatPhone(e.target.value))
+                  if (errors.phone) setErrors({})
+                }}
+                onFocus={() => setFocused('phone')}
+                onBlur={() => setFocused(null)}
+                className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
+                style={font}
+                autoFocus
+              />
+              {errors.phone && (
+                <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.phone}</p>
+              )}
+            </CompoundField>
+          )}
 
-          {/* Extra fields — slide down */}
-          <div
-            style={{
-              maxHeight: isExpanded ? extraHeight : 0,
-              opacity: isExpanded ? 1 : 0,
-              transition: 'max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
-              overflow: 'hidden',
-            }}
-          >
-            <div ref={extraRef}>
-              {/* Login: password only */}
-              {visibleStep === 'login' && (
-                <div className="border-t border-ink-faint">
-                  <CompoundField
-                    label="비밀번호"
-                    focused={focused === 'password'}
-                    borderRadius="0 0 12px 12px"
+          {step === 'otp' && (
+            <>
+              <CompoundField label="휴대폰 번호" borderRadius="12px 12px 0 0">
+                <div className="flex items-center justify-between">
+                  <span className="text-[16px] text-ink" style={font}>{phone}</span>
+                  <button
+                    type="button"
+                    onClick={handleChangePhone}
+                    className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink"
+                    style={font}
                   >
-                    <input
-                      id="password"
-                      type="password"
-                      autoComplete="current-password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => onPasswordChange(e.target.value)}
-                      onFocus={() => setFocused('password')}
-                      onBlur={() => setFocused(null)}
-                      className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
-                      style={font}
-                    />
-                  </CompoundField>
+                    변경
+                  </button>
                 </div>
-              )}
+              </CompoundField>
+              <div className="border-t border-ink-faint">
+                <CompoundField
+                  label="인증번호 (6자리)"
+                  focused={focused === 'otp'}
+                  borderRadius="0 0 12px 12px"
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="otp"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder={resendIn === 0 ? '만료됨' : '000000'}
+                      value={otp}
+                      disabled={pending || resendIn === 0}
+                      onChange={(e) => {
+                        setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                        if (errors.otp) setErrors({})
+                      }}
+                      onFocus={() => setFocused('otp')}
+                      onBlur={() => setFocused(null)}
+                      className="flex-1 bg-transparent text-[18px] tracking-[0.3em] text-ink placeholder:text-ink-faint outline-none disabled:opacity-60"
+                      style={font}
+                      autoFocus
+                    />
+                    {pending && (
+                      <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+                    )}
+                  </div>
+                  {errors.otp && (
+                    <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.otp}</p>
+                  )}
+                </CompoundField>
+              </div>
+            </>
+          )}
 
-              {/* Signup: name + password */}
-              {visibleStep === 'signup' && (
-                <>
-                  <div className="border-t border-ink-faint">
-                    <CompoundField
-                      label="이름"
-                      focused={focused === 'fullName'}
-                    >
-                      <input
-                        id="fullName"
-                        type="text"
-                        autoComplete="name"
-                        placeholder="홍길동"
-                        value={name}
-                        onChange={(e) => onNameChange(e.target.value)}
-                        onFocus={() => setFocused('fullName')}
-                        onBlur={() => setFocused(null)}
-                        className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
-                        style={font}
-                      />
-                      {errors.fullName && (
-                        <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.fullName}</p>
-                      )}
-                    </CompoundField>
-                  </div>
-                  <div className="border-t border-ink-faint">
-                    <CompoundField
-                      label="비밀번호"
-                      focused={focused === 'password'}
-                      borderRadius="0 0 12px 12px"
-                    >
-                      <input
-                        id="password"
-                        type="password"
-                        autoComplete="new-password"
-                        placeholder="영문·숫자 포함 8자 이상"
-                        value={password}
-                        onChange={(e) => onPasswordChange(e.target.value)}
-                        onFocus={() => setFocused('password')}
-                        onBlur={() => setFocused(null)}
-                        className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
-                        style={font}
-                      />
-                      {errors.password && (
-                        <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.password}</p>
-                      )}
-                    </CompoundField>
-                  </div>
-                </>
+          {step === 'profile' && (
+            <CompoundField label="이름" focused={focused === 'name'} borderRadius="12px">
+              <input
+                id="name"
+                type="text"
+                autoComplete="name"
+                placeholder="홍길동"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (errors.name) setErrors({})
+                }}
+                onFocus={() => setFocused('name')}
+                onBlur={() => setFocused(null)}
+                className="w-full bg-transparent text-[16px] text-ink placeholder:text-ink-faint outline-none"
+                style={font}
+                autoFocus
+              />
+              {errors.name && (
+                <p className="mt-1 text-[12px] text-destructive" style={font}>{errors.name}</p>
               )}
-            </div>
-          </div>
+            </CompoundField>
+          )}
         </div>
 
-        {/* Terms agreement — signup only */}
-        {step === 'signup' && (
+        {step === 'otp' && (
+          <div className="mt-3 text-center" style={font}>
+            {resendIn > 0 ? (
+              <p className="text-[13px] text-ink-muted">
+                {resendIn}초 후 다시 받을 수 있습니다
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={pending}
+                className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink disabled:opacity-50"
+              >
+                인증번호 다시 받기
+              </button>
+            )}
+          </div>
+        )}
+
+        {step === 'profile' && (
           <div className="flex flex-col gap-3 mt-4 mb-5 animate-fade-only" style={font}>
-            {/* All agree */}
             <label className="flex items-center gap-2.5 cursor-pointer">
               <button
                 type="button"
@@ -419,7 +398,6 @@ export function AuthForm() {
 
             <div className="w-full h-px bg-outline-dim" />
 
-            {/* Terms */}
             <label className="flex items-center gap-2.5 cursor-pointer">
               <button
                 type="button"
@@ -440,7 +418,6 @@ export function AuthForm() {
               </span>
             </label>
 
-            {/* Privacy */}
             <label className="flex items-center gap-2.5 cursor-pointer">
               <button
                 type="button"
@@ -463,30 +440,18 @@ export function AuthForm() {
           </div>
         )}
 
-        {/* Submit button */}
-        <LoadingButton
-          type="submit"
-          loading={pending}
-          disabled={step === 'signup' && !allAgreed}
-          loadingText={step === 'email' ? '확인 중...' : step === 'login' ? '로그인 중...' : '가입 중...'}
-          className="mt-5"
-        >
-          {step === 'email' ? '계속' : step === 'login' ? '로그인' : '가입하기'}
-        </LoadingButton>
-
-        {/* Back link */}
-        {isExpanded && (
-          <button
-            type="button"
-            onClick={handleBack}
-            className="w-full text-center text-sm text-ink-muted mt-4 hover:text-ink transition-colors animate-fade-only"
-            style={font}
+        {step !== 'otp' && (
+          <LoadingButton
+            type="submit"
+            loading={pending}
+            disabled={step === 'profile' && !allAgreed}
+            loadingText={loadingLabel}
+            className="mt-5"
           >
-            다른 이메일로 계속하기
-          </button>
+            {submitLabel}
+          </LoadingButton>
         )}
       </form>
-      )}
     </>
   )
 }

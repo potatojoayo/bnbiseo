@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { authRoutes } from './routes/auth'
+import { authHooksRoutes } from './routes/auth-hooks'
 import { propertiesRoutes } from './routes/properties'
 import { assetsRoutes } from './routes/assets'
 import { profilesRoutes } from './routes/profiles'
@@ -24,6 +25,7 @@ app.use(
 )
 
 app.route('/auth', authRoutes)
+app.route('/auth/hooks', authHooksRoutes)
 app.route('/properties', propertiesRoutes)
 app.route('/assets', assetsRoutes)
 app.route('/profiles', profilesRoutes)

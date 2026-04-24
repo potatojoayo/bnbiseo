@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/lib/auth-provider'
-import { api } from '@/lib/api-client'
+import { api, ApiError } from '@/lib/api-client'
 
 type Profile = {
   id: string
@@ -17,6 +17,11 @@ export function useProfile() {
     queryKey: ['profile'],
     queryFn: () => api.get<Profile>('/profiles/me'),
     enabled: !!user,
+    retry: (failureCount, error) => {
+      // 404 = profile doesn't exist yet (mid-signup). Not a transient failure.
+      if (error instanceof ApiError && error.status === 404) return false
+      return failureCount < 3
+    },
   })
 }
 

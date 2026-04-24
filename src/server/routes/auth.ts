@@ -71,12 +71,20 @@ authRoutes.post('/login', async (c) => {
 authRoutes.post('/signup', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const body = await c.req.json()
-  const { fullName, email } = z.object({
+  const { fullName } = z.object({
     fullName: z.string().min(1),
-    email: z.string().email().optional(),
   }).parse(body)
 
-  // Check if profile already exists for this auth user (e.g. re-signup after delete)
+  // Pull phone/email from the verified auth user (token was verified by middleware)
+  const header = c.req.header('Authorization')!
+  const token = header.slice(7)
+  const {
+    data: { user },
+  } = await getSupabase().auth.getUser(token)
+  const rawPhone = user?.phone ?? ''
+  const phone = rawPhone ? (rawPhone.startsWith('+') ? rawPhone : `+${rawPhone}`) : null
+  const email = user?.email ?? null
+
   const [existing] = await db
     .select({ id: profiles.id })
     .from(profiles)
@@ -87,12 +95,12 @@ authRoutes.post('/signup', authMiddleware, async (c) => {
     // Reactivate soft-deleted profile
     await db
       .update(profiles)
-      .set({ fullName, email, deletedAt: null, updatedAt: new Date() })
+      .set({ fullName, email, phone, deletedAt: null, updatedAt: new Date() })
       .where(eq(profiles.id, existing.id))
   } else {
     await db
       .insert(profiles)
-      .values({ userId, fullName, email })
+      .values({ userId, fullName, email, phone })
   }
 
   return c.json({ ok: true })

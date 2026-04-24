@@ -15,7 +15,7 @@ import {
   propertyAssets,
   propertySpaces,
 } from '@/db/schema'
-import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
 import { summarizeSpaces } from '@/lib/property-space-summary'
 import {
@@ -64,6 +64,7 @@ async function createSignedUrlMap(paths: string[]) {
 }
 
 cleaningRoutes.use('*', authMiddleware)
+cleaningRoutes.use('*', requireProfile)
 
 // List cleaning requests for the user
 cleaningRoutes.get('/', async (c) => {

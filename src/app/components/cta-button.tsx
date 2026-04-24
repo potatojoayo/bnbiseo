@@ -1,12 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/api-client'
-import { api } from '@/lib/api-client'
+import { useAuth } from '@/lib/auth-provider'
+import { useProfile } from '@/lib/hooks/use-profile'
 import { cn } from '@/lib/utils'
-
-type Destination = '/login' | '/onboarding' | '/home'
 
 export function CtaButton({
   className,
@@ -16,33 +14,17 @@ export function CtaButton({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const [destination, setDestination] = useState<Destination>('/login')
+  const { user } = useAuth()
+  const { data: profile } = useProfile()
   const [navigating, setNavigating] = useState(false)
-
-  // Pre-fetch auth + profile state on mount so click is instant
-  useEffect(() => {
-    async function check() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        setDestination('/login')
-        return
-      }
-
-      try {
-        const profile = await api.get<{ onboardingCompleted: boolean }>('/profiles/me')
-        setDestination(profile.onboardingCompleted ? '/home' : '/onboarding')
-      } catch {
-        // No profile — need to sign up properly
-        setDestination('/login')
-      }
-    }
-
-    check()
-  }, [])
 
   function handleClick() {
     setNavigating(true)
-    router.push(destination)
+    if (!user || !profile) {
+      router.push('/login')
+      return
+    }
+    router.push(profile.onboardingCompleted ? '/home' : '/onboarding')
   }
 
   return (

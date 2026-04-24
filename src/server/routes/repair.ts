@@ -15,7 +15,7 @@ import {
   repairRequestPhotos,
   repairRequests,
 } from '@/db/schema'
-import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
 
 const PhotoUploadSchema = z.object({
   fileName: z.string().min(1),
@@ -67,6 +67,7 @@ async function createSignedUrlMap(paths: string[]) {
 }
 
 repairRoutes.use('*', authMiddleware)
+repairRoutes.use('*', requireProfile)
 
 // 호스트의 수리 요청 목록
 repairRoutes.get('/', async (c) => {
