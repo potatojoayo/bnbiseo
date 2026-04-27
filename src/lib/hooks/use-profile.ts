@@ -5,6 +5,7 @@ import { api, ApiError } from '@/lib/api-client'
 type Profile = {
   id: string
   email: string | null
+  phone: string | null
   fullName: string | null
   onboardingCompleted: boolean
   role: 'user' | 'admin' | 'manager'

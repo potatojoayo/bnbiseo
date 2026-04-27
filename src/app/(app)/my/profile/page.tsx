@@ -15,6 +15,16 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 
+function formatPhone(raw: string) {
+  if (!raw) return ''
+  const digits = raw.replace(/\D/g, '')
+  const local = digits.startsWith('82') ? `0${digits.slice(2)}` : digits
+  if (local.length < 4) return local
+  if (local.length < 8) return `${local.slice(0, 3)}-${local.slice(3)}`
+  if (local.length === 10) return `${local.slice(0, 3)}-${local.slice(3, 6)}-${local.slice(6)}`
+  return `${local.slice(0, 3)}-${local.slice(3, 7)}-${local.slice(7, 11)}`
+}
+
 export default function ProfilePage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
@@ -28,7 +38,7 @@ export default function ProfilePage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  const email = profile?.email || user?.email || ''
+  const phone = formatPhone(profile?.phone || user?.phone || '')
   const name = nameDraft ?? (profile?.fullName || '')
   const hasChanges = name !== (profile?.fullName || '')
 
@@ -83,9 +93,9 @@ export default function ProfilePage() {
       {/* Form */}
       <div className="flex flex-col gap-5">
         <CompoundInput>
-          <CompoundField label="이메일" borderRadius="12px 12px 0 0">
+          <CompoundField label="휴대폰 번호" borderRadius="12px 12px 0 0">
             <span className="block w-full text-[16px] text-ink-faint">
-              {email}
+              {phone}
             </span>
           </CompoundField>
           <FloatingInput

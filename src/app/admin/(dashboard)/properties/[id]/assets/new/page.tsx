@@ -101,7 +101,7 @@ export default function AdminFixtureCreatePage() {
           thumbnailStoragePath: photo.thumbnailStoragePath,
         })),
       })
-      router.replace(`/admin/properties/${id}`)
+      router.back()
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '시설물을 추가하지 못했어요.')
       setSaving(false)
