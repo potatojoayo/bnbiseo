@@ -2,11 +2,13 @@ import { Context, Hono } from 'hono'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { eq, and, ne, desc, isNull, sql, count, inArray } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
 import { db } from '@/db'
 import {
   profiles,
   properties,
   cleaningRequests,
+  cleaningRequestPhotos,
   managers,
   propertyAssets,
   propertyAssetPhotos,
@@ -210,6 +212,106 @@ adminRoutes.get('/cleaning', async (c) => {
     .orderBy(desc(cleaningRequests.createdAt))
 
   return c.json(result)
+})
+
+// Get cleaning request detail
+adminRoutes.get('/cleaning/:id', async (c) => {
+  const id = c.req.param('id')
+
+  const hostProfiles = alias(profiles, 'host_profiles')
+  const managerProfiles = alias(profiles, 'manager_profiles')
+
+  const [request] = await db
+    .select({
+      id: cleaningRequests.id,
+      propertyId: cleaningRequests.propertyId,
+      hostId: cleaningRequests.hostId,
+      managerId: cleaningRequests.managerId,
+      cleaningType: cleaningRequests.cleaningType,
+      status: cleaningRequests.status,
+      scheduledDate: cleaningRequests.scheduledDate,
+      scheduledTime: cleaningRequests.scheduledTime,
+      memo: cleaningRequests.memo,
+      linenWash: cleaningRequests.linenWash,
+      price: cleaningRequests.price,
+      discount: cleaningRequests.discount,
+      finalPrice: cleaningRequests.finalPrice,
+      createdAt: cleaningRequests.createdAt,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+      hostName: hostProfiles.fullName,
+      hostEmail: hostProfiles.email,
+      hostPhone: hostProfiles.phone,
+      managerName: managers.name,
+      managerPhone: managers.phone,
+      managerAvatarStoragePath: managerProfiles.avatarStoragePath,
+      managerAvatarThumbnailStoragePath: managerProfiles.avatarThumbnailStoragePath,
+    })
+    .from(cleaningRequests)
+    .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .leftJoin(hostProfiles, eq(cleaningRequests.hostId, hostProfiles.id))
+    .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
+    .leftJoin(managerProfiles, eq(managers.profileId, managerProfiles.id))
+    .where(eq(cleaningRequests.id, id))
+    .limit(1)
+
+  if (!request) {
+    return warnJson(c, { error: '청소 요청을 찾을 수 없어요' }, 404)
+  }
+
+  const spaces = request.propertyId
+    ? await db
+        .select({
+          id: propertySpaces.id,
+          category: propertySpaces.category,
+          floor: propertySpaces.floor,
+          name: propertySpaces.name,
+          pyeong: propertySpaces.pyeong,
+        })
+        .from(propertySpaces)
+        .where(eq(propertySpaces.propertyId, request.propertyId))
+    : []
+
+  const requestPhotoRows = await db
+    .select({
+      id: cleaningRequestPhotos.id,
+      storagePath: cleaningRequestPhotos.storagePath,
+      thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
+      sortOrder: cleaningRequestPhotos.sortOrder,
+    })
+    .from(cleaningRequestPhotos)
+    .where(eq(cleaningRequestPhotos.cleaningRequestId, request.id))
+
+  const summary = summarizeSpaces(spaces)
+
+  const signedUrlMap = await createSignedUrlMap([
+    ...requestPhotoRows.map((photo) => photo.storagePath),
+    ...requestPhotoRows.map((photo) => photo.thumbnailStoragePath),
+    ...(request.managerAvatarStoragePath ? [request.managerAvatarStoragePath] : []),
+    ...(request.managerAvatarThumbnailStoragePath ? [request.managerAvatarThumbnailStoragePath] : []),
+  ])
+
+  return c.json({
+    ...request,
+    propertyPyeong: summary.pyeong,
+    propertyLivingRooms: summary.livingRooms,
+    propertyBedrooms: summary.bedrooms,
+    propertyBathrooms: summary.bathrooms,
+    managerAvatarSignedUrl: request.managerAvatarStoragePath
+      ? signedUrlMap.get(request.managerAvatarStoragePath) ?? null
+      : null,
+    managerAvatarThumbnailSignedUrl: request.managerAvatarThumbnailStoragePath
+      ? signedUrlMap.get(request.managerAvatarThumbnailStoragePath) ?? null
+      : null,
+    cleaningPhotos: requestPhotoRows
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((photo) => ({
+        id: photo.id,
+        signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+        thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+      })),
+  })
 })
 
 // Assign manager to cleaning request

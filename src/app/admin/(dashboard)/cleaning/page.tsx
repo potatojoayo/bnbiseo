@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { ChevronDownIcon } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
@@ -150,7 +151,9 @@ export default function AdminCleaningPage() {
           <>
           <div className="flex flex-col gap-3 md:hidden">
             {mobileRequests.map((r) => (
-              <AdminCleaningRequestCard key={r.id} request={r} />
+              <Link key={r.id} href={`/admin/cleaning/${r.id}`} className="block transition-transform active:scale-[0.99]">
+                <AdminCleaningRequestCard request={r} />
+              </Link>
             ))}
             {mobileVisibleCount < filteredRequests.length && (
               <div ref={loadMoreRef} className="flex items-center justify-center py-3">
@@ -188,9 +191,9 @@ export default function AdminCleaningPage() {
                         {r.status === 'pending' && (
                           <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="rounded-md bg-ink px-2.5 py-1 text-[11px] font-medium text-white">배정</button>
                         )}
-                        {['pending', 'confirmed', 'in_progress'].includes(r.status) && (
+                        {/* {['pending', 'confirmed', 'in_progress'].includes(r.status) && (
                           <button onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }} className="rounded-md border border-outline-dim px-2.5 py-1 text-[11px] font-medium text-ink-muted">상태</button>
-                        )}
+                        )} */}
                       </div>
                     </TableCell>
                   </TableRow>

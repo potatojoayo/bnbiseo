@@ -179,6 +179,52 @@ export function useAdminCleaning(status?: string) {
   })
 }
 
+export type AdminCleaningDetail = {
+  id: string
+  propertyId: string | null
+  hostId: string | null
+  managerId: string | null
+  cleaningType: string
+  status: string
+  scheduledDate: string
+  scheduledTime: string
+  memo: string | null
+  linenWash: string | null
+  price: number
+  discount: number
+  finalPrice: number
+  createdAt: string
+  propertyName: string | null
+  propertyAddress: string | null
+  propertyAddressDetail: string | null
+  propertyPyeong: number | null
+  propertyLivingRooms: number | null
+  propertyBedrooms: number | null
+  propertyBathrooms: number | null
+  hostName: string | null
+  hostEmail: string | null
+  hostPhone: string | null
+  managerName: string | null
+  managerPhone: string | null
+  managerAvatarSignedUrl: string | null
+  managerAvatarThumbnailSignedUrl: string | null
+  cleaningPhotos: Array<{
+    id: string
+    signedUrl: string | null
+    thumbnailSignedUrl: string | null
+  }>
+}
+
+export function useAdminCleaningDetail(id: string) {
+  return useQuery({
+    queryKey: ['admin', 'cleaning', 'detail', id],
+    queryFn: () => api.get<AdminCleaningDetail>(`/admin/cleaning/${id}`),
+    enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: true,
+  })
+}
+
 export function useAdminManagers() {
   return useQuery({
     queryKey: ['admin', 'managers'],
