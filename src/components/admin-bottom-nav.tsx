@@ -8,6 +8,7 @@ import {
   BrushCleaningIcon,
   UserCheckIcon,
   Building2Icon,
+  WrenchIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +16,7 @@ const tabs = [
   { label: '대시보드', href: '/admin', icon: LayoutDashboardIcon },
   { label: '숙소', href: '/admin/properties', icon: Building2Icon },
   { label: '청소', href: '/admin/cleaning', icon: BrushCleaningIcon },
+  { label: '수리', href: '/admin/repair', icon: WrenchIcon },
   { label: '매니저', href: '/admin/managers', icon: UserCheckIcon },
   // { label: '회원', href: '/admin/users', icon: UsersIcon },
 ]

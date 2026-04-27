@@ -14,6 +14,10 @@ import {
   propertyAssetPhotos,
   propertySpaces,
   propertySpacePhotos,
+  repairRequests,
+  repairRequestPhotos,
+  repairCompletionReports,
+  repairCompletionPhotos,
 } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
@@ -412,6 +416,206 @@ adminRoutes.post('/cleaning/:id/status', async (c) => {
         propertyName: detail.propertyName || '숙소',
       })
     }
+  }
+
+  return c.json(updated)
+})
+
+// ─── Repair Management ──────────────────────────────────────────────────────
+
+const AdminRepairStatusSchema = z.enum([
+  'submitted',
+  'quoted',
+  'confirmed',
+  'in_progress',
+  'completed',
+  'cancelled',
+])
+
+adminRoutes.get('/repair', async (c) => {
+  const statusQuery = c.req.query('status')
+  const status = statusQuery ? AdminRepairStatusSchema.safeParse(statusQuery) : null
+
+  if (statusQuery && !status?.success) {
+    return warnJson(c, { error: '유효하지 않은 상태값입니다.' }, 400)
+  }
+
+  const result = await db
+    .select({
+      id: repairRequests.id,
+      propertyId: repairRequests.propertyId,
+      hostId: repairRequests.hostId,
+      managerId: repairRequests.managerId,
+      status: repairRequests.status,
+      description: repairRequests.description,
+      preferredScheduledDate: repairRequests.preferredScheduledDate,
+      preferredScheduledTime: repairRequests.preferredScheduledTime,
+      scheduledDate: repairRequests.scheduledDate,
+      scheduledTime: repairRequests.scheduledTime,
+      quotedCost: repairRequests.quotedCost,
+      quoteNote: repairRequests.quoteNote,
+      createdAt: repairRequests.createdAt,
+      cancelledAt: repairRequests.cancelledAt,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      hostName: profiles.fullName,
+      hostEmail: profiles.email,
+      managerName: managers.name,
+    })
+    .from(repairRequests)
+    .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
+    .leftJoin(profiles, eq(repairRequests.hostId, profiles.id))
+    .leftJoin(managers, eq(repairRequests.managerId, managers.id))
+    .where(status?.success ? eq(repairRequests.status, status.data) : undefined)
+    .orderBy(desc(repairRequests.createdAt))
+
+  return c.json(result)
+})
+
+adminRoutes.get('/repair/:id', async (c) => {
+  const id = c.req.param('id')
+
+  const hostProfiles = alias(profiles, 'host_profiles_repair')
+  const managerProfiles = alias(profiles, 'manager_profiles_repair')
+
+  const [request] = await db
+    .select({
+      id: repairRequests.id,
+      propertyId: repairRequests.propertyId,
+      hostId: repairRequests.hostId,
+      managerId: repairRequests.managerId,
+      status: repairRequests.status,
+      description: repairRequests.description,
+      preferredScheduledDate: repairRequests.preferredScheduledDate,
+      preferredScheduledTime: repairRequests.preferredScheduledTime,
+      scheduledDate: repairRequests.scheduledDate,
+      scheduledTime: repairRequests.scheduledTime,
+      quotedCost: repairRequests.quotedCost,
+      quoteNote: repairRequests.quoteNote,
+      quotedAt: repairRequests.quotedAt,
+      confirmedAt: repairRequests.confirmedAt,
+      startedAt: repairRequests.startedAt,
+      completedAt: repairRequests.completedAt,
+      cancelledAt: repairRequests.cancelledAt,
+      createdAt: repairRequests.createdAt,
+      propertyName: properties.name,
+      propertyAddress: properties.address,
+      propertyAddressDetail: properties.addressDetail,
+      hostName: hostProfiles.fullName,
+      hostEmail: hostProfiles.email,
+      hostPhone: hostProfiles.phone,
+      managerName: managers.name,
+      managerPhone: managers.phone,
+      managerAvatarStoragePath: managerProfiles.avatarStoragePath,
+      managerAvatarThumbnailStoragePath: managerProfiles.avatarThumbnailStoragePath,
+    })
+    .from(repairRequests)
+    .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
+    .leftJoin(hostProfiles, eq(repairRequests.hostId, hostProfiles.id))
+    .leftJoin(managers, eq(repairRequests.managerId, managers.id))
+    .leftJoin(managerProfiles, eq(managers.profileId, managerProfiles.id))
+    .where(eq(repairRequests.id, id))
+    .limit(1)
+
+  if (!request) {
+    return warnJson(c, { error: '수리 요청을 찾을 수 없어요' }, 404)
+  }
+
+  const requestPhotoRows = await db
+    .select({
+      id: repairRequestPhotos.id,
+      storagePath: repairRequestPhotos.storagePath,
+      thumbnailStoragePath: repairRequestPhotos.thumbnailStoragePath,
+      sortOrder: repairRequestPhotos.sortOrder,
+    })
+    .from(repairRequestPhotos)
+    .where(eq(repairRequestPhotos.repairRequestId, request.id))
+
+  const [report] = await db
+    .select({
+      id: repairCompletionReports.id,
+      actionNotes: repairCompletionReports.actionNotes,
+      additionalNotes: repairCompletionReports.additionalNotes,
+      createdAt: repairCompletionReports.createdAt,
+    })
+    .from(repairCompletionReports)
+    .where(eq(repairCompletionReports.repairRequestId, request.id))
+    .limit(1)
+
+  const reportPhotoRows = report
+    ? await db
+        .select({
+          id: repairCompletionPhotos.id,
+          storagePath: repairCompletionPhotos.storagePath,
+          thumbnailStoragePath: repairCompletionPhotos.thumbnailStoragePath,
+          sortOrder: repairCompletionPhotos.sortOrder,
+        })
+        .from(repairCompletionPhotos)
+        .where(eq(repairCompletionPhotos.completionReportId, report.id))
+    : []
+
+  const signedUrlMap = await createSignedUrlMap([
+    ...requestPhotoRows.map((photo) => photo.storagePath),
+    ...requestPhotoRows.map((photo) => photo.thumbnailStoragePath),
+    ...reportPhotoRows.map((photo) => photo.storagePath),
+    ...reportPhotoRows.map((photo) => photo.thumbnailStoragePath),
+    ...(request.managerAvatarStoragePath ? [request.managerAvatarStoragePath] : []),
+    ...(request.managerAvatarThumbnailStoragePath ? [request.managerAvatarThumbnailStoragePath] : []),
+  ])
+
+  return c.json({
+    ...request,
+    managerAvatarSignedUrl: request.managerAvatarStoragePath
+      ? signedUrlMap.get(request.managerAvatarStoragePath) ?? null
+      : null,
+    managerAvatarThumbnailSignedUrl: request.managerAvatarThumbnailStoragePath
+      ? signedUrlMap.get(request.managerAvatarThumbnailStoragePath) ?? null
+      : null,
+    photos: requestPhotoRows
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((photo) => ({
+        id: photo.id,
+        signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+        thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+      })),
+    report: report
+      ? {
+          id: report.id,
+          actionNotes: report.actionNotes,
+          additionalNotes: report.additionalNotes,
+          createdAt: report.createdAt,
+          photos: reportPhotoRows
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((photo) => ({
+              id: photo.id,
+              signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+              thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+            })),
+        }
+      : null,
+  })
+})
+
+adminRoutes.post('/repair/:id/assign', async (c) => {
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  const validated = AssignManagerSchema.safeParse(body)
+
+  if (!validated.success) {
+    return warnJson(c, { errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [updated] = await db
+    .update(repairRequests)
+    .set({
+      managerId: validated.data.managerId,
+      updatedAt: new Date(),
+    })
+    .where(eq(repairRequests.id, id))
+    .returning()
+
+  if (!updated) {
+    return warnJson(c, { error: '수리 요청을 찾을 수 없어요' }, 404)
   }
 
   return c.json(updated)

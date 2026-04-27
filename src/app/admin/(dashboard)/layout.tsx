@@ -20,7 +20,7 @@ export default function AdminDashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [ready, setReady] = useState(false)
-  const rootNavPaths = ['/admin', '/admin/cleaning', '/admin/users', '/admin/properties', '/admin/managers']
+  const rootNavPaths = ['/admin', '/admin/cleaning', '/admin/repair', '/admin/users', '/admin/properties', '/admin/managers']
   const showBottomNav = rootNavPaths.includes(pathname)
 
   useEffect(() => {

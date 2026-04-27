@@ -8,6 +8,7 @@ import {
   UsersIcon,
   Building2Icon,
   UserCheckIcon,
+  WrenchIcon,
 } from 'lucide-react'
 
 import { NavMain } from '@/components/nav-main'
@@ -36,6 +37,11 @@ const navItems = [
     title: '청소 관리',
     url: '/admin/cleaning',
     icon: <BrushCleaningIcon />,
+  },
+  {
+    title: '수리 관리',
+    url: '/admin/repair',
+    icon: <WrenchIcon />,
   },
   {
     title: '매니저 관리',

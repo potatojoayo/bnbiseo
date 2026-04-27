@@ -225,6 +225,75 @@ export function useAdminCleaningDetail(id: string) {
   })
 }
 
+export type AdminRepairListItem = {
+  id: string
+  propertyId: string
+  hostId: string
+  managerId: string | null
+  status: string
+  description: string
+  preferredScheduledDate: string
+  preferredScheduledTime: string
+  scheduledDate: string | null
+  scheduledTime: string | null
+  quotedCost: number | null
+  quoteNote: string | null
+  createdAt: string
+  cancelledAt: string | null
+  propertyName: string | null
+  propertyAddress: string | null
+  hostName: string | null
+  hostEmail: string | null
+  managerName: string | null
+}
+
+export type AdminRepairDetail = AdminRepairListItem & {
+  hostPhone: string | null
+  managerPhone: string | null
+  managerAvatarSignedUrl: string | null
+  managerAvatarThumbnailSignedUrl: string | null
+  propertyAddressDetail: string | null
+  quotedAt: string | null
+  confirmedAt: string | null
+  startedAt: string | null
+  completedAt: string | null
+  photos: Array<{
+    id: string
+    signedUrl: string | null
+    thumbnailSignedUrl: string | null
+  }>
+  report: {
+    id: string
+    actionNotes: string
+    additionalNotes: string | null
+    createdAt: string
+    photos: Array<{
+      id: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>
+  } | null
+}
+
+export function useAdminRepair(status?: string) {
+  return useQuery({
+    queryKey: ['admin', 'repair', status ?? 'all'],
+    queryFn: () => api.get<AdminRepairListItem[]>(`/admin/repair${status ? `?status=${status}` : ''}`),
+    staleTime: 0,
+    refetchOnMount: true,
+  })
+}
+
+export function useAdminRepairDetail(id: string) {
+  return useQuery({
+    queryKey: ['admin', 'repair', 'detail', id],
+    queryFn: () => api.get<AdminRepairDetail>(`/admin/repair/${id}`),
+    enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: true,
+  })
+}
+
 export function useAdminManagers() {
   return useQuery({
     queryKey: ['admin', 'managers'],
@@ -268,6 +337,7 @@ export function useInvalidateAdmin() {
     all: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
     stats: () => queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] }),
     cleaning: () => queryClient.invalidateQueries({ queryKey: ['admin', 'cleaning'] }),
+    repair: () => queryClient.invalidateQueries({ queryKey: ['admin', 'repair'] }),
     managers: () => queryClient.invalidateQueries({ queryKey: ['admin', 'managers'] }),
     properties: () => queryClient.invalidateQueries({ queryKey: ['admin', 'properties'] }),
     users: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
