@@ -41,8 +41,8 @@ export function HostCleaningRequestCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {showKindBadge && (
-            <span className="mb-2 inline-flex h-6 items-center gap-1 rounded-full bg-emerald-50 px-2.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100">
-              <BrushCleaningIcon className="size-3" strokeWidth={1.8} />
+            <span className="mb-2 inline-flex h-6 items-center gap-1 rounded-full border border-outline-strong bg-surface-subtle px-2.5 text-[11px] font-medium text-ink">
+              <BrushCleaningIcon className="size-3" strokeWidth={2} />
               청소
             </span>
           )}
@@ -56,7 +56,7 @@ export function HostCleaningRequestCard({
         <CleaningStatusBadge status={request.status as CleaningStatus} />
       </div>
 
-      <div className="mt-3 h-px w-full bg-outline-dim" />
+      <div className="mt-3 border-t border-dashed border-outline-strong" />
 
       <p className={cn('mt-3 text-[13px]', isCancelled ? 'text-ink-faint line-through' : 'text-ink-muted')}>
         {request.finalPrice.toLocaleString()}원

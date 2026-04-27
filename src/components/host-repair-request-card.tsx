@@ -49,7 +49,7 @@ export function HostRepairRequestCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           {showKindBadge && (
-            <span className="mb-2 inline-flex h-6 items-center gap-1 rounded-full bg-amber-50 px-2.5 text-[11px] font-medium text-amber-700 ring-1 ring-amber-100">
+            <span className="mb-2 inline-flex h-6 items-center gap-1 rounded-full border border-outline-strong bg-surface-subtle px-2.5 text-[11px] font-medium text-ink">
               <WrenchIcon className="size-3" strokeWidth={2} />
               수리
             </span>
@@ -76,14 +76,17 @@ export function HostRepairRequestCard({
       </p>
 
       {request.quotedCost != null && (
-        <p
-          className={cn(
-            'mt-2 text-[13px]',
-            isCancelled ? 'text-ink-faint line-through' : 'text-ink-muted',
-          )}
-        >
-          {request.quotedCost.toLocaleString()}원
-        </p>
+        <>
+          <div className="mt-3 border-t border-dashed border-outline-strong" />
+          <p
+            className={cn(
+              'mt-3 text-[13px]',
+              isCancelled ? 'text-ink-faint line-through' : 'text-ink-muted',
+            )}
+          >
+            {request.quotedCost.toLocaleString()}원
+          </p>
+        </>
       )}
     </Link>
   )

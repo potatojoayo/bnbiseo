@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Building2Icon, CalendarIcon, WalletIcon } from 'lucide-react'
+import { Building2Icon, CalendarIcon, WalletIcon, WrenchIcon } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { NotificationBell } from '@/components/notification-bell'
 import { useAdminProperties, useAdminStats } from '@/lib/hooks/use-admin'
@@ -60,12 +60,28 @@ export default function AdminDashboardPage() {
                 <CardHeader>
                   <CardDescription className="text-[14px] text-ink-muted">미배정 청소</CardDescription>
                   <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-[26px] font-semibold text-ink">
-                      {stats?.pendingAssignment.length ?? 0}건
-                    </CardTitle>
-                    <p className="mt-1 text-[13px] text-ink-muted">배정이 필요한 요청이에요.</p>
+                    <div>
+                      <CardTitle className="text-[26px] font-semibold text-ink">
+                        {stats?.pendingAssignment.length ?? 0}건
+                      </CardTitle>
+                      <p className="mt-1 text-[13px] text-ink-muted">배정이 필요한 요청이에요.</p>
+                    </div>
                   </div>
+                </CardHeader>
+              </Card>
+            </Link>
+
+            <Link href="/admin/repair" className="block transition-transform active:scale-[0.99]">
+              <Card className="h-full border-outline-dim">
+                <CardHeader>
+                  <CardDescription className="text-[14px] text-ink-muted">미배정 수리</CardDescription>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <CardTitle className="text-[26px] font-semibold text-ink">
+                        {stats?.repair?.unassigned ?? 0}건
+                      </CardTitle>
+                      <p className="mt-1 text-[13px] text-ink-muted">매니저 배정이 필요한 수리 요청이에요.</p>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
@@ -90,6 +106,25 @@ export default function AdminDashboardPage() {
               </Card>
             </Link>
 
+            <Link href="/admin/repair" className="block transition-transform active:scale-[0.99]">
+              <Card className="h-full border-outline-dim">
+                <CardHeader>
+                  <CardDescription className="text-[14px] text-ink-muted">진행 중 수리</CardDescription>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <CardTitle className="text-[26px] font-semibold text-ink">
+                        {stats?.repair?.inProgress ?? 0}건
+                      </CardTitle>
+                      <p className="mt-1 text-[13px] text-ink-muted">
+                        전체 진행 중 {stats?.repair?.open ?? 0}건 중 작업이 시작된 건이에요.
+                      </p>
+                    </div>
+                    <WrenchIcon className="size-5 text-ink-faint" />
+                  </div>
+                </CardHeader>
+              </Card>
+            </Link>
+
             <Card className="h-full border-outline-dim">
               <CardHeader>
                 <CardDescription className="text-[14px] text-ink-muted">오늘 매출</CardDescription>
@@ -98,7 +133,7 @@ export default function AdminDashboardPage() {
                     <CardTitle className="text-[26px] font-semibold text-ink">
                       {(stats?.todayRevenue ?? 0).toLocaleString()}원
                     </CardTitle>
-                    <p className="mt-1 text-[13px] text-ink-muted">오늘 완료된 청소 기준 매출이에요.</p>
+                    <p className="mt-1 text-[13px] text-ink-muted">오늘 청소·수리 기준 매출이에요.</p>
                   </div>
                   <WalletIcon className="size-5 text-ink-faint" />
                 </div>
@@ -111,7 +146,7 @@ export default function AdminDashboardPage() {
                   <CardDescription className="text-[14px] text-ink-muted">전체 숙소</CardDescription>
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                    <CardTitle className="text-[26px] font-semibold text-ink">
+                      <CardTitle className="text-[26px] font-semibold text-ink">
                         {activeProperties.length}개
                       </CardTitle>
                       <p className="mt-1 text-[13px] text-ink-muted">등록 완료된 숙소 기준이에요.</p>

@@ -98,8 +98,8 @@ adminRoutes.get('/stats', async (c) => {
     if (row.status === 'completed') todayCleaning.completed = row.count
   }
 
-  // Today's revenue
-  const [todayRevenueRow] = await db
+  // Today's revenue (cleaning + repair)
+  const [todayCleaningRevenueRow] = await db
     .select({ total: sql<number>`coalesce(sum(${cleaningRequests.finalPrice}), 0)` })
     .from(cleaningRequests)
     .where(and(
@@ -108,9 +108,19 @@ adminRoutes.get('/stats', async (c) => {
       ne(cleaningRequests.status, 'cancelled'),
     ))
 
-  // This month's revenue
+  const [todayRepairRevenueRow] = await db
+    .select({ total: sql<number>`coalesce(sum(${repairRequests.quotedCost}), 0)` })
+    .from(repairRequests)
+    .where(and(
+      eq(repairRequests.scheduledDate, today),
+      inArray(repairRequests.status, ['confirmed', 'in_progress', 'completed']),
+    ))
+
+  const todayRevenue = Number(todayCleaningRevenueRow.total) + Number(todayRepairRevenueRow.total)
+
+  // This month's revenue (cleaning + repair)
   const monthStart = today.slice(0, 7) + '-01'
-  const [monthRevenueRow] = await db
+  const [monthCleaningRevenueRow] = await db
     .select({ total: sql<number>`coalesce(sum(${cleaningRequests.finalPrice}), 0)` })
     .from(cleaningRequests)
     .where(and(
@@ -118,6 +128,16 @@ adminRoutes.get('/stats', async (c) => {
       ne(cleaningRequests.status, 'pending_payment'),
       ne(cleaningRequests.status, 'cancelled'),
     ))
+
+  const [monthRepairRevenueRow] = await db
+    .select({ total: sql<number>`coalesce(sum(${repairRequests.quotedCost}), 0)` })
+    .from(repairRequests)
+    .where(and(
+      sql`${repairRequests.scheduledDate} >= ${monthStart}`,
+      inArray(repairRequests.status, ['confirmed', 'in_progress', 'completed']),
+    ))
+
+  const monthRevenue = Number(monthCleaningRevenueRow.total) + Number(monthRepairRevenueRow.total)
 
   // Pending assignment (up to 5)
   const pendingAssignment = await db
@@ -161,15 +181,43 @@ adminRoutes.get('/stats', async (c) => {
   const [userCount] = await db.select({ count: count() }).from(profiles).where(and(isNull(profiles.deletedAt), eq(profiles.role, 'user')))
   const [managerCount] = await db.select({ count: count() }).from(managers).where(eq(managers.isActive, true))
 
+  // Repair counts (open = not completed/cancelled, pendingAssignment = no manager)
+  const [repairOpenRow] = await db
+    .select({ count: count() })
+    .from(repairRequests)
+    .where(and(
+      ne(repairRequests.status, 'completed'),
+      ne(repairRequests.status, 'cancelled'),
+    ))
+
+  const [repairUnassignedRow] = await db
+    .select({ count: count() })
+    .from(repairRequests)
+    .where(and(
+      isNull(repairRequests.managerId),
+      ne(repairRequests.status, 'completed'),
+      ne(repairRequests.status, 'cancelled'),
+    ))
+
+  const [repairInProgressRow] = await db
+    .select({ count: count() })
+    .from(repairRequests)
+    .where(eq(repairRequests.status, 'in_progress'))
+
   return c.json({
     todayCleaning,
-    todayRevenue: todayRevenueRow.total,
-    monthRevenue: monthRevenueRow.total,
+    todayRevenue,
+    monthRevenue,
     pendingAssignment,
     todaySchedule,
     totalProperties: propCount.count,
     totalUsers: userCount.count,
     totalManagers: managerCount.count,
+    repair: {
+      open: repairOpenRow.count,
+      unassigned: repairUnassignedRow.count,
+      inProgress: repairInProgressRow.count,
+    },
   })
 })
 

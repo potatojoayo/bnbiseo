@@ -31,6 +31,7 @@ type Stats = {
   totalProperties: number
   totalUsers: number
   totalManagers: number
+  repair: { open: number; unassigned: number; inProgress: number }
 }
 
 type CleaningRequest = {
