@@ -28,8 +28,10 @@ export function AuthForm() {
   const [focused, setFocused] = useState<string | null>(null)
   const [agreedTerms, setAgreedTerms] = useState(false)
   const [agreedPrivacy, setAgreedPrivacy] = useState(false)
+  const [agreedMarketing, setAgreedMarketing] = useState(false)
   const [resendIn, setResendIn] = useState(0)
   const allAgreed = agreedTerms && agreedPrivacy
+  const allChecked = agreedTerms && agreedPrivacy && agreedMarketing
   const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const font = { fontFamily: 'var(--font-body)' }
@@ -179,7 +181,7 @@ export function AuthForm() {
       return
     }
     try {
-      await api.post('/auth/signup', { fullName: trimmed })
+      await api.post('/auth/signup', { fullName: trimmed, marketingOptIn: agreedMarketing })
       await invalidateProfile()
       router.push('/onboarding')
     } catch {
@@ -379,15 +381,16 @@ export function AuthForm() {
               <button
                 type="button"
                 onClick={() => {
-                  const next = !allAgreed
+                  const next = !allChecked
                   setAgreedTerms(next)
                   setAgreedPrivacy(next)
+                  setAgreedMarketing(next)
                 }}
                 className={`w-[18px] h-[18px] rounded border-[1.5px] shrink-0 flex items-center justify-center transition-all ${
-                  allAgreed ? 'bg-ink border-ink' : 'border-outline'
+                  allChecked ? 'bg-ink border-ink' : 'border-outline'
                 }`}
               >
-                {allAgreed && (
+                {allChecked && (
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                     <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -435,6 +438,26 @@ export function AuthForm() {
               <span className="text-[12px] text-ink-muted flex-1">
                 <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-2 font-medium">개인정보 수집·이용</a>에 동의합니다
                 <span className="text-brand ml-0.5">(필수)</span>
+              </span>
+            </label>
+
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setAgreedMarketing(!agreedMarketing)}
+                className={`w-[18px] h-[18px] rounded border-[1.5px] shrink-0 flex items-center justify-center transition-all ${
+                  agreedMarketing ? 'bg-ink border-ink' : 'border-outline'
+                }`}
+              >
+                {agreedMarketing && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+              <span className="text-[12px] text-ink-muted flex-1">
+                마케팅 정보 수신에 동의합니다 (이벤트·프로모션 알림)
+                <span className="text-ink-faint ml-0.5">(선택)</span>
               </span>
             </label>
           </div>

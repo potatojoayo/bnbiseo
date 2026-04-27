@@ -5,6 +5,7 @@ import { eq, and, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import {
   cleaningRequests,
+  profiles,
   properties,
   propertyAssets,
   propertyAssetPhotos,
@@ -204,9 +205,17 @@ propertiesRoutes.post('/', async (c) => {
     .values({ hostId: profileId, ...validated.data })
     .returning()
 
+  const [host] = await db
+    .select({ fullName: profiles.fullName, email: profiles.email })
+    .from(profiles)
+    .where(eq(profiles.id, profileId))
+    .limit(1)
+
   await notifyPropertySubmitted({
     propertyId: created.id,
     propertyName: created.name,
+    hostName: host?.fullName ?? null,
+    hostEmail: host?.email ?? null,
   })
 
   return c.json(created, 201)

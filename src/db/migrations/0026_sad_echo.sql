@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "marketing_opt_in_at" timestamp with time zone;

@@ -71,8 +71,9 @@ authRoutes.post('/login', async (c) => {
 authRoutes.post('/signup', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const body = await c.req.json()
-  const { fullName } = z.object({
+  const { fullName, marketingOptIn } = z.object({
     fullName: z.string().min(1),
+    marketingOptIn: z.boolean().optional(),
   }).parse(body)
 
   // Pull phone/email from the verified auth user (token was verified by middleware)
@@ -84,6 +85,7 @@ authRoutes.post('/signup', authMiddleware, async (c) => {
   const rawPhone = user?.phone ?? ''
   const phone = rawPhone ? (rawPhone.startsWith('+') ? rawPhone : `+${rawPhone}`) : null
   const email = user?.email ?? null
+  const marketingOptInAt = marketingOptIn ? new Date() : null
 
   const [existing] = await db
     .select({ id: profiles.id })
@@ -95,12 +97,12 @@ authRoutes.post('/signup', authMiddleware, async (c) => {
     // Reactivate soft-deleted profile
     await db
       .update(profiles)
-      .set({ fullName, email, phone, deletedAt: null, updatedAt: new Date() })
+      .set({ fullName, email, phone, marketingOptInAt, deletedAt: null, updatedAt: new Date() })
       .where(eq(profiles.id, existing.id))
   } else {
     await db
       .insert(profiles)
-      .values({ userId, fullName, email, phone })
+      .values({ userId, fullName, email, phone, marketingOptInAt })
   }
 
   return c.json({ ok: true })

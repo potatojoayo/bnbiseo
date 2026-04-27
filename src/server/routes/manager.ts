@@ -28,6 +28,9 @@ import {
   notifyCleaningAssigned,
   notifyCleaningCompleted,
   notifyCleaningStarted,
+  notifyRepairCompleted,
+  notifyRepairQuoted,
+  notifyRepairStarted,
 } from '../lib/notifications'
 
 type ManagerEnv = {
@@ -1122,10 +1125,14 @@ managerRoutes.post('/cleanings/:id/claim', async (c) => {
     .select({
       hostId: cleaningRequests.hostId,
       managerId: cleaningRequests.managerId,
+      scheduledDate: cleaningRequests.scheduledDate,
+      scheduledTime: cleaningRequests.scheduledTime,
       propertyName: properties.name,
+      managerName: managers.name,
     })
     .from(cleaningRequests)
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
     .where(eq(cleaningRequests.id, id))
     .limit(1)
 
@@ -1135,6 +1142,9 @@ managerRoutes.post('/cleanings/:id/claim', async (c) => {
       hostProfileId: detail.hostId,
       managerId: detail.managerId,
       propertyName: detail.propertyName || '숙소',
+      scheduledDate: detail.scheduledDate,
+      scheduledTime: detail.scheduledTime,
+      managerName: detail.managerName || '매니저',
     })
   }
 
@@ -1473,6 +1483,21 @@ managerRoutes.post('/repairs/:id/quote', async (c) => {
     .where(eq(repairRequests.id, id))
     .returning()
 
+  const [property] = await db
+    .select({ name: properties.name })
+    .from(properties)
+    .where(eq(properties.id, updated.propertyId))
+    .limit(1)
+
+  await notifyRepairQuoted({
+    repairRequestId: updated.id,
+    hostProfileId: updated.hostId,
+    propertyName: property?.name || '숙소',
+    quotedCost: validated.data.quotedCost,
+    scheduledDate: validated.data.scheduledDate,
+    scheduledTime: validated.data.scheduledTime,
+  })
+
   return c.json(updated)
 })
 
@@ -1501,6 +1526,18 @@ managerRoutes.post('/repairs/:id/start', async (c) => {
     .set({ status: 'in_progress', startedAt: now, updatedAt: now })
     .where(eq(repairRequests.id, id))
     .returning()
+
+  const [property] = await db
+    .select({ name: properties.name })
+    .from(properties)
+    .where(eq(properties.id, updated.propertyId))
+    .limit(1)
+
+  await notifyRepairStarted({
+    repairRequestId: updated.id,
+    hostProfileId: updated.hostId,
+    propertyName: property?.name || '숙소',
+  })
 
   return c.json(updated)
 })
@@ -1632,6 +1669,18 @@ managerRoutes.post('/repairs/:id/complete', async (c) => {
     })
     .where(eq(repairRequests.id, id))
     .returning()
+
+  const [property] = await db
+    .select({ name: properties.name })
+    .from(properties)
+    .where(eq(properties.id, updated.propertyId))
+    .limit(1)
+
+  await notifyRepairCompleted({
+    repairRequestId: updated.id,
+    hostProfileId: updated.hostId,
+    propertyName: property?.name || '숙소',
+  })
 
   return c.json(updated)
 })

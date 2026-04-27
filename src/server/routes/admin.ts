@@ -398,10 +398,14 @@ adminRoutes.post('/cleaning/:id/assign', async (c) => {
     .select({
       hostId: cleaningRequests.hostId,
       managerId: cleaningRequests.managerId,
+      scheduledDate: cleaningRequests.scheduledDate,
+      scheduledTime: cleaningRequests.scheduledTime,
       propertyName: properties.name,
+      managerName: managers.name,
     })
     .from(cleaningRequests)
     .leftJoin(properties, eq(cleaningRequests.propertyId, properties.id))
+    .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
     .where(eq(cleaningRequests.id, id))
     .limit(1)
 
@@ -411,6 +415,9 @@ adminRoutes.post('/cleaning/:id/assign', async (c) => {
       hostProfileId: detail.hostId,
       managerId: detail.managerId,
       propertyName: detail.propertyName || '숙소',
+      scheduledDate: detail.scheduledDate,
+      scheduledTime: detail.scheduledTime,
+      managerName: detail.managerName || '매니저',
     })
   }
 
@@ -449,6 +456,8 @@ adminRoutes.post('/cleaning/:id/status', async (c) => {
       .select({
         hostId: cleaningRequests.hostId,
         managerId: cleaningRequests.managerId,
+        scheduledDate: cleaningRequests.scheduledDate,
+        scheduledTime: cleaningRequests.scheduledTime,
         propertyName: properties.name,
       })
       .from(cleaningRequests)
@@ -462,6 +471,8 @@ adminRoutes.post('/cleaning/:id/status', async (c) => {
         hostProfileId: detail.hostId,
         managerId: detail.managerId,
         propertyName: detail.propertyName || '숙소',
+        scheduledDate: detail.scheduledDate,
+        scheduledTime: detail.scheduledTime,
       })
     }
   }

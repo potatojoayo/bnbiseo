@@ -95,6 +95,13 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'cleaning_completed',
   'cleaning_cancelled_by_host',
   'cleaning_cancelled_by_admin',
+  'repair_requested',
+  'repair_quoted',
+  'repair_confirmed',
+  'repair_started',
+  'repair_completed',
+  'repair_cancelled_by_host',
+  'repair_cancelled_by_manager',
 ])
 
 // ─── Tables ──────────────────────────────────────────────────────────────────
@@ -109,6 +116,7 @@ export const profiles = pgTable('profiles', {
   avatarThumbnailStoragePath: text('avatar_thumbnail_storage_path'),
   role: userRoleEnum('role').default('user').notNull(),
   onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
+  marketingOptInAt: timestamp('marketing_opt_in_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),

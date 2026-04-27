@@ -31,3 +31,34 @@ export async function sendSms(params: { to: string; text: string }) {
     text: params.text,
   })
 }
+
+// Send a Kakao Alimtalk via Solapi. Falls back to SMS automatically if
+// `disableSms` is false (default) and the template delivery fails.
+//
+// The template must be pre-registered in Solapi Kakao console; variables
+// are substituted by Solapi using #{variableName} placeholders in the
+// approved template body.
+export async function sendAlimtalk(params: {
+  to: string
+  templateId: string
+  variables: Record<string, string>
+  // Plain text used by the SMS fallback when alimtalk delivery fails.
+  fallbackText?: string
+}) {
+  const from = process.env.SOLAPI_SENDER_PHONE
+  const pfId = process.env.SOLAPI_KAKAO_PF_ID
+  if (!from) throw new Error('SOLAPI_SENDER_PHONE env var is not set')
+  if (!pfId) throw new Error('SOLAPI_KAKAO_PF_ID env var is not set')
+
+  return getClient().send({
+    to: toKoreanLocalNumber(params.to),
+    from,
+    text: params.fallbackText,
+    kakaoOptions: {
+      pfId,
+      templateId: params.templateId,
+      variables: params.variables,
+      disableSms: false,
+    },
+  })
+}

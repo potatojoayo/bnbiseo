@@ -16,6 +16,11 @@ import {
   repairRequests,
 } from '@/db/schema'
 import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
+import {
+  notifyRepairCancelledByHost,
+  notifyRepairConfirmed,
+  notifyRepairRequested,
+} from '../lib/notifications'
 
 const PhotoUploadSchema = z.object({
   fileName: z.string().min(1),
@@ -411,6 +416,14 @@ repairRoutes.post('/', async (c) => {
     )
   }
 
+  await notifyRepairRequested({
+    repairRequestId: created.id,
+    hostProfileId: profileId,
+    propertyName: property.name,
+    preferredScheduledDate,
+    preferredScheduledTime,
+  })
+
   return c.json(created, 201)
 })
 
@@ -500,6 +513,26 @@ repairRoutes.post('/:id/confirm-payment', async (c) => {
     .where(eq(properties.id, request.propertyId))
     .limit(1)
 
+  const [manager] = updated.managerId
+    ? await db
+        .select({ name: managers.name })
+        .from(managers)
+        .where(eq(managers.id, updated.managerId))
+        .limit(1)
+    : [null]
+
+  if (updated.scheduledDate && updated.scheduledTime) {
+    await notifyRepairConfirmed({
+      repairRequestId: updated.id,
+      hostProfileId: updated.hostId,
+      managerId: updated.managerId,
+      propertyName: property?.name || '숙소',
+      scheduledDate: updated.scheduledDate,
+      scheduledTime: updated.scheduledTime,
+      managerName: manager?.name || '매니저',
+    })
+  }
+
   return c.json({
     ...updated,
     property: property ?? null,
@@ -571,6 +604,21 @@ repairRoutes.post('/:id/cancel', async (c) => {
     })
     .where(eq(repairRequests.id, id))
     .returning()
+
+  const [property] = await db
+    .select({ name: properties.name })
+    .from(properties)
+    .where(eq(properties.id, updated.propertyId))
+    .limit(1)
+
+  await notifyRepairCancelledByHost({
+    repairRequestId: updated.id,
+    hostProfileId: updated.hostId,
+    managerId: updated.managerId,
+    propertyName: property?.name || '숙소',
+    scheduledDate: updated.scheduledDate,
+    scheduledTime: updated.scheduledTime,
+  })
 
   return c.json(updated)
 })

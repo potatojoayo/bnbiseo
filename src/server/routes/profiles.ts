@@ -8,6 +8,7 @@ import { authMiddleware, type AuthEnv } from '../middleware/auth'
 const UpdateProfileSchema = z.object({
   fullName: z.string().min(1).optional(),
   phone: z.string().optional(),
+  marketingOptIn: z.boolean().optional(),
 })
 
 export const profilesRoutes = new Hono<AuthEnv>()
@@ -34,10 +35,17 @@ profilesRoutes.get('/me', async (c) => {
 // Update profile
 profilesRoutes.patch('/me', async (c) => {
   const userId = c.get('userId')
+  const parsed = UpdateProfileSchema.parse(await c.req.json())
+  const { marketingOptIn, ...rest } = parsed
+
+  const updates: Record<string, unknown> = { ...rest, updatedAt: new Date() }
+  if (marketingOptIn !== undefined) {
+    updates.marketingOptInAt = marketingOptIn ? new Date() : null
+  }
 
   const [updated] = await db
     .update(profiles)
-    .set({ ...UpdateProfileSchema.parse(await c.req.json()), updatedAt: new Date() })
+    .set(updates)
     .where(and(eq(profiles.userId, userId), isNull(profiles.deletedAt)))
     .returning()
 

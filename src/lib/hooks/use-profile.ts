@@ -8,6 +8,7 @@ type Profile = {
   phone: string | null
   fullName: string | null
   onboardingCompleted: boolean
+  marketingOptInAt: string | null
   role: 'user' | 'admin' | 'manager'
 }
 

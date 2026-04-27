@@ -581,6 +581,8 @@ cleaningRoutes.post('/:id/cancel', async (c) => {
     hostProfileId: updated.hostId,
     managerId: updated.managerId,
     propertyName: property?.name || '숙소',
+    scheduledDate: updated.scheduledDate,
+    scheduledTime: updated.scheduledTime,
   })
 
   return c.json(updated)

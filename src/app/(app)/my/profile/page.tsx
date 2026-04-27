@@ -38,9 +38,12 @@ export default function ProfilePage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  const [marketingSaving, setMarketingSaving] = useState(false)
+
   const phone = formatPhone(profile?.phone || user?.phone || '')
   const name = nameDraft ?? (profile?.fullName || '')
   const hasChanges = name !== (profile?.fullName || '')
+  const marketingOptedIn = !!profile?.marketingOptInAt
 
   async function handleSave() {
     if (!hasChanges) return
@@ -54,6 +57,19 @@ export default function ProfilePage() {
       // error
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleToggleMarketing() {
+    if (marketingSaving) return
+    setMarketingSaving(true)
+    try {
+      await api.patch('/profiles/me', { marketingOptIn: !marketingOptedIn })
+      await invalidateProfile()
+    } catch {
+      // error
+    } finally {
+      setMarketingSaving(false)
     }
   }
 
@@ -116,6 +132,31 @@ export default function ProfilePage() {
         >
           {saved ? '저장되었어요' : '저장하기'}
         </LoadingButton>
+      </div>
+
+      <div className="mt-8 flex items-start justify-between gap-4 rounded-xl border border-outline-dim px-4 py-4">
+        <div className="min-w-0">
+          <p className="text-[14px] font-medium text-ink">마케팅 정보 수신</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+            이벤트·프로모션·신규 기능 안내를 알림톡 또는 이메일로 받아요.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={marketingOptedIn}
+          onClick={handleToggleMarketing}
+          disabled={marketingSaving}
+          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+            marketingOptedIn ? 'bg-ink' : 'bg-outline-strong'
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+              marketingOptedIn ? 'translate-x-[22px]' : 'translate-x-0.5'
+            }`}
+          />
+        </button>
       </div>
 
       {/* Spacer pushes the delete button to the bottom */}
