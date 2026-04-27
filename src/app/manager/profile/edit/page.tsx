@@ -148,7 +148,7 @@ export default function ManagerProfileEditPage() {
         avatarThumbnailStoragePath,
       })
       await invalidate.me()
-      router.replace('/manager/profile')
+      router.back()
     } catch (error) {
       if (error instanceof ApiError) {
         setMessage(error.message)

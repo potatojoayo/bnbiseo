@@ -56,7 +56,7 @@ export default function MyPropertyEditPage() {
       })
       await queryClient.invalidateQueries({ queryKey: ['properties'] })
       await queryClient.invalidateQueries({ queryKey: ['properties', id] })
-      router.replace(`/my/properties/${id}`)
+      router.back()
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '수정 중 문제가 생겼어요. 다시 시도해주세요.')
       setSaving(false)

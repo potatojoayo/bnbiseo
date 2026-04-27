@@ -13,15 +13,15 @@ export default function PrivacyPage() {
           <div className="text-ink-muted flex flex-col gap-2">
             <div>
               <p className="font-medium text-ink">필수 항목</p>
-              <p>이메일 주소, 이름, 비밀번호</p>
+              <p>이메일 주소, 이름, 비밀번호, 휴대폰 번호</p>
             </div>
             <div>
               <p className="font-medium text-ink">선택 항목</p>
-              <p>전화번호, 숙소 주소</p>
+              <p>숙소 주소, 수리 요청 시 첨부하는 사진 및 시설물 상태 설명</p>
             </div>
             <div>
               <p className="font-medium text-ink">자동 수집 항목</p>
-              <p>서비스 이용 기록, 접속 로그, 결제 기록</p>
+              <p>서비스 이용 기록, 접속 로그, 결제 기록, 청소·수리 요청 이력</p>
             </div>
           </div>
         </section>
@@ -29,8 +29,9 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-[16px] font-semibold mb-2">2. 개인정보의 수집 및 이용 목적</h2>
           <ol className="list-decimal list-inside text-ink-muted flex flex-col gap-1">
-            <li>서비스 제공 및 계약 이행 (청소 예약, 결제, 리포트 전달)</li>
+            <li>서비스 제공 및 계약 이행 (청소 예약, 수리 요청 접수·견적 발송·방문 작업, 결제, 점검·조치 리포트 전달)</li>
             <li>회원 관리 (본인 확인, 서비스 이용 문의 응대)</li>
+            <li>매니저 배정 및 작업 진행 시 호스트와 매니저 간 연락 (휴대폰 번호 제공)</li>
             <li>서비스 개선 (이용 통계 분석, 신규 서비스 개발)</li>
             <li>마케팅 및 광고 (이벤트, 프로모션 안내 — 별도 동의 시)</li>
           </ol>
@@ -57,7 +58,7 @@ export default function PrivacyPage() {
           <div className="rounded-lg bg-surface-soft px-4 py-3 mt-2 text-[13px] text-ink-muted">
             <p><span className="text-ink font-medium">제공받는 자:</span> 토스페이먼츠</p>
             <p><span className="text-ink font-medium">제공 항목:</span> 주문번호, 결제금액, 이메일</p>
-            <p><span className="text-ink font-medium">제공 목적:</span> 결제 처리 및 결제 사기 방지</p>
+            <p><span className="text-ink font-medium">제공 목적:</span> 청소 및 수리 결제 처리 및 결제 사기 방지</p>
             <p><span className="text-ink font-medium">보유 기간:</span> 결제 완료 후 5년</p>
           </div>
         </section>
@@ -107,7 +108,7 @@ export default function PrivacyPage() {
         </section>
 
         <p className="text-[13px] text-ink-faint mt-4">
-          시행일: 2026년 4월 18일
+          시행일: 2026년 4월 27일
         </p>
       </div>
     </div>

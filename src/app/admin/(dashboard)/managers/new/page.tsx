@@ -144,7 +144,7 @@ export default function AdminManagerCreatePage() {
       })
       invalidate.managers()
       invalidate.stats()
-      router.replace('/admin/managers')
+      router.back()
     } catch (error) {
       if (error instanceof ApiError) {
         setMessage(error.message)

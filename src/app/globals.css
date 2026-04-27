@@ -43,6 +43,7 @@
   --surface: #FFFFFF;
   --surface-hover: #F7F7F7;
   --surface-dim: #F7F7F7;
+  --surface-soft: #FAFAFA;
   --surface-subtle: #FAFAFA;
   --on-surface: #222222;
   --on-surface-subtle: #717171;
@@ -168,6 +169,7 @@ body {
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
   --color-surface-dim: var(--surface-dim);
+  --color-surface-soft: var(--surface-soft);
   --color-surface-subtle: var(--surface-subtle);
   --color-on-surface: var(--on-surface);
   --color-on-surface-subtle: var(--on-surface-subtle);

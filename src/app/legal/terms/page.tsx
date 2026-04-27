@@ -7,16 +7,18 @@ export default function TermsPage() {
         <section>
           <h2 className="text-[16px] font-semibold mb-2">제1조 (목적)</h2>
           <p className="text-ink-muted">
-            본 약관은 실버백 가디언즈(이하 &quot;회사&quot;)가 제공하는 숙소 청소 및 시설관리 서비스(이하 &quot;서비스&quot;)의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+            본 약관은 실버백 가디언즈(이하 &quot;회사&quot;)가 제공하는 숙소 청소, 시설 수리 및 관련 부가 서비스(이하 &quot;서비스&quot;)의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
           </p>
         </section>
 
         <section>
           <h2 className="text-[16px] font-semibold mb-2">제2조 (정의)</h2>
           <ol className="list-decimal list-inside text-ink-muted flex flex-col gap-1">
-            <li>&quot;서비스&quot;란 회사가 제공하는 숙소 청소, 시설 점검, 점검 리포트 등 관련 일체의 서비스를 말합니다.</li>
+            <li>&quot;서비스&quot;란 회사가 제공하는 숙소 청소, 시설 점검, 시설 수리, 점검·조치 리포트 등 관련 일체의 서비스를 말합니다.</li>
             <li>&quot;이용자&quot;란 본 약관에 동의하고 회사가 제공하는 서비스를 이용하는 자를 말합니다.</li>
             <li>&quot;숙소&quot;란 이용자가 등록한 에어비앤비 등 단기 임대 숙박시설을 말합니다.</li>
+            <li>&quot;수리 요청&quot;이란 이용자가 숙소 시설물의 수리·교체·점검을 요청하는 의사표시를 말합니다.</li>
+            <li>&quot;견적&quot;이란 회사가 수리 요청에 대해 산정하여 이용자에게 발송하는 작업 일정 및 금액 안내를 말합니다.</li>
           </ol>
         </section>
 
@@ -34,6 +36,7 @@ export default function TermsPage() {
             <li>숙소 청소 서비스 (표준 청소, 긴급 청소)</li>
             <li>호텔식 침구 세팅</li>
             <li>15항목 시설 점검 및 리포트 제공</li>
+            <li>시설 수리 서비스 (수리 요청 접수, 견적 산정, 방문 수리, 조치 보고서 제공)</li>
             <li>기타 회사가 정하는 부가 서비스</li>
           </ol>
         </section>
@@ -41,20 +44,26 @@ export default function TermsPage() {
         <section>
           <h2 className="text-[16px] font-semibold mb-2">제5조 (서비스 이용료 및 결제)</h2>
           <ol className="list-decimal list-inside text-ink-muted flex flex-col gap-1">
-            <li>서비스 이용료는 숙소 면적, 방 수, 욕실 수 등을 기준으로 산정됩니다.</li>
+            <li>청소 서비스 이용료는 숙소 면적, 방 수, 욕실 수 등을 기준으로 산정됩니다.</li>
+            <li>수리 서비스 이용료는 회사가 수리 요청 내용을 검토 후 견적으로 산정하여 이용자에게 안내하며, 이용자가 견적에 동의하고 결제를 완료한 시점에 방문 일정이 확정됩니다.</li>
             <li>결제는 토스페이먼츠를 통해 진행되며, 카드 결제를 지원합니다.</li>
             <li>당일 청소 요청 시 긴급 할증(50%)이 적용됩니다.</li>
             <li>최소 청소 요금은 35,000원입니다.</li>
+            <li>수리 작업 중 견적 외 추가 자재나 작업이 필요한 경우, 이용자에게 사전 고지 후 동의를 받아 진행합니다.</li>
           </ol>
         </section>
 
         <section>
           <h2 className="text-[16px] font-semibold mb-2">제6조 (취소 및 환불)</h2>
           <ol className="list-decimal list-inside text-ink-muted flex flex-col gap-1">
-            <li>매니저 배정 전: 전액 환불</li>
-            <li>매니저 배정 후, 청소 예정일 24시간 이전: 전액 환불</li>
-            <li>청소 예정일 24시간 이내: 환불 불가</li>
-            <li>청소 진행 중 또는 완료 후: 환불 불가</li>
+            <li>청소 — 매니저 배정 전: 전액 환불</li>
+            <li>청소 — 매니저 배정 후, 청소 예정일 24시간 이전: 전액 환불</li>
+            <li>청소 — 예정일 24시간 이내: 환불 불가</li>
+            <li>청소 — 진행 중 또는 완료 후: 환불 불가</li>
+            <li>수리 — 견적 결제 전: 언제든 취소 가능 (결제 발생 없음)</li>
+            <li>수리 — 견적 결제 후, 방문 예정일 24시간 이전: 전액 환불</li>
+            <li>수리 — 방문 예정일 24시간 이내: 환불 불가</li>
+            <li>수리 — 작업 진행 중 또는 완료 후: 환불 불가</li>
           </ol>
         </section>
 
@@ -62,7 +71,8 @@ export default function TermsPage() {
           <h2 className="text-[16px] font-semibold mb-2">제7조 (이용자의 의무)</h2>
           <ol className="list-decimal list-inside text-ink-muted flex flex-col gap-1">
             <li>이용자는 정확한 숙소 정보를 등록해야 합니다.</li>
-            <li>이용자는 청소 일시에 매니저가 숙소에 출입할 수 있도록 해야 합니다.</li>
+            <li>이용자는 청소·수리 일시에 매니저가 숙소에 출입할 수 있도록 해야 합니다.</li>
+            <li>이용자는 수리 요청 시 시설물의 상태와 증상을 정확히 기재하고 필요한 사진을 함께 제출해야 합니다.</li>
             <li>이용자는 타인의 정보를 부정하게 사용해서는 안 됩니다.</li>
           </ol>
         </section>
@@ -73,6 +83,7 @@ export default function TermsPage() {
             <li>회사는 안정적인 서비스 제공을 위해 최선을 다합니다.</li>
             <li>회사는 이용자의 개인정보를 관련 법령에 따라 보호합니다.</li>
             <li>회사는 청소 완료 후 시설 점검 리포트를 제공합니다.</li>
+            <li>회사는 수리 완료 후 작업 내용·사용 자재·결과 사진이 포함된 조치 보고서를 제공합니다.</li>
           </ol>
         </section>
 
@@ -103,7 +114,7 @@ export default function TermsPage() {
         </section>
 
         <p className="text-[13px] text-ink-faint mt-4">
-          시행일: 2026년 4월 18일
+          시행일: 2026년 4월 27일
         </p>
       </div>
     </div>

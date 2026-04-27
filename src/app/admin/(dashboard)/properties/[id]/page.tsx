@@ -353,7 +353,7 @@ function AdminPropertyRegistrationForm({
       })
       invalidate.propertyRegistration(propertyId)
       invalidate.properties()
-      router.replace(isEditingActive ? `/admin/properties/${propertyId}` : '/admin/properties')
+      router.back()
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '등록 진행 내용을 저장하지 못했어요.')
       setSaving(false)
