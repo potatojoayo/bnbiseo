@@ -1,15 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { ChevronDownIcon } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { api } from '@/lib/api-client'
 import { useAdminCleaning, useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { AdminCleaningRequestCard } from '@/components/admin-cleaning-request-card'
 import { CleaningStatusBadge, getCleaningStatusLabel, type CleaningStatus } from '@/components/cleaning-status-badge'
-import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { formatDateLabel, formatTimeKorean, cn } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Drawer,
   DrawerContent,
@@ -69,6 +69,18 @@ export default function AdminCleaningPage() {
   const [statusTargetId, setStatusTargetId] = useState('')
   const [updating, setUpdating] = useState(false)
 
+  const [filterOpen, setFilterOpen] = useState(false)
+
+  const filterOptions: Array<{ value: CleaningFilter; label: string; count: number }> = [
+    { value: 'all', label: '전체', count: allRequests.length },
+    { value: 'pending', label: '배정 대기', count: pendingCount },
+    { value: 'confirmed', label: '배정 완료', count: confirmedCount },
+    { value: 'in_progress', label: '진행 중', count: inProgressCount },
+    { value: 'completed', label: '완료', count: completedCount },
+    { value: 'cancelled', label: '취소', count: cancelledCount },
+  ]
+  const currentFilter = filterOptions.find((option) => option.value === tab) ?? filterOptions[0]
+
   useEffect(() => {
     const target = loadMoreRef.current
 
@@ -119,36 +131,17 @@ export default function AdminCleaningPage() {
       ) : (
       <div className="flex flex-1 flex-col gap-4 p-6 max-w-[960px] mx-auto w-full max-md:gap-3 max-md:animate-fade-up-fast">
         <div className="flex flex-col gap-3">
-          <Tabs
-            value={tab}
-            onValueChange={(value) => {
-              setTab(value as CleaningFilter)
-              setPage(1)
-              setMobileVisibleCount(10)
-            }}
-            className="w-full"
+          <button
+            type="button"
+            onClick={() => setFilterOpen(true)}
+            className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-outline-dim bg-background px-4 text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
           >
-            <TabsList className="!h-10 w-full justify-start overflow-x-auto rounded-xl bg-surface-subtle p-1">
-              <TabsTrigger value="all" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-                전체({allRequests.length})
-              </TabsTrigger>
-              <TabsTrigger value="pending" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-                배정 대기({pendingCount})
-              </TabsTrigger>
-              <TabsTrigger value="confirmed" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-                배정 완료({confirmedCount})
-              </TabsTrigger>
-              <TabsTrigger value="in_progress" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-                진행 중({inProgressCount})
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-                완료({completedCount})
-              </TabsTrigger>
-              <TabsTrigger value="cancelled" className="h-8 shrink-0 rounded-lg px-3 text-[13px] font-medium data-active:bg-background data-active:text-ink">
-                취소({cancelledCount})
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+            <span>
+              {currentFilter.label}
+              <span className="ml-1 text-ink-muted">({currentFilter.count})</span>
+            </span>
+            <ChevronDownIcon size={16} className="text-ink-muted" />
+          </button>
         </div>
 
         {filteredRequests.length === 0 ? (
@@ -157,20 +150,7 @@ export default function AdminCleaningPage() {
           <>
           <div className="flex flex-col gap-3 md:hidden">
             {mobileRequests.map((r) => (
-              <AdminCleaningRequestCard
-                key={r.id}
-                request={r}
-                action={(
-                  <>
-                    {r.status === 'pending' && (
-                      <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="rounded-lg bg-ink px-3 py-1.5 text-[12px] font-medium text-white">매니저 배정</button>
-                    )}
-                    {['pending', 'confirmed', 'in_progress'].includes(r.status) && (
-                      <button onClick={() => { setStatusTargetId(r.id); setStatusOpen(true) }} className="rounded-lg border border-outline-dim px-3 py-1.5 text-[12px] font-medium text-ink-muted">상태 변경</button>
-                    )}
-                  </>
-                )}
-              />
+              <AdminCleaningRequestCard key={r.id} request={r} />
             ))}
             {mobileVisibleCount < filteredRequests.length && (
               <div ref={loadMoreRef} className="flex items-center justify-center py-3">
@@ -225,6 +205,42 @@ export default function AdminCleaningPage() {
         )}
       </div>
       )}
+
+      {/* Status Filter Drawer */}
+      <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
+        <DrawerContent>
+          <div className="w-full px-5 pb-8">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">상태 필터</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex flex-col gap-2">
+              {filterOptions.map((option) => {
+                const selected = option.value === tab
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setTab(option.value)
+                      setPage(1)
+                      setMobileVisibleCount(10)
+                      setFilterOpen(false)
+                    }}
+                    className={`flex h-12 items-center justify-between rounded-lg border px-4 text-[14px] font-medium transition-colors ${
+                      selected
+                        ? 'border-ink bg-surface-soft text-ink'
+                        : 'border-outline-dim text-ink hover:bg-surface-soft'
+                    }`}
+                  >
+                    <span>{option.label}</span>
+                    <span className="text-[13px] text-ink-muted">{option.count}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* Assign Manager Drawer */}
       <Drawer open={assignOpen} onOpenChange={setAssignOpen}>

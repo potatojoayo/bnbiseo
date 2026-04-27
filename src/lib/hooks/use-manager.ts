@@ -136,6 +136,8 @@ export function useManagerMe() {
     queryFn: () => api.get<ManagerMe>('/manager/me'),
     enabled: !!user,
     retry: false,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

@@ -51,19 +51,16 @@ function getSupabaseAdmin() {
 }
 
 async function createSignedUrlMap(paths: string[]) {
-  const signedUrlMap = new Map<string, string | null>()
-  if (paths.length === 0) return signedUrlMap
+  const map = new Map<string, string | null>()
+  if (paths.length === 0) return map
 
   const supabaseAdmin = getSupabaseAdmin()
-  const { data } = await supabaseAdmin.storage
-    .from('images')
-    .createSignedUrls(paths, 60 * 60)
+  for (const path of paths) {
+    const { data } = supabaseAdmin.storage.from('images').getPublicUrl(path)
+    map.set(path, data?.publicUrl ?? null)
+  }
 
-  data?.forEach((item, index) => {
-    signedUrlMap.set(paths[index], item.signedUrl ?? null)
-  })
-
-  return signedUrlMap
+  return map
 }
 
 repairRoutes.use('*', authMiddleware)

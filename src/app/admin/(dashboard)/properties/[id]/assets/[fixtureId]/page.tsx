@@ -1,8 +1,7 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
 import { MobileBackButton } from '@/components/mobile-back-button'
@@ -10,12 +9,6 @@ import { SiteHeader } from '@/components/site-header'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  type CarouselApi,
-} from '@/components/ui/carousel'
 import {
   Drawer,
   DrawerContent,
@@ -92,8 +85,6 @@ export default function AdminFixtureDetailPage() {
   const invalidate = useInvalidateAdmin()
   const queryClient = useQueryClient()
   const fixture = data?.fixtures.find((item) => item.id === fixtureId)
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null)
 
@@ -121,21 +112,6 @@ export default function AdminFixtureDetailPage() {
       invalidate.properties()
     },
   })
-
-  useEffect(() => {
-    if (!carouselApi) return
-
-    const onSelect = () => {
-      setSelectedPhotoIndex(carouselApi.selectedScrollSnap())
-    }
-
-    onSelect()
-    carouselApi.on('select', onSelect)
-
-    return () => {
-      carouselApi.off('select', onSelect)
-    }
-  }, [carouselApi])
 
   async function handleDelete() {
     setDeleteMessage(null)
@@ -210,85 +186,31 @@ export default function AdminFixtureDetailPage() {
           </div>
         </section>
 
-        <section className="-mx-5 space-y-4 md:mx-0">
-          <div className="hidden md:flex md:flex-col md:gap-3">
-            {fixture.photos.length > 0 ? (
-              fixture.photos.map((photo) => (
-                <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
-                  {photo.signedUrl ? (
-                    <ImageWithSkeleton
-                      src={photo.signedUrl}
-                      alt=""
-                      fill
-                      sizes="720px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
-                      사진 없음
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-soft text-[13px] text-ink-faint">
-                사진 없음
-              </div>
-            )}
-          </div>
-
-          <Carousel
-            setApi={setCarouselApi}
-            opts={{ loop: fixture.photos.length > 1 }}
-            className="w-full md:hidden"
-          >
-            <CarouselContent className="-ml-0">
-              {fixture.photos.length > 0 ? (
-                fixture.photos.map((photo) => (
-                  <CarouselItem key={photo.id} className="pl-0">
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-soft">
-                      {photo.signedUrl ? (
-                        <ImageWithSkeleton
-                          src={photo.signedUrl}
-                          alt=""
-                          fill
-                          sizes="(max-width: 768px) 100vw, 720px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
-                          사진 없음
-                        </div>
-                      )}
-                    </div>
-                  </CarouselItem>
-                ))
-              ) : (
-                <CarouselItem className="pl-0">
-                  <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-surface-soft text-[13px] text-ink-faint">
+        <section className="flex flex-col gap-3">
+          {fixture.photos.length > 0 ? (
+            fixture.photos.map((photo) => (
+              <div
+                key={photo.id}
+                className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft"
+              >
+                {photo.signedUrl ? (
+                  <ImageWithSkeleton
+                    src={photo.signedUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 100vw, 720px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
                     사진 없음
                   </div>
-                </CarouselItem>
-              )}
-            </CarouselContent>
-          </Carousel>
-
-          {fixture.photos.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 px-5 md:hidden">
-              {fixture.photos.map((photo, index) => (
-                <button
-                  key={photo.id}
-                  type="button"
-                  onClick={() => {
-                    carouselApi?.scrollTo(index)
-                    setSelectedPhotoIndex(index)
-                  }}
-                  aria-label={`${index + 1}번 사진 보기`}
-                  className={`h-1.5 rounded-full transition-all ${
-                    selectedPhotoIndex === index ? 'w-5 bg-ink' : 'w-1.5 bg-outline-strong'
-                  }`}
-                />
-              ))}
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-surface-soft text-[13px] rounded-2xl text-ink-faint">
+              사진 없음
             </div>
           )}
         </section>

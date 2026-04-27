@@ -1,17 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  type CarouselApi,
-} from '@/components/ui/carousel'
 import {
   useManagerCleaning,
   type ManagerCleaningDetail,
@@ -49,23 +42,6 @@ function splitAssetLocation(location: string, spaceNames: string[]) {
 export default function ManagerCleaningAssetDetailPage() {
   const { id, fixtureId } = useParams<{ id: string; fixtureId: string }>()
   const { data, isLoading } = useManagerCleaning(id)
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>()
-
-  useEffect(() => {
-    if (!carouselApi) return
-
-    const onSelect = () => {
-      setSelectedPhotoIndex(carouselApi.selectedScrollSnap())
-    }
-
-    onSelect()
-    carouselApi.on('select', onSelect)
-
-    return () => {
-      carouselApi.off('select', onSelect)
-    }
-  }, [carouselApi])
 
   const asset = data?.assets.find((item) => item.id === fixtureId)
   const locationParts = useMemo(
@@ -125,71 +101,29 @@ export default function ManagerCleaningAssetDetailPage() {
         )}
       </section>
 
-      <section className="-mx-5 space-y-4 md:mx-0">
-        <div className="hidden md:flex md:flex-col md:gap-3">
-          {asset.photos.length > 0 ? (
-            asset.photos.map((photo) => (
-              <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
-                {photo.signedUrl ? (
-                  <ImageWithSkeleton src={photo.signedUrl} alt="" fill sizes="720px" className="object-contain" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-soft text-[13px] text-ink-faint">
-              사진 없음
+      <section className="flex flex-col gap-3">
+        {asset.photos.length > 0 ? (
+          asset.photos.map((photo) => (
+            <div
+              key={photo.id}
+              className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft"
+            >
+              {photo.signedUrl ? (
+                <ImageWithSkeleton
+                  src={photo.signedUrl}
+                  alt=""
+                  fill
+                  sizes="(max-width: 768px) 100vw, 720px"
+                  className="object-contain"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
+              )}
             </div>
-          )}
-        </div>
-
-        <Carousel setApi={setCarouselApi} opts={{ loop: asset.photos.length > 1 }} className="w-full md:hidden">
-          <CarouselContent className="-ml-0">
-            {asset.photos.length > 0 ? (
-              asset.photos.map((photo) => (
-                <CarouselItem key={photo.id} className="pl-0">
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-soft">
-                    {photo.signedUrl ? (
-                        <ImageWithSkeleton
-                          src={photo.signedUrl}
-                          alt=""
-                          fill
-                        sizes="(max-width: 768px) 100vw, 720px"
-                        className="object-contain"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">사진 없음</div>
-                    )}
-                  </div>
-                </CarouselItem>
-              ))
-            ) : (
-              <CarouselItem className="pl-0">
-                <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-surface-soft text-[13px] text-ink-faint">
-                  사진 없음
-                </div>
-              </CarouselItem>
-            )}
-          </CarouselContent>
-        </Carousel>
-
-        {asset.photos.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5 px-5 md:hidden">
-            {asset.photos.map((photo, index) => (
-              <button
-                key={photo.id}
-                type="button"
-                onClick={() => {
-                  carouselApi?.scrollTo(index)
-                  setSelectedPhotoIndex(index)
-                }}
-                aria-label={`${index + 1}번 사진 보기`}
-                className={`h-1.5 rounded-full transition-all ${
-                  selectedPhotoIndex === index ? 'w-5 bg-ink' : 'w-1.5 bg-outline-strong'
-                }`}
-              />
-            ))}
+          ))
+        ) : (
+          <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-surface-soft text-[13px] rounded-2xl text-ink-faint">
+            사진 없음
           </div>
         )}
       </section>

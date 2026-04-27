@@ -1,21 +1,15 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
+import { AssetCard } from '@/components/asset-card'
 import { api, ApiError } from '@/lib/api-client'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  type CarouselApi,
-} from '@/components/ui/carousel'
 import {
   Drawer,
   DrawerContent,
@@ -88,8 +82,6 @@ export default function AdminSpaceDetailPage() {
   const invalidate = useInvalidateAdmin()
   const queryClient = useQueryClient()
   const space = data?.spaces.find((item) => item.id === spaceId)
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null)
 
@@ -110,21 +102,6 @@ export default function AdminSpaceDetailPage() {
       invalidate.properties()
     },
   })
-
-  useEffect(() => {
-    if (!carouselApi) return
-
-    const onSelect = () => {
-      setSelectedPhotoIndex(carouselApi.selectedScrollSnap())
-    }
-
-    onSelect()
-    carouselApi.on('select', onSelect)
-
-    return () => {
-      carouselApi.off('select', onSelect)
-    }
-  }, [carouselApi])
 
   if (isLoading) {
     return (
@@ -182,87 +159,31 @@ export default function AdminSpaceDetailPage() {
           </div>
         </section>
 
-        <section className="-mx-5 space-y-4 md:mx-0 max-md:-mx-5">
-          <div className="hidden md:flex md:flex-col md:gap-3">
-            {space.photos.length > 0 ? (
-              space.photos.map((photo) => (
-                <div key={photo.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft">
-                  {photo.signedUrl ? (
-                    <ImageWithSkeleton
-                      src={photo.signedUrl}
-                      alt=""
-                      fill
-                      sizes="720px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
-                      사진 없음
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-soft text-[13px] text-ink-faint">
-                사진 없음
-              </div>
-            )}
-          </div>
-
-          <Carousel
-            setApi={setCarouselApi}
-            opts={{ loop: space.photos.length > 1 }}
-            className="w-full md:hidden"
-          >
-            <CarouselContent className="-ml-0">
-              {space.photos.length > 0 ? (
-                space.photos.map((photo) => (
-                  <CarouselItem key={photo.id} className="pl-0">
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-soft">
-                      {photo.signedUrl ? (
-                        <ImageWithSkeleton
-                          src={photo.signedUrl}
-                          alt=""
-                          fill
-                          sizes="(max-width: 768px) 100vw, 720px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
-                          사진 없음
-                        </div>
-                      )}
-                    </div>
-                  </CarouselItem>
-                ))
-              ) : (
-                <CarouselItem className="pl-0">
-                  <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-soft text-[13px] text-ink-faint">
+        <section className="flex flex-col gap-3">
+          {space.photos.length > 0 ? (
+            space.photos.map((photo) => (
+              <div
+                key={photo.id}
+                className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-surface-soft"
+              >
+                {photo.signedUrl ? (
+                  <ImageWithSkeleton
+                    src={photo.signedUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 100vw, 720px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[13px] text-ink-faint">
                     사진 없음
                   </div>
-                </CarouselItem>
-              )}
-            </CarouselContent>
-          </Carousel>
-
-          {space.photos.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 px-5 md:hidden">
-              {space.photos.map((photo, index) => (
-                <button
-                  key={photo.id}
-                  type="button"
-                  onClick={() => {
-                    carouselApi?.scrollTo(index)
-                    setSelectedPhotoIndex(index)
-                  }}
-                  aria-label={`${index + 1}번 사진 보기`}
-                  className={`h-1.5 rounded-full transition-all ${
-                    selectedPhotoIndex === index
-                      ? 'w-5 bg-ink'
-                      : 'w-1.5 bg-outline-strong'
-                  }`}
-                />
-              ))}
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-surface-soft text-[13px] rounded-2xl text-ink-faint">
+              사진 없음
             </div>
           )}
         </section>
@@ -280,45 +201,17 @@ export default function AdminSpaceDetailPage() {
           ) : (
             <div className="flex flex-col gap-3">
               {linkedFixtures.map((fixture) => (
-                <Link
+                <AssetCard
                   key={fixture.id}
                   href={`/admin/properties/${id}/assets/${fixture.id}`}
-                  className="overflow-hidden rounded-xl border border-outline-dim transition-all active:scale-[0.99] md:hover:-translate-y-0.5 md:hover:border-outline-strong md:hover:shadow-[0_10px_24px_rgba(0,0,0,0.06)]"
-                >
-                  <div className="flex items-stretch">
-                    <div className="relative w-[104px] shrink-0 overflow-hidden bg-surface-soft">
-                      {fixture.photos[0]?.signedUrl ? (
-                          <ImageWithSkeleton
-                            src={fixture.photos[0].signedUrl}
-                            alt=""
-                            fill
-                          sizes="104px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">
-                          사진 없음
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex min-w-0 flex-1 items-start px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="text-[15px] font-semibold text-ink">{fixture.name}</p>
-                        <p className="mt-1 text-[13px] text-ink-muted">
-                          {CATEGORY_LABELS[fixture.category]} · {fixture.location}
-                        </p>
-                        {(fixture.brand || fixture.modelNumber) && (
-                          <p className="mt-1 text-[13px] text-ink-muted">
-                            {[fixture.brand, fixture.modelNumber].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                        {fixture.notes && (
-                          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{fixture.notes}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                  name={fixture.name}
+                  category={CATEGORY_LABELS[fixture.category]}
+                  location={fixture.location}
+                  brand={fixture.brand}
+                  modelNumber={fixture.modelNumber}
+                  notes={fixture.notes}
+                  imageUrl={fixture.photos[0]?.signedUrl ?? null}
+                />
               ))}
             </div>
           )}

@@ -76,7 +76,7 @@ export function ManagerCleaningCard({
         </>
       )}
 
-      <div className="mt-3 border-t border-outline-dim" />
+      <div className="mt-3 border-t border-dashed border-outline-strong" />
 
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-[13px] text-ink-muted">청소 금액</p>

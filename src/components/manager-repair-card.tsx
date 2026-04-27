@@ -56,7 +56,7 @@ export function ManagerRepairCard({
 
       {repair.quotedCost != null && (
         <>
-          <div className="mt-3 border-t border-outline-dim" />
+          <div className="mt-3 border-t border-dashed border-outline-strong" />
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-[13px] text-ink-muted">견적 금액</p>
             <p className="text-[15px] font-semibold text-ink">
