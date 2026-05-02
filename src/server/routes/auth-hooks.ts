@@ -61,7 +61,6 @@ authHooksRoutes.post('/send-sms', async (c) => {
       to: phone,
       text: `[비엔비서] 인증번호는 ${otp} 입니다. 타인에게 알려주지 마세요.`,
     })
-    console.log('[send-sms hook] Solapi response:', JSON.stringify(result, null, 2))
 
     // Solapi reports per-message failures in failedMessageList rather than throwing
     const failed = result.failedMessageList ?? []

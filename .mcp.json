@@ -2,7 +2,13 @@
   "mcpServers": {
     "tosspayments-integration-guide": {
       "command": "npx",
-      "args": ["-y", "@tosspayments/integration-guide-mcp@latest"]
+      "args": [
+        "-y",
+        "@tosspayments/integration-guide-mcp@latest"
+      ]
+    },
+    "Sentry": {
+      "url": "https://mcp.sentry.dev/mcp/plain--potato/bnbiseo"
     }
   }
 }

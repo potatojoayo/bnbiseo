@@ -67,7 +67,31 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-[16px] font-semibold mb-2">5. 개인정보의 파기 절차 및 방법</h2>
+          <h2 className="text-[16px] font-semibold mb-2">5. 개인정보 처리위탁</h2>
+          <p className="text-ink-muted">
+            회사는 원활한 서비스 제공을 위해 다음과 같이 개인정보 처리 업무를 외부에 위탁하고 있으며, 위탁 계약 시 개인정보보호법 제26조에 따라 개인정보가 안전하게 관리될 수 있도록 필요한 사항을 규정하고 있습니다.
+          </p>
+          <div className="mt-2 rounded-lg bg-surface-soft px-4 py-3 text-[13px] text-ink-muted flex flex-col gap-2">
+            <div>
+              <p className="text-ink font-medium">Supabase Inc.</p>
+              <p>위탁 업무: 회원 인증, 데이터베이스, 파일 스토리지 운영</p>
+              <p>보유 기간: 회원 탈퇴 시 또는 위탁 계약 종료 시까지</p>
+            </div>
+            <div>
+              <p className="text-ink font-medium">㈜쿨에스엠에스(Solapi)</p>
+              <p>위탁 업무: 알림톡·SMS 발송 (휴대폰 번호)</p>
+              <p>보유 기간: 발송 후 즉시 파기 (법정 보관 기간 제외)</p>
+            </div>
+            <div>
+              <p className="text-ink font-medium">Resend, Inc.</p>
+              <p>위탁 업무: 이메일 발송 (이메일 주소)</p>
+              <p>보유 기간: 발송 후 즉시 파기</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-[16px] font-semibold mb-2">6. 개인정보의 파기 절차 및 방법</h2>
           <ol className="list-decimal list-inside text-ink-muted flex flex-col gap-1">
             <li>파기 절차: 이용 목적이 달성된 개인정보는 별도의 DB로 옮겨 일정 기간 저장 후 파기합니다.</li>
             <li>파기 방법: 전자적 파일은 복구 불가능한 방법으로 영구 삭제합니다.</li>
@@ -75,14 +99,14 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-[16px] font-semibold mb-2">6. 이용자의 권리와 행사 방법</h2>
+          <h2 className="text-[16px] font-semibold mb-2">7. 이용자의 권리와 행사 방법</h2>
           <p className="text-ink-muted">
             이용자는 언제든지 개인정보의 조회, 수정, 삭제, 처리 정지를 요청할 수 있습니다. 앱 내 &quot;내 정보 수정&quot; 메뉴 또는 고객센터를 통해 요청할 수 있습니다.
           </p>
         </section>
 
         <section>
-          <h2 className="text-[16px] font-semibold mb-2">7. 개인정보의 안전성 확보 조치</h2>
+          <h2 className="text-[16px] font-semibold mb-2">8. 개인정보의 안전성 확보 조치</h2>
           <ol className="list-decimal list-inside text-ink-muted flex flex-col gap-1">
             <li>비밀번호 암호화 저장</li>
             <li>SSL/TLS 암호화 통신</li>
@@ -92,7 +116,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-[16px] font-semibold mb-2">8. 개인정보 보호책임자</h2>
+          <h2 className="text-[16px] font-semibold mb-2">9. 개인정보 보호책임자</h2>
           <div className="rounded-lg bg-surface-soft px-4 py-3 text-[13px] text-ink-muted">
             <p><span className="text-ink font-medium">상호:</span> 실버백 가디언즈</p>
             <p><span className="text-ink font-medium">성명:</span> 최정호</p>
@@ -104,7 +128,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-[16px] font-semibold mb-2">9. 개인정보처리방침 변경</h2>
+          <h2 className="text-[16px] font-semibold mb-2">10. 개인정보처리방침 변경</h2>
           <p className="text-ink-muted">
             본 방침은 시행일로부터 적용되며, 변경 사항이 있을 경우 서비스 공지를 통해 안내합니다.
           </p>

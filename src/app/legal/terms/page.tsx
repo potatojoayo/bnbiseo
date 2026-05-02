@@ -107,6 +107,7 @@ export default function TermsPage() {
             <p><span className="text-ink font-medium">상호:</span> 실버백 가디언즈</p>
             <p><span className="text-ink font-medium">대표자:</span> 최정호</p>
             <p><span className="text-ink font-medium">사업자등록번호:</span> 267-28-01998</p>
+            <p><span className="text-ink font-medium">통신판매업 신고번호:</span> {process.env.NEXT_PUBLIC_ECOMMERCE_REG_NO ?? '신청 중'}</p>
             <p><span className="text-ink font-medium">사업장 소재지:</span> 서울특별시 마포구 방울내로6길 14, 302호(망원동)</p>
             <p><span className="text-ink font-medium">이메일:</span> bohemiantoday4676@naver.com</p>
             <p><span className="text-ink font-medium">전화:</span> 010-2960-4676</p>
