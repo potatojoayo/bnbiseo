@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/site-header'
 import { useAdminProperties } from '@/lib/hooks/use-admin'
-import { MapPinIcon } from 'lucide-react'
+import { MapPinIcon, PhoneIcon, UserIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -140,9 +140,11 @@ export default function AdminPropertiesPage() {
                   </p>
 
                   <p className="mt-3 text-[12px] text-ink-muted">
+                    <UserIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
                     {p.hostName || p.hostEmail || '-'}
                   </p>
                   <p className="mt-1 text-[12px] text-ink-muted">
+                    <PhoneIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
                     {p.hostPhone ? formatKoreanPhone(p.hostPhone) : '-'}
                   </p>
                 </div>

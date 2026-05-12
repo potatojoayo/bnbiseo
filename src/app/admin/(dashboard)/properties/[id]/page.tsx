@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { MapPinIcon, PlusIcon } from 'lucide-react'
+import { MapPinIcon, PhoneIcon, PlusIcon, UserIcon } from 'lucide-react'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { SiteHeader } from '@/components/site-header'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
@@ -375,8 +375,12 @@ function AdminPropertyRegistrationForm({
             <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
             {initialData.address}{initialData.addressDetail ? ` ${initialData.addressDetail}` : ''}
           </p>
-          <p className="mt-2 text-[13px] text-ink-muted">{initialData.hostName || initialData.hostEmail || '-'}</p>
+          <p className="mt-2 text-[13px] text-ink-muted">
+            <UserIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
+            {initialData.hostName || initialData.hostEmail || '-'}
+          </p>
           <p className="mt-1 text-[13px] text-ink-muted">
+            <PhoneIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
             {initialData.hostPhone ? (
               <a
                 href={`tel:${initialData.hostPhone.replace(/\D/g, '')}`}
@@ -720,8 +724,12 @@ function AdminPropertyDetailView({
           {details.length > 0 && (
             <p className="text-[13px] text-ink-muted">{details.join(' · ')}</p>
           )}
-          <p className="text-[13px] text-ink-muted">{property.hostName || property.hostEmail || '-'}</p>
           <p className="text-[13px] text-ink-muted">
+            <UserIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
+            {property.hostName || property.hostEmail || '-'}
+          </p>
+          <p className="text-[13px] text-ink-muted">
+            <PhoneIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
             {property.hostPhone ? (
               <a
                 href={`tel:${property.hostPhone.replace(/\D/g, '')}`}
