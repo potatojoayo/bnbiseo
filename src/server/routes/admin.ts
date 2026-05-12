@@ -682,11 +682,17 @@ adminRoutes.post('/repair/:id/assign', async (c) => {
 
 // ─── Manager Management ─────────────────────────────────────────────────────
 
+const PhoneDigits = z
+  .string()
+  .min(1)
+  .transform((value) => value.replace(/\D/g, ''))
+  .refine((digits) => /^01\d{8,9}$/.test(digits), '올바른 전화번호 형식이 아니에요.')
+
 const CreateManagerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().min(1),
-  phone: z.string().min(1),
+  phone: PhoneDigits,
   memo: z.string().optional(),
   avatarStoragePath: z.string().min(1),
   avatarThumbnailStoragePath: z.string().min(1),
@@ -694,7 +700,7 @@ const CreateManagerSchema = z.object({
 
 const UpdateManagerSchema = z.object({
   name: z.string().min(1).optional(),
-  phone: z.string().min(1).optional(),
+  phone: PhoneDigits.optional(),
   memo: z.string().optional(),
   avatarStoragePath: z.string().min(1).optional(),
   avatarThumbnailStoragePath: z.string().min(1).optional(),
@@ -1064,6 +1070,7 @@ adminRoutes.get('/properties', async (c) => {
       address: properties.address,
       hostName: profiles.fullName,
       hostEmail: profiles.email,
+      hostPhone: profiles.phone,
       createdAt: properties.createdAt,
       activatedAt: properties.activatedAt,
     })
@@ -1113,6 +1120,7 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       linenWashLocation: properties.linenWashLocation,
       hostName: profiles.fullName,
       hostEmail: profiles.email,
+      hostPhone: profiles.phone,
     })
     .from(properties)
     .leftJoin(profiles, eq(properties.hostId, profiles.id))

@@ -18,7 +18,7 @@ import { loadTossPayments } from '@tosspayments/tosspayments-sdk'
 import { toast } from 'sonner'
 import { RepairCompletionReportReadOnly } from '@/components/repair-completion-report-read-only'
 import { useRepairRequest, useRepairReport, useInvalidateRepair } from '@/lib/hooks/use-repair'
-import { formatDateLabel, formatTimeKorean, cn } from '@/lib/utils'
+import { formatDateLabel, formatTimeKorean, cn, formatKoreanPhone } from '@/lib/utils'
 import { api } from '@/lib/api-client'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
@@ -274,10 +274,10 @@ export default function RepairDetailPage() {
                   <PhoneIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
                   {repair.managerPhone ? (
                     <a
-                      href={`tel:${repair.managerPhone.replaceAll('-', '')}`}
+                      href={`tel:${repair.managerPhone.replace(/\D/g, '')}`}
                       className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
                     >
-                      {repair.managerPhone}
+                      {formatKoreanPhone(repair.managerPhone)}
                     </a>
                   ) : (
                     <p className="text-[13px] text-ink-muted">-</p>

@@ -86,3 +86,16 @@ export function getDefaultTime(selectedDate: string): string {
   if (!minTime) return '11:00'
   return minTime > '11:00' ? minTime : '11:00'
 }
+
+// ─── Phone Formatting ────────────────────────────────────────────────────────
+
+/** "+821012345678" → "010-1234-5678" (한국식 표기) */
+export function formatKoreanPhone(raw: string | null | undefined): string {
+  if (!raw) return ''
+  const digits = raw.replace(/\D/g, '')
+  const local = digits.startsWith('82') ? `0${digits.slice(2)}` : digits
+  if (local.length < 4) return local
+  if (local.length < 8) return `${local.slice(0, 3)}-${local.slice(3)}`
+  if (local.length === 10) return `${local.slice(0, 3)}-${local.slice(3, 6)}-${local.slice(6)}`
+  return `${local.slice(0, 3)}-${local.slice(3, 7)}-${local.slice(7, 11)}`
+}

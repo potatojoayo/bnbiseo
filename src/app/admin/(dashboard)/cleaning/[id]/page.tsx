@@ -21,7 +21,7 @@ import {
   type CleaningStatus,
 } from '@/components/cleaning-status-badge'
 import { api } from '@/lib/api-client'
-import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { formatDateLabel, formatTimeKorean, formatKoreanPhone } from '@/lib/utils'
 import {
   useAdminCleaningDetail,
   useAdminManagers,
@@ -190,10 +190,10 @@ export default function AdminCleaningDetailPage() {
               <div className="flex items-center gap-2.5">
                 <PhoneIcon size={16} className="shrink-0 text-ink-muted" strokeWidth={1.5} />
                 <a
-                  href={`tel:${cleaning.hostPhone.replaceAll('-', '')}`}
+                  href={`tel:${cleaning.hostPhone.replace(/\D/g, '')}`}
                   className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
                 >
-                  {cleaning.hostPhone}
+                  {formatKoreanPhone(cleaning.hostPhone)}
                 </a>
               </div>
             )}
@@ -228,10 +228,10 @@ export default function AdminCleaningDetailPage() {
                   <div className="flex items-center gap-2.5">
                     <PhoneIcon size={16} className="shrink-0 text-ink-muted" strokeWidth={1.5} />
                     <a
-                      href={`tel:${cleaning.managerPhone.replaceAll('-', '')}`}
+                      href={`tel:${cleaning.managerPhone.replace(/\D/g, '')}`}
                       className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
                     >
-                      {cleaning.managerPhone}
+                      {formatKoreanPhone(cleaning.managerPhone)}
                     </a>
                   </div>
                 )}
@@ -292,7 +292,7 @@ export default function AdminCleaningDetailPage() {
                     onClick={() => setConfirmManager({ id: m.id, name: m.name, phone: m.phone })}
                     className="inline-flex h-12 items-center justify-center rounded-lg border border-outline-strong px-4 text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
                   >
-                    {m.name} ({m.phone})
+                    {m.name} ({formatKoreanPhone(m.phone)})
                   </button>
                 ))}
               </div>
@@ -315,7 +315,7 @@ export default function AdminCleaningDetailPage() {
             {confirmManager && (
               <p className="mb-6 text-[14px] text-ink-muted">
                 <span className="font-semibold text-ink">{confirmManager.name}</span>
-                <span className="text-ink-muted"> ({confirmManager.phone})</span>
+                <span className="text-ink-muted"> ({formatKoreanPhone(confirmManager.phone)})</span>
                 {' '}매니저를 이 청소 요청에 배정할까요?
               </p>
             )}

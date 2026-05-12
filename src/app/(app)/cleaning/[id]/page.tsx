@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { CleaningReportReadOnly } from '@/components/cleaning-report-read-only'
 import { useCleaningRequest, useCleaningReport, useInvalidateCleaning } from '@/lib/hooks/use-cleaning'
-import { formatDateLabel, formatTimeKorean, cn } from '@/lib/utils'
+import { formatDateLabel, formatTimeKorean, cn, formatKoreanPhone } from '@/lib/utils'
 import { api } from '@/lib/api-client'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
@@ -216,10 +216,10 @@ export default function CleaningDetailPage() {
                   <PhoneIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
                   {cleaning.managerPhone ? (
                     <a
-                      href={`tel:${cleaning.managerPhone.replaceAll('-', '')}`}
+                      href={`tel:${cleaning.managerPhone.replace(/\D/g, '')}`}
                       className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
                     >
-                      {cleaning.managerPhone}
+                      {formatKoreanPhone(cleaning.managerPhone)}
                     </a>
                   ) : (
                     <p className="text-[13px] text-ink-muted">-</p>

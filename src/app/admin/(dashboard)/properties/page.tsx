@@ -8,6 +8,7 @@ import { MapPinIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatKoreanPhone } from '@/lib/utils'
 
 const STATUS_STYLES = {
   pending_activation: 'border border-outline-dim bg-surface-subtle text-ink-muted',
@@ -139,7 +140,10 @@ export default function AdminPropertiesPage() {
                   </p>
 
                   <p className="mt-3 text-[12px] text-ink-muted">
-                    호스트: {p.hostName || p.hostEmail || '-'}
+                    {p.hostName || p.hostEmail || '-'}
+                  </p>
+                  <p className="mt-1 text-[12px] text-ink-muted">
+                    {p.hostPhone ? formatKoreanPhone(p.hostPhone) : '-'}
                   </p>
                 </div>
               )
@@ -197,7 +201,14 @@ export default function AdminPropertiesPage() {
                         ? [p.livingRooms != null && `거실 ${p.livingRooms}`, p.bedrooms != null && `침실 ${p.bedrooms}`, p.bathrooms != null && `욕실 ${p.bathrooms}`].filter(Boolean).join(' · ') || '-'
                         : '-'}
                     </TableCell>
-                    <TableCell>{p.hostName || p.hostEmail || '-'}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span>{p.hostName || p.hostEmail || '-'}</span>
+                        {p.hostPhone && (
+                          <span className="text-[12px] text-ink-muted">{formatKoreanPhone(p.hostPhone)}</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       {p.status === 'pending_activation' ? (
                         <Link

@@ -29,7 +29,7 @@ import { LoadingButton } from '@/components/ui/loading-button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { CompoundInput, FloatingInput, FloatingTextarea, CompoundField } from '@/components/ui/floating-input'
 import { CalendarPicker } from '@/components/calendar-picker'
-import { ALL_TIME_SLOTS, cn, formatDateLabel, formatTimeKorean, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
+import { ALL_TIME_SLOTS, cn, formatDateLabel, formatKoreanPhone, formatTimeKorean, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
 import { uploadRepairCompletionImage, type UploadedRepairImage } from '@/lib/repair-image-upload'
 import { CheckIcon } from 'lucide-react'
 import { ReadOnlyPhotoGallery } from '@/components/read-only-photo-gallery'
@@ -156,10 +156,10 @@ export default function ManagerRepairDetailPage() {
           <div className="flex items-center gap-2.5">
             <PhoneIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
             <a
-              href={`tel:${repair.hostPhone.replaceAll('-', '')}`}
+              href={`tel:${repair.hostPhone.replace(/\D/g, '')}`}
               className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
             >
-              {repair.hostPhone}
+              {formatKoreanPhone(repair.hostPhone)}
             </a>
           </div>
         )}

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ClipboardListIcon, ChevronRightIcon, FileTextIcon, ShieldCheckIcon, WrenchIcon } from 'lucide-react'
 import { supabase } from '@/lib/api-client'
 import { useManagerMe } from '@/lib/hooks/use-manager'
+import { formatKoreanPhone } from '@/lib/utils'
 import { AvatarWithSkeleton } from '@/components/ui/avatar-with-skeleton'
 import { LoadingButton } from '@/components/ui/loading-button'
 import {
@@ -66,7 +67,7 @@ export default function ManagerProfilePage() {
               )}
               {managerMe?.manager.phone && (
                 <p className="text-[14px] text-ink-muted">
-                  {managerMe.manager.phone}
+                  {formatKoreanPhone(managerMe.manager.phone)}
                 </p>
               )}
             </div>

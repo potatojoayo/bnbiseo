@@ -8,7 +8,7 @@ import { api } from '@/lib/api-client'
 import { useAdminCleaning, useAdminManagers, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { AdminCleaningRequestCard } from '@/components/admin-cleaning-request-card'
 import { CleaningStatusBadge, getCleaningStatusLabel, type CleaningStatus } from '@/components/cleaning-status-badge'
-import { formatDateLabel, formatTimeKorean, cn } from '@/lib/utils'
+import { formatDateLabel, formatTimeKorean, cn, formatKoreanPhone } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 import {
@@ -258,7 +258,7 @@ export default function AdminCleaningPage() {
               <div className="flex flex-col gap-2">
                 {activeManagers.map((m) => (
                   <LoadingButton key={m.id} type="button" variant="outline" loading={assigning} onClick={() => handleAssign(m.id)}>
-                    {m.name} ({m.phone})
+                    {m.name} ({formatKoreanPhone(m.phone)})
                   </LoadingButton>
                 ))}
               </div>

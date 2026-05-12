@@ -11,7 +11,7 @@ import { SiteHeader } from '@/components/site-header'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { AssetCard } from '@/components/asset-card'
 import { api, ApiError } from '@/lib/api-client'
-import { cn } from '@/lib/utils'
+import { cn, formatKoreanPhone } from '@/lib/utils'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { CompoundField, CompoundInput, FloatingInput } from '@/components/ui/floating-input'
@@ -160,6 +160,7 @@ function AdminPropertyRegistrationForm({
     linenWashLocation: 'in_house' | 'external' | null
     hostName: string | null
     hostEmail: string | null
+    hostPhone: string | null
     spaces: RegistrationDetail['spaces']
     fixtures: RegistrationDetail['fixtures']
   }
@@ -374,7 +375,19 @@ function AdminPropertyRegistrationForm({
             <MapPinIcon className="mr-1 inline-block size-3.5 align-[-2px] text-ink-faint" strokeWidth={1.75} />
             {initialData.address}{initialData.addressDetail ? ` ${initialData.addressDetail}` : ''}
           </p>
-          <p className="mt-2 text-[13px] text-ink-muted">호스트: {initialData.hostName || initialData.hostEmail || '-'}</p>
+          <p className="mt-2 text-[13px] text-ink-muted">{initialData.hostName || initialData.hostEmail || '-'}</p>
+          <p className="mt-1 text-[13px] text-ink-muted">
+            {initialData.hostPhone ? (
+              <a
+                href={`tel:${initialData.hostPhone.replace(/\D/g, '')}`}
+                className="text-ink underline underline-offset-2"
+              >
+                {formatKoreanPhone(initialData.hostPhone)}
+              </a>
+            ) : (
+              '-'
+            )}
+          </p>
         </section>
 
         <section className="space-y-4">
@@ -647,6 +660,7 @@ function AdminPropertyDetailView({
     linenWashLocation: 'in_house' | 'external' | null
     hostName: string | null
     hostEmail: string | null
+    hostPhone: string | null
     spaces: RegistrationDetail['spaces']
     fixtures: RegistrationDetail['fixtures']
   }
@@ -706,7 +720,19 @@ function AdminPropertyDetailView({
           {details.length > 0 && (
             <p className="text-[13px] text-ink-muted">{details.join(' · ')}</p>
           )}
-          <p className="text-[13px] text-ink-muted">호스트: {property.hostName || property.hostEmail || '-'}</p>
+          <p className="text-[13px] text-ink-muted">{property.hostName || property.hostEmail || '-'}</p>
+          <p className="text-[13px] text-ink-muted">
+            {property.hostPhone ? (
+              <a
+                href={`tel:${property.hostPhone.replace(/\D/g, '')}`}
+                className="text-ink underline underline-offset-2"
+              >
+                {formatKoreanPhone(property.hostPhone)}
+              </a>
+            ) : (
+              '-'
+            )}
+          </p>
         </section>
 
         <section className="space-y-4">

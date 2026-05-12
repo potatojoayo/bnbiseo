@@ -77,6 +77,7 @@ type Property = {
   bathrooms: number | null
   hostName: string | null
   hostEmail: string | null
+  hostPhone: string | null
   createdAt: string
   activatedAt: string | null
 }
@@ -126,6 +127,7 @@ type RegistrationDetail = {
   linenWashLocation: 'in_house' | 'external' | null
   hostName: string | null
   hostEmail: string | null
+  hostPhone: string | null
   spaces: Array<{
     id: string
     category: SpaceCategory

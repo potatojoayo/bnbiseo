@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { SiteHeader } from '@/components/site-header'
 import { useAdminUsers } from '@/lib/hooks/use-admin'
+import { formatKoreanPhone } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useTablePagination, AdminTablePagination } from '@/components/admin-table-pagination'
 
@@ -42,7 +43,7 @@ export default function AdminUsersPage() {
                   <span className="rounded-full bg-surface-soft px-2 py-0.5 text-[11px] font-medium text-ink-muted">{ROLE_LABELS[u.role] || u.role}</span>
                 </div>
                 <p className="text-[13px] text-ink-muted">{u.email || '-'}</p>
-                {u.phone && <p className="text-[13px] text-ink-muted">{u.phone}</p>}
+                {u.phone && <p className="text-[13px] text-ink-muted">{formatKoreanPhone(u.phone)}</p>}
                 <p className="mt-1 text-[12px] text-ink-faint">
                   가입일: {new Date(u.createdAt).toLocaleDateString('ko-KR')}
                   {!u.onboardingCompleted && ' · 온보딩 미완료'}
@@ -67,7 +68,7 @@ export default function AdminUsersPage() {
                   <TableRow key={u.id}>
                     <TableCell>{u.fullName || '이름 없음'}</TableCell>
                     <TableCell className="text-ink-muted">{u.email || '-'}</TableCell>
-                    <TableCell className="text-ink-muted">{u.phone || '-'}</TableCell>
+                    <TableCell className="text-ink-muted">{u.phone ? formatKoreanPhone(u.phone) : '-'}</TableCell>
                     <TableCell>
                       <span className="rounded-full bg-surface-soft px-2 py-0.5 text-[11px] font-medium text-ink-muted">{ROLE_LABELS[u.role] || u.role}</span>
                     </TableCell>

@@ -45,7 +45,11 @@ const ManagerCleaningStatusUpdateSchema = z.object({
 })
 const UpdateManagerMeSchema = z.object({
   name: z.string().min(1),
-  phone: z.string().min(1),
+  phone: z
+    .string()
+    .min(1)
+    .transform((value) => value.replace(/\D/g, ''))
+    .refine((digits) => /^01\d{8,9}$/.test(digits), '올바른 전화번호 형식이 아니에요.'),
   avatarStoragePath: z.string().min(1),
   avatarThumbnailStoragePath: z.string().min(1),
 })

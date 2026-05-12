@@ -88,7 +88,7 @@ export default function ManagerProfileEditPage() {
   useEffect(() => {
     if (!managerMe) return
     setName(managerMe.manager.name)
-    setPhone(managerMe.manager.phone)
+    setPhone(formatPhoneNumber(managerMe.manager.phone))
     setAvatarStoragePath(managerMe.profile.avatarStoragePath ?? '')
     setAvatarThumbnailStoragePath(managerMe.profile.avatarThumbnailStoragePath ?? '')
     setAvatarPreviewUrl(managerMe.profile.avatarSignedUrl ?? managerMe.profile.avatarThumbnailSignedUrl ?? '')

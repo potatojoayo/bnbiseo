@@ -79,7 +79,7 @@ export default function AdminManagerEditPage() {
   const manager = useMemo(() => managers.find((item) => item.id === id) ?? null, [id, managers])
 
   const [name, setName] = useState(manager?.name ?? '')
-  const [phone, setPhone] = useState(manager?.phone ?? '')
+  const [phone, setPhone] = useState(formatPhoneNumber(manager?.phone ?? ''))
   const [memo, setMemo] = useState(manager?.memo ?? '')
   const [avatarStoragePath, setAvatarStoragePath] = useState(manager?.avatarStoragePath ?? '')
   const [avatarThumbnailStoragePath, setAvatarThumbnailStoragePath] = useState(manager?.avatarThumbnailStoragePath ?? '')
@@ -91,7 +91,7 @@ export default function AdminManagerEditPage() {
   useEffect(() => {
     if (!manager) return
     setName(manager.name)
-    setPhone(manager.phone)
+    setPhone(formatPhoneNumber(manager.phone))
     setMemo(manager.memo ?? '')
     setAvatarStoragePath(manager.avatarStoragePath ?? '')
     setAvatarThumbnailStoragePath(manager.avatarThumbnailStoragePath ?? '')

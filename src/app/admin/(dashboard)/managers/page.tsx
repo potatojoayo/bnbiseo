@@ -11,6 +11,7 @@ import { useTablePagination, AdminTablePagination } from '@/components/admin-tab
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { AvatarWithSkeleton } from '@/components/ui/avatar-with-skeleton'
+import { formatKoreanPhone } from '@/lib/utils'
 import {
   Drawer,
   DrawerContent,
@@ -19,14 +20,6 @@ import {
 } from '@/components/ui/drawer'
 
 type ManagerFilter = 'all' | 'active' | 'inactive'
-
-function formatPhoneNumber(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 11)
-
-  if (digits.length <= 3) return digits
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
-}
 
 export default function AdminManagersPage() {
   const { data: managers = [], isLoading } = useAdminManagers()
@@ -148,7 +141,7 @@ export default function AdminManagersPage() {
                       </span>
                     </div>
                     {m.email && <p className="text-[13px] text-ink-muted">{m.email}</p>}
-                    <p className="text-[13px] text-ink-muted">{m.phone}</p>
+                    <p className="text-[13px] text-ink-muted">{formatKoreanPhone(m.phone)}</p>
                     {m.memo && <p className="mt-1 text-[12px] text-ink-faint">{m.memo}</p>}
                   </div>
                 </div>
@@ -191,7 +184,7 @@ export default function AdminManagersPage() {
                     </TableCell>
                     <TableCell>{m.name}</TableCell>
                     <TableCell className="text-ink-muted">{m.email || '-'}</TableCell>
-                    <TableCell>{m.phone}</TableCell>
+                    <TableCell>{formatKoreanPhone(m.phone)}</TableCell>
                     <TableCell className="text-ink-muted">{m.memo || '-'}</TableCell>
                     <TableCell>
                       <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${m.isActive ? 'bg-success-soft text-success' : 'bg-surface-soft text-ink-faint'}`}>

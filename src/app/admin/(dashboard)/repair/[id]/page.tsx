@@ -18,7 +18,7 @@ import { ReadOnlyPhotoGallery } from '@/components/read-only-photo-gallery'
 import { RepairStatusBadge } from '@/components/repair-status-badge'
 import type { RepairStatus } from '@/lib/hooks/use-repair'
 import { api } from '@/lib/api-client'
-import { formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { formatDateLabel, formatTimeKorean, formatKoreanPhone } from '@/lib/utils'
 import {
   useAdminRepairDetail,
   useAdminManagers,
@@ -180,10 +180,10 @@ export default function AdminRepairDetailPage() {
               <div className="flex items-center gap-2.5">
                 <PhoneIcon size={16} className="shrink-0 text-ink-muted" strokeWidth={1.5} />
                 <a
-                  href={`tel:${repair.hostPhone.replaceAll('-', '')}`}
+                  href={`tel:${repair.hostPhone.replace(/\D/g, '')}`}
                   className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
                 >
-                  {repair.hostPhone}
+                  {formatKoreanPhone(repair.hostPhone)}
                 </a>
               </div>
             )}
@@ -218,10 +218,10 @@ export default function AdminRepairDetailPage() {
                   <div className="flex items-center gap-2.5">
                     <PhoneIcon size={16} className="shrink-0 text-ink-muted" strokeWidth={1.5} />
                     <a
-                      href={`tel:${repair.managerPhone.replaceAll('-', '')}`}
+                      href={`tel:${repair.managerPhone.replace(/\D/g, '')}`}
                       className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
                     >
-                      {repair.managerPhone}
+                      {formatKoreanPhone(repair.managerPhone)}
                     </a>
                   </div>
                 )}
@@ -285,7 +285,7 @@ export default function AdminRepairDetailPage() {
                     onClick={() => setConfirmManager({ id: m.id, name: m.name, phone: m.phone })}
                     className="inline-flex h-12 items-center justify-center rounded-lg border border-outline-strong px-4 text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
                   >
-                    {m.name} ({m.phone})
+                    {m.name} ({formatKoreanPhone(m.phone)})
                   </button>
                 ))}
               </div>
@@ -308,7 +308,7 @@ export default function AdminRepairDetailPage() {
             {confirmManager && (
               <p className="mb-6 text-[14px] text-ink-muted">
                 <span className="font-semibold text-ink">{confirmManager.name}</span>
-                <span className="text-ink-muted"> ({confirmManager.phone})</span>
+                <span className="text-ink-muted"> ({formatKoreanPhone(confirmManager.phone)})</span>
                 {' '}매니저를 이 수리 요청에 배정할까요?
               </p>
             )}
