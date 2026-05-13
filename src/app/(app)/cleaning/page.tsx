@@ -33,7 +33,10 @@ export default function CleaningPage() {
     )
   }
 
-  const visible = requests.filter((r) => r.status !== 'pending_payment')
+  // 카드 결제 진행 중인 pending_payment는 숨기고, 무통장 입금 대기는 보여줌
+  const visible = requests.filter(
+    (r) => r.status !== 'pending_payment' || r.paymentMethod === 'bank_transfer',
+  )
   const now = nowKST()
 
   const upcoming = visible

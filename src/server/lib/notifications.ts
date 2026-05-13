@@ -182,6 +182,84 @@ export async function notifyCleaningRequested(input: {
   }
 }
 
+export async function notifyCleaningBankTransferRequested(input: {
+  cleaningRequestId: string
+  propertyName: string
+  scheduledDate: string
+  scheduledTime: string
+  finalPrice: number
+  hostName: string | null
+  hostEmail: string | null
+  hostPhone: string | null
+}) {
+  const html = `
+    <h2>무통장 입금 청소 요청</h2>
+    <p><strong>${input.propertyName}</strong> 청소 요청이 무통장 입금 방식으로 접수되었습니다.</p>
+    <ul>
+      <li>일정: ${input.scheduledDate} ${input.scheduledTime}</li>
+      <li>금액: ${input.finalPrice.toLocaleString()}원</li>
+      <li>호스트: ${input.hostName ?? '-'} ${input.hostEmail ? `(${input.hostEmail})` : ''} ${input.hostPhone ?? ''}</li>
+      <li>요청 ID: ${input.cleaningRequestId}</li>
+    </ul>
+    <p>입금 확인 후 관리자 페이지에서 입금 확인 처리를 해주세요.</p>
+  `
+  const text = `[BnBiseo] 무통장 입금 청소 요청 — ${input.propertyName} · ${input.finalPrice.toLocaleString()}원. 입금 확인 필요.`
+
+  await dispatchAdminEmail({
+    subject: `[BnBiseo] 무통장 입금 청소 요청 — ${input.propertyName}`,
+    html,
+    text,
+  })
+}
+
+export async function notifyCleaningBankTransferConfirmed(input: {
+  cleaningRequestId: string
+  hostProfileId: string
+  propertyName: string
+  scheduledDate: string
+  scheduledTime: string
+  isUrgent: boolean
+}) {
+  const managerRecipients = await getActiveManagerRecipientProfiles()
+
+  await createNotifications([
+    {
+      profileId: input.hostProfileId,
+      type: 'cleaning_bank_transfer_confirmed',
+      title: '입금 확인 완료',
+      body: `${input.propertyName} 청소 요청 입금이 확인되어 접수되었어요.`,
+      targetPath: `/cleaning/${input.cleaningRequestId}`,
+      entityType: 'cleaning_request',
+      entityId: input.cleaningRequestId,
+    },
+    ...managerRecipients.map((recipient) => ({
+      profileId: recipient.profileId,
+      type: (input.isUrgent ? 'cleaning_urgent_requested' : 'cleaning_requested') as NotificationType,
+      title: input.isUrgent ? '긴급 청소 요청' : '새 청소 요청',
+      body: `${input.propertyName} · ${input.scheduledDate} ${input.scheduledTime}`,
+      targetPath: '/manager/cleanings',
+      entityType: 'cleaning_request',
+      entityId: input.cleaningRequestId,
+      payload: {
+        managerId: recipient.managerId,
+        isUrgent: input.isUrgent,
+      },
+    })),
+  ])
+
+  if (input.isUrgent) {
+    await Promise.all(
+      managerRecipients.map((recipient) =>
+        dispatchAlimtalk(cleaningUrgentManagerTemplate, recipient.phone, {
+          propertyName: input.propertyName,
+          scheduledDate: input.scheduledDate,
+          scheduledTime: input.scheduledTime,
+        }),
+      ),
+    )
+  }
+}
+
 export async function notifyCleaningAssigned(input: {
   cleaningRequestId: string
   hostProfileId: string

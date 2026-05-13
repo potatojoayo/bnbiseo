@@ -15,6 +15,7 @@ type AdminCleaningRequestCardProps = {
     scheduledTime: string
     memo: string | null
     finalPrice: number
+    paymentMethod?: 'card' | 'bank_transfer'
   }
   className?: string
 }
@@ -39,17 +40,19 @@ export function AdminCleaningRequestCard({
         <CleaningStatusBadge
           status={request.status as CleaningStatus}
           label={
-            request.status === 'pending'
-              ? '배정 대기'
-              : request.status === 'confirmed'
-                ? '배정 완료'
-                : request.status === 'in_progress'
-                  ? '진행 중'
-                  : request.status === 'completed'
-                    ? '완료'
-                    : request.status === 'cancelled'
-                      ? '취소'
-                      : undefined
+            request.status === 'pending_payment' && request.paymentMethod === 'bank_transfer'
+              ? '입금 대기'
+              : request.status === 'pending'
+                ? '배정 대기'
+                : request.status === 'confirmed'
+                  ? '배정 완료'
+                  : request.status === 'in_progress'
+                    ? '진행 중'
+                    : request.status === 'completed'
+                      ? '완료'
+                      : request.status === 'cancelled'
+                        ? '취소'
+                        : undefined
           }
         />
       </div>

@@ -17,6 +17,8 @@ type CleaningRequest = {
   finalPrice: number
   orderId: string | null
   paymentKey: string | null
+  paymentMethod: 'card' | 'bank_transfer'
+  paidAt: string | null
   createdAt: string
   propertyName: string | null
   propertyAddress: string | null

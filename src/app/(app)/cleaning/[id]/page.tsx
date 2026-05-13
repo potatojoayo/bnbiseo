@@ -12,6 +12,9 @@ import {
   HomeIcon,
   PhoneIcon,
   UserIcon,
+  BanknoteIcon,
+  CheckIcon,
+  CopyIcon,
 } from 'lucide-react'
 import { CleaningReportReadOnly } from '@/components/cleaning-report-read-only'
 import { useCleaningRequest, useCleaningReport, useInvalidateCleaning } from '@/lib/hooks/use-cleaning'
@@ -44,6 +47,10 @@ const PROCESS_STEPS = [
   { num: 4, title: '점검 리포트 수신', desc: '청소 완료 후 사진과 함께 시설 점검 리포트를 받아요.' },
 ]
 
+const BANK_NAME = process.env.NEXT_PUBLIC_BANK_NAME ?? ''
+const BANK_ACCOUNT = process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? ''
+const BANK_HOLDER = process.env.NEXT_PUBLIC_BANK_HOLDER ?? ''
+
 export default function CleaningDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -55,6 +62,7 @@ export default function CleaningDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [currentTime] = useState(() => Date.now())
+  const [copiedField, setCopiedField] = useState<'account' | null>(null)
 
   async function handleCancel() {
     setCancelling(true)
@@ -94,12 +102,27 @@ export default function CleaningDetailPage() {
   const statusConfig = STATUS_CONFIG[cleaning.status as CleaningStatus]
   const currentStep = statusConfig?.step ?? 0
   const showManagerSection = ['confirmed', 'in_progress', 'completed'].includes(cleaning.status)
+  const isBankTransferPending =
+    cleaning.status === 'pending_payment' && cleaning.paymentMethod === 'bank_transfer'
 
-  // 취소 정책: pending 전액 환불, confirmed 24시간 전까지만
+  // 취소 정책: pending 전액 환불, confirmed 24시간 전까지만, 무통장 입금 대기 건은 언제든 취소 가능
   const scheduledAt = new Date(`${cleaning.scheduledDate}T${cleaning.scheduledTime}:00+09:00`)
   const hoursUntil = (scheduledAt.getTime() - currentTime) / (1000 * 60 * 60)
-  const canCancel = cleaning.status === 'pending' || (cleaning.status === 'confirmed' && hoursUntil >= 24)
+  const canCancel =
+    isBankTransferPending ||
+    cleaning.status === 'pending' ||
+    (cleaning.status === 'confirmed' && hoursUntil >= 24)
   const isFullRefund = cleaning.status === 'pending'
+
+  async function handleCopyAccount() {
+    try {
+      await navigator.clipboard.writeText(BANK_ACCOUNT.replace(/\D/g, ''))
+      setCopiedField('account')
+      setTimeout(() => setCopiedField(null), 1500)
+    } catch {
+      // ignore
+    }
+  }
   const cleaningPhotos = cleaning.cleaningPhotos.map((photo) => ({
     id: photo.id,
     signedUrl: photo.signedUrl ?? photo.thumbnailSignedUrl,
@@ -122,7 +145,60 @@ export default function CleaningDetailPage() {
       {/* Status badge */}
       {statusConfig && (
         <div className="mb-5">
-          <CleaningStatusBadge status={cleaning.status as CleaningStatus} className="text-[12px]" />
+          <CleaningStatusBadge
+            status={cleaning.status as CleaningStatus}
+            label={isBankTransferPending ? '입금 대기' : undefined}
+            className="text-[12px]"
+          />
+        </div>
+      )}
+
+      {/* 무통장 입금 안내 배너 */}
+      {isBankTransferPending && (
+        <div className="mb-4 rounded-xl border border-warning bg-warning-soft/60 px-4 py-4">
+          <div className="flex items-center gap-2 mb-3">
+            <BanknoteIcon size={18} className="text-warning shrink-0" strokeWidth={1.75} />
+            <p className="text-[14px] font-semibold text-ink">입금 대기 중</p>
+          </div>
+          <p className="text-[13px] text-ink-muted leading-relaxed mb-3">
+            아래 계좌로 <span className="font-semibold text-ink">{cleaning.finalPrice.toLocaleString()}원</span>을 입금해주세요.
+            입금이 확인되면 청소 요청이 정식 접수돼요.
+          </p>
+          <div className="rounded-lg bg-white border border-outline-dim px-3.5 py-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] text-ink-muted">은행</span>
+              <span className="text-[13px] font-medium text-ink">{BANK_NAME || '-'}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[12px] text-ink-muted">계좌번호</span>
+              <button
+                type="button"
+                onClick={handleCopyAccount}
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink hover:text-brand transition-colors"
+              >
+                <span className="font-mono">{BANK_ACCOUNT || '-'}</span>
+                {copiedField === 'account' ? (
+                  <CheckIcon size={13} className="text-success" strokeWidth={2.5} />
+                ) : (
+                  <CopyIcon size={13} className="text-ink-muted" strokeWidth={1.75} />
+                )}
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] text-ink-muted">예금주</span>
+              <span className="text-[13px] font-medium text-ink">{BANK_HOLDER || '-'}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-outline-dim pt-2 mt-0.5">
+              <span className="text-[12px] text-ink-muted">입금 금액</span>
+              <span className="text-[14px] font-semibold text-ink">
+                {cleaning.finalPrice.toLocaleString()}원
+              </span>
+            </div>
+          </div>
+          <p className="text-[12px] text-ink-muted mt-3 leading-relaxed">
+            · 입금자명에 본인 이름을 기재해 주세요.<br />
+            · 영업일 기준 1~2시간 내에 입금 확인 후 매니저 배정이 시작돼요.
+          </p>
         </div>
       )}
 
@@ -323,7 +399,11 @@ export default function CleaningDetailPage() {
               </DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col gap-1.5 mb-6">
-              {isFullRefund ? (
+              {isBankTransferPending ? (
+                <p className="text-[14px] text-ink-muted">
+                  아직 입금이 확인되지 않은 요청이에요. 취소하면 요청이 즉시 삭제돼요.
+                </p>
+              ) : isFullRefund ? (
                 <p className="text-[14px] text-ink-muted">
                   취소하면 결제 금액이 전액 환불돼요.
                 </p>

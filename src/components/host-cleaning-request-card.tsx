@@ -12,6 +12,7 @@ type HostCleaningRequestCardProps = {
     status: string
     finalPrice: number
     cleaningType: 'standard' | 'urgent'
+    paymentMethod?: 'card' | 'bank_transfer'
   }
   href: string
   className?: string
@@ -53,7 +54,14 @@ export function HostCleaningRequestCard({
             {metaText}
           </p>
         </div>
-        <CleaningStatusBadge status={request.status as CleaningStatus} />
+        <CleaningStatusBadge
+          status={request.status as CleaningStatus}
+          label={
+            request.status === 'pending_payment' && request.paymentMethod === 'bank_transfer'
+              ? '입금 대기'
+              : undefined
+          }
+        />
       </div>
 
       <div className="mt-3 border-t border-dashed border-outline-strong" />

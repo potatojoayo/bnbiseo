@@ -1,7 +1,7 @@
 import { Context, Hono } from 'hono'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
-import { eq, and, ne, desc, isNull, sql, count, inArray } from 'drizzle-orm'
+import { eq, and, ne, or, desc, isNull, sql, count, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { db } from '@/db'
 import {
@@ -23,6 +23,7 @@ import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 import {
   notifyCleaningAssigned,
+  notifyCleaningBankTransferConfirmed,
   notifyCleaningCancelledByAdmin,
   notifyPropertyActivated,
 } from '../lib/notifications'
@@ -50,6 +51,7 @@ function getSupabaseAdmin() {
 }
 
 const AdminCleaningStatusSchema = z.enum([
+  'pending_payment',
   'pending',
   'confirmed',
   'in_progress',
@@ -157,7 +159,7 @@ adminRoutes.get('/stats', async (c) => {
     .orderBy(cleaningRequests.scheduledDate, cleaningRequests.scheduledTime)
     .limit(5)
 
-  // Today's schedule
+  // Today's schedule (무통장 입금 대기 건도 노출 — 관리자가 당일 입금 확인해야 함)
   const todaySchedule = await db
     .select({
       id: cleaningRequests.id,
@@ -172,7 +174,10 @@ adminRoutes.get('/stats', async (c) => {
     .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
     .where(and(
       eq(cleaningRequests.scheduledDate, today),
-      ne(cleaningRequests.status, 'pending_payment'),
+      or(
+        ne(cleaningRequests.status, 'pending_payment'),
+        eq(cleaningRequests.paymentMethod, 'bank_transfer'),
+      ),
       ne(cleaningRequests.status, 'cancelled'),
     ))
     .orderBy(cleaningRequests.scheduledTime)
@@ -246,6 +251,8 @@ adminRoutes.get('/cleaning', async (c) => {
       price: cleaningRequests.price,
       discount: cleaningRequests.discount,
       finalPrice: cleaningRequests.finalPrice,
+      paymentMethod: cleaningRequests.paymentMethod,
+      paidAt: cleaningRequests.paidAt,
       createdAt: cleaningRequests.createdAt,
       propertyName: properties.name,
       propertyAddress: properties.address,
@@ -258,7 +265,11 @@ adminRoutes.get('/cleaning', async (c) => {
     .leftJoin(profiles, eq(cleaningRequests.hostId, profiles.id))
     .leftJoin(managers, eq(cleaningRequests.managerId, managers.id))
     .where(and(
-      ne(cleaningRequests.status, 'pending_payment'),
+      // 카드 결제 진행 중인 pending_payment는 숨기고 무통장 입금 대기 건만 노출
+      or(
+        ne(cleaningRequests.status, 'pending_payment'),
+        eq(cleaningRequests.paymentMethod, 'bank_transfer'),
+      ),
       status?.success ? eq(cleaningRequests.status, status.data) : undefined,
     ))
     .orderBy(desc(cleaningRequests.createdAt))
@@ -288,6 +299,8 @@ adminRoutes.get('/cleaning/:id', async (c) => {
       price: cleaningRequests.price,
       discount: cleaningRequests.discount,
       finalPrice: cleaningRequests.finalPrice,
+      paymentMethod: cleaningRequests.paymentMethod,
+      paidAt: cleaningRequests.paidAt,
       createdAt: cleaningRequests.createdAt,
       propertyName: properties.name,
       propertyAddress: properties.address,
@@ -420,6 +433,56 @@ adminRoutes.post('/cleaning/:id/assign', async (c) => {
       managerName: detail.managerName || '매니저',
     })
   }
+
+  return c.json(updated)
+})
+
+// 무통장 입금 확인 — pending_payment + bank_transfer 건을 pending으로 전환
+adminRoutes.post('/cleaning/:id/confirm-bank-transfer', async (c) => {
+  const id = c.req.param('id')
+
+  const [request] = await db
+    .select()
+    .from(cleaningRequests)
+    .where(eq(cleaningRequests.id, id))
+    .limit(1)
+
+  if (!request) {
+    return warnJson(c, { error: '청소 요청을 찾을 수 없어요' }, 404)
+  }
+
+  if (request.paymentMethod !== 'bank_transfer') {
+    return warnJson(c, { error: '무통장 입금 요청이 아니에요' }, 400)
+  }
+
+  if (request.status !== 'pending_payment') {
+    return warnJson(c, { error: '이미 입금이 확인되었거나 처리할 수 없는 상태에요' }, 400)
+  }
+
+  const [updated] = await db
+    .update(cleaningRequests)
+    .set({
+      status: 'pending',
+      paidAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(cleaningRequests.id, id))
+    .returning()
+
+  const [property] = await db
+    .select({ name: properties.name })
+    .from(properties)
+    .where(eq(properties.id, updated.propertyId))
+    .limit(1)
+
+  await notifyCleaningBankTransferConfirmed({
+    cleaningRequestId: updated.id,
+    hostProfileId: updated.hostId,
+    propertyName: property?.name || '숙소',
+    scheduledDate: updated.scheduledDate,
+    scheduledTime: updated.scheduledTime,
+    isUrgent: updated.cleaningType === 'urgent',
+  })
 
   return c.json(updated)
 })
@@ -1595,7 +1658,7 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
   }
 
   const [property] = await db
-    .select({ id: properties.id, hostId: properties.hostId, name: properties.name })
+    .select({ id: properties.id, hostId: properties.hostId, name: properties.name, status: properties.status })
     .from(properties)
     .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
     .limit(1)
@@ -1603,6 +1666,8 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
   if (!property) {
     return warnJson(c, { error: '숙소를 찾을 수 없어요' }, 404)
   }
+
+  const wasPendingActivation = property.status === 'pending_activation'
 
   await db.transaction(async (tx) => {
     await tx
@@ -1616,8 +1681,10 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
         extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
         trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
         linenWashLocation: validated.data.linenWashLocation ?? null,
-        status: 'active',
-        activatedAt: new Date(),
+        // 최초 등록 완료 시에만 active로 전환 + activatedAt 기록. 이미 active인 숙소 수정 시 덮어쓰지 않음.
+        ...(wasPendingActivation
+          ? { status: 'active' as const, activatedAt: new Date() }
+          : {}),
         updatedAt: new Date(),
       })
       .where(eq(properties.id, id))
@@ -1689,11 +1756,13 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
     }
   })
 
-  await notifyPropertyActivated({
-    hostProfileId: property.hostId,
-    propertyId: property.id,
-    propertyName: property.name,
-  })
+  if (wasPendingActivation) {
+    await notifyPropertyActivated({
+      hostProfileId: property.hostId,
+      propertyId: property.id,
+      propertyName: property.name,
+    })
+  }
 
   return c.json({ success: true })
 })

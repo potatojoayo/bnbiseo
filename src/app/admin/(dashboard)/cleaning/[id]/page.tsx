@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import {
+  BanknoteIcon,
   CalendarIcon,
   ClockIcon,
   CreditCardIcon,
@@ -47,6 +48,20 @@ export default function AdminCleaningDetailPage() {
   const [confirmManager, setConfirmManager] = useState<{ id: string; name: string; phone: string } | null>(null)
   const [statusOpen, setStatusOpen] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [bankTransferOpen, setBankTransferOpen] = useState(false)
+  const [confirmingBankTransfer, setConfirmingBankTransfer] = useState(false)
+
+  async function handleConfirmBankTransfer() {
+    setConfirmingBankTransfer(true)
+    try {
+      await api.post(`/admin/cleaning/${id}/confirm-bank-transfer`)
+      invalidate.cleaning()
+      invalidate.stats()
+      setBankTransferOpen(false)
+    } finally {
+      setConfirmingBankTransfer(false)
+    }
+  }
 
   async function handleAssign(managerId: string) {
     setAssigning(true)
@@ -97,6 +112,8 @@ export default function AdminCleaningDetailPage() {
 
   const showManagerSection = ['confirmed', 'in_progress', 'completed'].includes(cleaning.status)
   const canAssign = cleaning.status === 'pending'
+  const isBankTransferPending =
+    cleaning.status === 'pending_payment' && cleaning.paymentMethod === 'bank_transfer'
   const canChangeStatus = ['pending', 'confirmed', 'in_progress'].includes(cleaning.status)
   const propertySummary = [
     cleaning.propertyPyeong != null && `${cleaning.propertyPyeong}평`,
@@ -119,8 +136,30 @@ export default function AdminCleaningDetailPage() {
         </div>
 
         <div>
-          <CleaningStatusBadge status={cleaning.status as CleaningStatus} />
+          <CleaningStatusBadge
+            status={cleaning.status as CleaningStatus}
+            label={isBankTransferPending ? '입금 대기' : undefined}
+          />
         </div>
+
+        {isBankTransferPending && (
+          <section className="rounded-xl border border-warning bg-warning-soft/60 px-4 py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <BanknoteIcon size={18} className="shrink-0 text-warning" strokeWidth={1.75} />
+              <p className="text-[14px] font-semibold text-ink">무통장 입금 대기 중</p>
+            </div>
+            <p className="text-[13px] text-ink-muted leading-relaxed">
+              호스트의 입금 확인 후 아래 버튼으로 처리해주세요. 처리 시 매니저 풀에 노출되고 호스트에게 알림이 발송돼요.
+            </p>
+            <button
+              type="button"
+              onClick={() => setBankTransferOpen(true)}
+              className="mt-3 inline-flex h-10 items-center justify-center rounded-lg bg-ink px-4 text-[13px] font-semibold text-white transition-all active:scale-[0.98]"
+            >
+              입금 확인 처리
+            </button>
+          </section>
+        )}
 
         {cleaning.propertyName && (
           <section className="rounded-xl border border-outline-dim px-4 py-4">
@@ -170,6 +209,10 @@ export default function AdminCleaningDetailPage() {
                   {cleaning.discount.toLocaleString()}원 할인
                 </span>
               )}
+              <span className="ml-1.5 text-[12px] text-ink-muted">
+                · {cleaning.paymentMethod === 'bank_transfer' ? '무통장 입금' : '카드/간편 결제'}
+                {cleaning.paidAt && ' · 입금 확인'}
+              </span>
             </span>
           </div>
           {cleaning.memo && (
@@ -274,6 +317,38 @@ export default function AdminCleaningDetailPage() {
           </div>
         )}
       </div>
+
+      <Drawer open={bankTransferOpen} onOpenChange={setBankTransferOpen}>
+        <DrawerContent>
+          <div className="w-full px-5 pb-8">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">입금 확인 처리</DrawerTitle>
+            </DrawerHeader>
+            <p className="mb-6 text-[14px] text-ink-muted leading-relaxed">
+              호스트가 <span className="font-semibold text-ink">{cleaning.finalPrice.toLocaleString()}원</span>을 입금했음을 확인했나요?
+              확인 시 청소 요청이 정식 접수되고 매니저 풀에 노출돼요.
+            </p>
+            <div className="flex flex-col gap-2">
+              <LoadingButton
+                type="button"
+                loading={confirmingBankTransfer}
+                loadingText="처리 중..."
+                onClick={handleConfirmBankTransfer}
+              >
+                입금 확인 완료
+              </LoadingButton>
+              <button
+                type="button"
+                onClick={() => setBankTransferOpen(false)}
+                disabled={confirmingBankTransfer}
+                className="h-12 rounded-lg text-[15px] font-semibold text-ink-muted transition-colors active:bg-surface-soft disabled:opacity-50"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <Drawer open={assignOpen} onOpenChange={setAssignOpen}>
         <DrawerContent>

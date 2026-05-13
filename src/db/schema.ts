@@ -68,6 +68,11 @@ export const cleaningTypeEnum = pgEnum('cleaning_type', [
   'urgent',       // 긴급 청소 (당일)
 ])
 
+export const paymentMethodEnum = pgEnum('payment_method', [
+  'card',          // 카드/간편 결제 (토스페이먼츠)
+  'bank_transfer', // 무통장 입금
+])
+
 export const repairStatusEnum = pgEnum('repair_status', [
   'submitted',     // 호스트 요청 접수 (매니저 유선 협의 대기)
   'quoted',        // 매니저가 일정+견적 발송 (호스트 결제 대기)
@@ -95,6 +100,8 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'cleaning_completed',
   'cleaning_cancelled_by_host',
   'cleaning_cancelled_by_admin',
+  'cleaning_bank_transfer_requested',
+  'cleaning_bank_transfer_confirmed',
   'repair_requested',
   'repair_quoted',
   'repair_confirmed',
@@ -189,6 +196,8 @@ export const cleaningRequests = pgTable('cleaning_requests', {
   finalPrice: integer('final_price').notNull(), // 최종 결제 금액
   orderId: text('order_id'), // 토스페이먼츠 주문번호
   paymentKey: text('payment_key'), // 토스페이먼츠 결제키
+  paymentMethod: paymentMethodEnum('payment_method').default('card').notNull(),
+  paidAt: timestamp('paid_at', { withTimezone: true }), // 결제/입금 확인 시점
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),

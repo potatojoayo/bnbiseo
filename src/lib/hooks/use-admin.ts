@@ -48,6 +48,8 @@ type CleaningRequest = {
   scheduledTime: string
   memo: string | null
   finalPrice: number
+  paymentMethod: 'card' | 'bank_transfer'
+  paidAt: string | null
   createdAt: string
 }
 
@@ -196,6 +198,8 @@ export type AdminCleaningDetail = {
   price: number
   discount: number
   finalPrice: number
+  paymentMethod: 'card' | 'bank_transfer'
+  paidAt: string | null
   createdAt: string
   propertyName: string | null
   propertyAddress: string | null

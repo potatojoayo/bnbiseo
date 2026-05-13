@@ -19,6 +19,7 @@ import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
 import { summarizeSpaces } from '@/lib/property-space-summary'
 import {
+  notifyCleaningBankTransferRequested,
   notifyCleaningCancelledByHost,
   notifyCleaningRequested,
 } from '../lib/notifications'
@@ -30,6 +31,7 @@ const CleaningRequestSchema = z.object({
   memo: z.string().optional(),
   isUrgent: z.boolean().default(false),
   linenWash: z.boolean().default(false),
+  paymentMethod: z.enum(['card', 'bank_transfer']).default('card'),
 })
 
 const ConfirmPaymentSchema = z.object({
@@ -83,6 +85,8 @@ cleaningRoutes.get('/', async (c) => {
       finalPrice: cleaningRequests.finalPrice,
       orderId: cleaningRequests.orderId,
       paymentKey: cleaningRequests.paymentKey,
+      paymentMethod: cleaningRequests.paymentMethod,
+      paidAt: cleaningRequests.paidAt,
       createdAt: cleaningRequests.createdAt,
       propertyName: properties.name,
       propertyAddress: properties.address,
@@ -116,6 +120,8 @@ cleaningRoutes.get('/:id', async (c) => {
       finalPrice: cleaningRequests.finalPrice,
       orderId: cleaningRequests.orderId,
       paymentKey: cleaningRequests.paymentKey,
+      paymentMethod: cleaningRequests.paymentMethod,
+      paidAt: cleaningRequests.paidAt,
       createdAt: cleaningRequests.createdAt,
       cancelledAt: cleaningRequests.cancelledAt,
       propertyName: properties.name,
@@ -305,7 +311,7 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
   }
 
-  const { propertyId, scheduledDate, scheduledTime, memo, isUrgent, linenWash } = validated.data
+  const { propertyId, scheduledDate, scheduledTime, memo, isUrgent, linenWash, paymentMethod } = validated.data
 
   // Verify property ownership
   const [property] = await db
@@ -382,8 +388,29 @@ cleaningRoutes.post('/', async (c) => {
       discount,
       finalPrice,
       orderId,
+      paymentMethod,
     })
     .returning()
+
+  // 무통장 입금: 관리자에게 입금 확인 요청 알림 발송 (호스트/매니저는 입금 확인 후 알림)
+  if (paymentMethod === 'bank_transfer') {
+    const [host] = await db
+      .select({ fullName: profiles.fullName, email: profiles.email, phone: profiles.phone })
+      .from(profiles)
+      .where(eq(profiles.id, profileId))
+      .limit(1)
+
+    await notifyCleaningBankTransferRequested({
+      cleaningRequestId: created.id,
+      propertyName: property.name,
+      scheduledDate,
+      scheduledTime,
+      finalPrice,
+      hostName: host?.fullName ?? null,
+      hostEmail: host?.email ?? null,
+      hostPhone: host?.phone ?? null,
+    })
+  }
 
   return c.json(created, 201)
 })
@@ -459,6 +486,7 @@ cleaningRoutes.post('/confirm', async (c) => {
     .set({
       status: 'pending',
       paymentKey,
+      paidAt: new Date(),
       updatedAt: new Date(),
     })
     .where(eq(cleaningRequests.id, request.id))

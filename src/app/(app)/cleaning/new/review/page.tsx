@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChevronDownIcon, ChevronLeftIcon } from 'lucide-react'
+import { BanknoteIcon, ChevronDownIcon, ChevronLeftIcon, CreditCardIcon } from 'lucide-react'
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk'
-import { getToday } from '@/lib/utils'
+import { cn, getToday } from '@/lib/utils'
 import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT, LINEN_WASH_LABELS } from '@/lib/cleaning-pricing'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
@@ -12,6 +12,8 @@ import { useAuth } from '@/lib/auth-provider'
 import { api } from '@/lib/api-client'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+
+type PaymentMethod = 'card' | 'bank_transfer'
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!
 
@@ -110,6 +112,7 @@ export default function CleaningReviewPage() {
   const linenWash = searchParams.get('linenWash') === '1'
 
   const [submitting, setSubmitting] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>('bank_transfer')
 
   // Redirect back to form if required params are missing
   useEffect(() => {
@@ -142,7 +145,7 @@ export default function CleaningReviewPage() {
     : 0
 
   async function handlePay() {
-    if (!propertyId || !user) return
+    if (!propertyId || !user || !paymentMethod) return
     setSubmitting(true)
     try {
       const created = await api.post<{
@@ -156,7 +159,13 @@ export default function CleaningReviewPage() {
         memo: memo || undefined,
         isUrgent,
         linenWash,
+        paymentMethod,
       })
+
+      if (paymentMethod === 'bank_transfer') {
+        router.replace(`/cleaning/${created.id}`)
+        return
+      }
 
       const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY)
       const payment = tossPayments.payment({ customerKey: user.id })
@@ -198,10 +207,10 @@ export default function CleaningReviewPage() {
   }
 
   return (
-    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-0">
+    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-10">
       <button
         type="button"
-        onClick={() => router.replace(`/cleaning/new?${searchParams.toString()}`)}
+        onClick={() => router.back()}
         className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
       >
         <ChevronLeftIcon size={32} />
@@ -261,6 +270,72 @@ export default function CleaningReviewPage() {
           </div>
         </section>
 
+        {/* 결제 방법 */}
+        <section>
+          <p className="text-[16px] font-semibold text-ink mb-3">결제 방법</p>
+          <div className="grid grid-cols-1 gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('bank_transfer')}
+              className={cn(
+                'flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors',
+                paymentMethod === 'bank_transfer'
+                  ? 'border-ink bg-surface-soft'
+                  : 'border-ink-faint hover:bg-surface-soft',
+              )}
+            >
+              <span
+                className={cn(
+                  'flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] shrink-0 transition-colors',
+                  paymentMethod === 'bank_transfer' ? 'border-ink' : 'border-outline',
+                )}
+              >
+                {paymentMethod === 'bank_transfer' && (
+                  <span className="h-[10px] w-[10px] rounded-full bg-ink" />
+                )}
+              </span>
+              <BanknoteIcon size={20} strokeWidth={1.5} className="text-ink shrink-0" />
+              <div className="flex-1">
+                <p className="text-[14px] font-semibold text-ink">무통장 입금</p>
+                <p className="text-[12px] text-ink-muted mt-0.5">
+                  요청 후 안내된 계좌로 입금
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('card')}
+              className={cn(
+                'flex items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors',
+                paymentMethod === 'card'
+                  ? 'border-ink bg-surface-soft'
+                  : 'border-ink-faint hover:bg-surface-soft',
+              )}
+            >
+              <span
+                className={cn(
+                  'flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] shrink-0 transition-colors',
+                  paymentMethod === 'card' ? 'border-ink' : 'border-outline',
+                )}
+              >
+                {paymentMethod === 'card' && (
+                  <span className="h-[10px] w-[10px] rounded-full bg-ink" />
+                )}
+              </span>
+              <CreditCardIcon size={20} strokeWidth={1.5} className="text-ink shrink-0" />
+              <div className="flex-1">
+                <p className="text-[14px] font-semibold text-ink">
+                  카드/간편 결제 <span className="text-ink-muted font-normal">(준비중)</span>
+                </p>
+                <p className="text-[12px] text-ink-muted mt-0.5">
+                  토스페이먼츠로 즉시 결제
+                </p>
+              </div>
+            </button>
+          </div>
+        </section>
+
         {/* 결제 요약 */}
         {priceInfo && (
           <div className="rounded-xl border border-ink-faint px-4 py-4">
@@ -300,12 +375,19 @@ export default function CleaningReviewPage() {
           type="button"
           variant="primary"
           loading={submitting}
-          loadingText="결제 진행 중..."
+          loadingText={paymentMethod === 'bank_transfer' ? '요청 중...' : '결제 진행 중...'}
+          disabled={!paymentMethod}
           onClick={handlePay}
         >
-          {estimatedPrice > 0
-            ? `${estimatedPrice.toLocaleString()}원 결제하기`
-            : '결제하기'}
+          {!paymentMethod
+            ? '결제 방법을 선택해주세요'
+            : paymentMethod === 'bank_transfer'
+              ? estimatedPrice > 0
+                ? `${estimatedPrice.toLocaleString()}원 청소 요청하기`
+                : '청소 요청하기'
+              : estimatedPrice > 0
+                ? `${estimatedPrice.toLocaleString()}원 결제하기`
+                : '결제하기'}
         </LoadingButton>
       </div>
     </div>

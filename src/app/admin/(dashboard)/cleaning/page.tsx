@@ -19,24 +19,27 @@ import {
 } from '@/components/ui/drawer'
 import { LoadingButton } from '@/components/ui/loading-button'
 
-type CleaningFilter = 'all' | 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+type CleaningFilter = 'all' | 'pending_payment' | 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, paymentMethod }: { status: string; paymentMethod?: 'card' | 'bank_transfer' }) {
+  const isBankTransferPending = status === 'pending_payment' && paymentMethod === 'bank_transfer'
   return (
     <CleaningStatusBadge
       status={status as CleaningStatus}
       label={
-        status === 'pending'
-          ? '배정 대기'
-          : status === 'confirmed'
-            ? '배정 완료'
-            : status === 'in_progress'
-              ? '진행 중'
-              : status === 'completed'
-                ? '완료'
-                : status === 'cancelled'
-                  ? '취소'
-                  : undefined
+        isBankTransferPending
+          ? '입금 대기'
+          : status === 'pending'
+            ? '배정 대기'
+            : status === 'confirmed'
+              ? '배정 완료'
+              : status === 'in_progress'
+                ? '진행 중'
+                : status === 'completed'
+                  ? '완료'
+                  : status === 'cancelled'
+                    ? '취소'
+                    : undefined
       }
     />
   )
@@ -53,6 +56,9 @@ export default function AdminCleaningPage() {
   const isPageLoading = requestsLoading || managersLoading
 
   const activeManagers = allManagers.filter((m) => m.isActive)
+  const bankTransferPendingCount = allRequests.filter(
+    (request) => request.status === 'pending_payment' && request.paymentMethod === 'bank_transfer',
+  ).length
   const pendingCount = allRequests.filter((request) => request.status === 'pending').length
   const confirmedCount = allRequests.filter((request) => request.status === 'confirmed').length
   const inProgressCount = allRequests.filter((request) => request.status === 'in_progress').length
@@ -74,6 +80,7 @@ export default function AdminCleaningPage() {
 
   const filterOptions: Array<{ value: CleaningFilter; label: string; count: number }> = [
     { value: 'all', label: '전체', count: allRequests.length },
+    { value: 'pending_payment', label: '입금 대기', count: bankTransferPendingCount },
     { value: 'pending', label: '배정 대기', count: pendingCount },
     { value: 'confirmed', label: '배정 완료', count: confirmedCount },
     { value: 'in_progress', label: '진행 중', count: inProgressCount },
@@ -185,7 +192,7 @@ export default function AdminCleaningPage() {
                     <TableCell>{r.hostName || r.hostEmail || '-'}</TableCell>
                     <TableCell>{r.managerName || <span className="text-ink-faint">미배정</span>}</TableCell>
                     <TableCell>{r.finalPrice.toLocaleString()}원</TableCell>
-                    <TableCell><StatusBadge status={r.status} /></TableCell>
+                    <TableCell><StatusBadge status={r.status} paymentMethod={r.paymentMethod} /></TableCell>
                     <TableCell>
                       <div className="flex gap-1.5">
                         {r.status === 'pending' && (
