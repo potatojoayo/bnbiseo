@@ -307,7 +307,7 @@ function AdminSpaceEditForm({
           kind="spaces"
           images={photos as UploadedAdminImage[]}
           onChange={(nextImages) => setPhotos(nextImages)}
-          description="순서를 바꾸면 첫 번째 사진이 썸네일이 돼요."
+          description="순서를 바꾸면 첫 번째 사진이 썸네일이 됩니다."
           emptyText="아직 추가된 사진이 없어요."
           onError={setMessage}
         />

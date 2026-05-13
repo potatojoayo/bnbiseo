@@ -155,16 +155,16 @@ export default function CleaningDetailPage() {
 
       {/* 무통장 입금 안내 배너 */}
       {isBankTransferPending && (
-        <div className="mb-4 rounded-xl border border-warning bg-warning-soft/60 px-4 py-4">
-          <div className="flex items-center gap-2 mb-3">
-            <BanknoteIcon size={18} className="text-warning shrink-0" strokeWidth={1.75} />
+        <div className="mb-4 rounded-2xl border border-outline-dim bg-white px-4 py-4 shadow-[0_10px_28px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center gap-2 mb-2.5">
+            <BanknoteIcon size={18} className="text-ink shrink-0" strokeWidth={1.75} />
             <p className="text-[14px] font-semibold text-ink">입금 대기 중</p>
           </div>
-          <p className="text-[13px] text-ink-muted leading-relaxed mb-3">
+          <p className="text-[13px] text-ink-muted leading-relaxed mb-3.5">
             아래 계좌로 <span className="font-semibold text-ink">{cleaning.finalPrice.toLocaleString()}원</span>을 입금해주세요.
-            입금이 확인되면 청소 요청이 정식 접수돼요.
+            입금이 확인되면 청소 요청이 정식 접수됩니다.
           </p>
-          <div className="rounded-lg bg-white border border-outline-dim px-3.5 py-3 flex flex-col gap-2">
+          <div className="rounded-lg bg-surface-soft px-3.5 py-3 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-[12px] text-ink-muted">은행</span>
               <span className="text-[13px] font-medium text-ink">{BANK_NAME || '-'}</span>
@@ -176,7 +176,7 @@ export default function CleaningDetailPage() {
                 onClick={handleCopyAccount}
                 className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink hover:text-brand transition-colors"
               >
-                <span className="font-mono">{BANK_ACCOUNT || '-'}</span>
+                <span className="font-mono tracking-tight">{BANK_ACCOUNT || '-'}</span>
                 {copiedField === 'account' ? (
                   <CheckIcon size={13} className="text-success" strokeWidth={2.5} />
                 ) : (
@@ -190,14 +190,14 @@ export default function CleaningDetailPage() {
             </div>
             <div className="flex items-center justify-between border-t border-outline-dim pt-2 mt-0.5">
               <span className="text-[12px] text-ink-muted">입금 금액</span>
-              <span className="text-[14px] font-semibold text-ink">
+              <span className="text-[14px] font-semibold text-brand">
                 {cleaning.finalPrice.toLocaleString()}원
               </span>
             </div>
           </div>
           <p className="text-[12px] text-ink-muted mt-3 leading-relaxed">
             · 입금자명에 본인 이름을 기재해 주세요.<br />
-            · 영업일 기준 1~2시간 내에 입금 확인 후 매니저 배정이 시작돼요.
+            · 영업일 기준 1~2시간 내에 입금 확인 후 매니저 배정이 시작됩니다.
           </p>
         </div>
       )}
@@ -401,16 +401,16 @@ export default function CleaningDetailPage() {
             <div className="flex flex-col gap-1.5 mb-6">
               {isBankTransferPending ? (
                 <p className="text-[14px] text-ink-muted">
-                  아직 입금이 확인되지 않은 요청이에요. 취소하면 요청이 즉시 삭제돼요.
+                  아직 입금이 확인되지 않은 요청이에요. 취소하면 요청이 즉시 삭제됩니다.
                 </p>
               ) : isFullRefund ? (
                 <p className="text-[14px] text-ink-muted">
-                  취소하면 결제 금액이 전액 환불돼요.
+                  취소하면 결제 금액이 전액 환불됩니다.
                 </p>
               ) : (
                 <>
                   <p className="text-[14px] text-ink-muted">
-                    매니저가 이미 배정되었어요. 취소하면 결제 금액이 전액 환불돼요.
+                    매니저가 이미 배정되었어요. 취소하면 결제 금액이 전액 환불됩니다.
                   </p>
                   <p className="text-[13px] text-ink-faint">
                     청소 예정일 24시간 이내에는 취소가 불가해요.

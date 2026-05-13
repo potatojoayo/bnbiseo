@@ -392,7 +392,7 @@ export default function NewCleaningPage() {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">기본 요금</p>
                   <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    숙소 면적(평수)에 따라 기본 청소 비용이 산정돼요.
+                    숙소 면적(평수)에 따라 기본 청소 비용이 산정됩니다.
                     <span className="block text-[13px] text-ink-muted mt-1">10평 이하 2,500원/평 · 11~20평 2,200원/평 · 21평+ 2,000원/평</span>
                   </div>
                 </div>
@@ -408,14 +408,14 @@ export default function NewCleaningPage() {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">포함 서비스</p>
                   <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    호텔식 침구 세팅과 15항목 시설 점검 리포트가 기본 포함돼요.
+                    호텔식 침구 세팅과 15항목 시설 점검 리포트가 기본 포함됩니다.
                   </div>
                 </div>
 
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">긴급 청소</p>
                   <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    당일 요청 시 긴급 청소로 진행되며, 50% 할증이 적용돼요.
+                    당일 요청 시 긴급 청소로 진행되며, 50% 할증이 적용됩니다.
                   </div>
                 </div>
 

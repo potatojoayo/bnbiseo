@@ -15,7 +15,7 @@ export const PROPERTY_REGISTRATION_STEPS = [
 export const REPAIR_PROCESS_STEPS = [
   { num: 1, title: '수리 요청', desc: '증상과 희망 일시, 관련 시설물을 입력해 요청해요.' },
   { num: 2, title: '일정·견적 협의', desc: '매니저가 유선으로 연락해 정확한 일정과 견적을 조율해요.' },
-  { num: 3, title: '견적 확인 및 결제', desc: '발송된 견적서를 확인한 후 결제하면 방문이 확정돼요.' },
+  { num: 3, title: '견적 확인 및 결제', desc: '발송된 견적서를 확인한 후 결제하면 방문이 확정됩니다.' },
   { num: 4, title: '방문 수리', desc: '확정 일정에 매니저가 방문해 수리 작업을 진행해요.' },
   { num: 5, title: '조치 보고서 수신', desc: '작업 완료 후 사진과 조치 내용을 담은 보고서를 받아요.' },
 ] as const

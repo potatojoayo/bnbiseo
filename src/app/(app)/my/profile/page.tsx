@@ -184,7 +184,7 @@ export default function ProfilePage() {
             </DrawerHeader>
             <div className="flex flex-col gap-1.5 mb-6">
               <p className="text-[14px] text-ink-muted">
-                탈퇴하면 모든 숙소 정보와 청소 내역이 삭제돼요.
+                탈퇴하면 모든 숙소 정보와 청소 내역이 삭제됩니다.
               </p>
               <p className="text-[13px] text-ink-faint">
                 이 작업은 되돌릴 수 없어요.

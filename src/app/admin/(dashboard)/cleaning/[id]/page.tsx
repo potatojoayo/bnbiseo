@@ -143,13 +143,13 @@ export default function AdminCleaningDetailPage() {
         </div>
 
         {isBankTransferPending && (
-          <section className="rounded-xl border border-warning bg-warning-soft/60 px-4 py-4">
+          <section className="rounded-2xl border border-outline-dim bg-white px-4 py-4 shadow-[0_10px_28px_rgba(0,0,0,0.08)]">
             <div className="flex items-center gap-2 mb-2">
-              <BanknoteIcon size={18} className="shrink-0 text-warning" strokeWidth={1.75} />
+              <BanknoteIcon size={18} className="shrink-0 text-ink" strokeWidth={1.75} />
               <p className="text-[14px] font-semibold text-ink">무통장 입금 대기 중</p>
             </div>
             <p className="text-[13px] text-ink-muted leading-relaxed">
-              호스트의 입금 확인 후 아래 버튼으로 처리해주세요. 처리 시 매니저 풀에 노출되고 호스트에게 알림이 발송돼요.
+              호스트의 입금 확인 후 아래 버튼으로 처리해주세요. 처리 시 매니저 풀에 노출되고 호스트에게 알림이 발송됩니다.
             </p>
             <button
               type="button"
@@ -326,7 +326,7 @@ export default function AdminCleaningDetailPage() {
             </DrawerHeader>
             <p className="mb-6 text-[14px] text-ink-muted leading-relaxed">
               호스트가 <span className="font-semibold text-ink">{cleaning.finalPrice.toLocaleString()}원</span>을 입금했음을 확인했나요?
-              확인 시 청소 요청이 정식 접수되고 매니저 풀에 노출돼요.
+              확인 시 청소 요청이 정식 접수되고 매니저 풀에 노출됩니다.
             </p>
             <div className="flex flex-col gap-2">
               <LoadingButton

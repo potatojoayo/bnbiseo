@@ -573,7 +573,7 @@ function AdminPropertyRegistrationForm({
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[16px] font-semibold text-ink">시설물 정보</p>
-              <p className="mt-1 text-[13px] text-ink-muted">추가한 시설물은 바로 저장돼요.</p>
+              <p className="mt-1 text-[13px] text-ink-muted">추가한 시설물은 바로 저장됩니다.</p>
             </div>
             <Link
               href={`/admin/properties/${propertyId}/assets/new`}
