@@ -1,6 +1,7 @@
 import { CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
 import { RepairStatusBadge } from '@/components/repair-status-badge'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { calculateManagerPayout } from '@/lib/manager-payout'
 import type { ManagerRepairListItem } from '@/lib/hooks/use-manager'
 
 type ManagerRepairCardProps = {
@@ -58,9 +59,9 @@ export function ManagerRepairCard({
         <>
           <div className="mt-3 border-t border-dashed border-outline-strong" />
           <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-[13px] text-ink-muted">견적 금액</p>
+            <p className="text-[13px] text-ink-muted">정산 예정</p>
             <p className="text-[15px] font-semibold text-ink">
-              {repair.quotedCost.toLocaleString()}원
+              {calculateManagerPayout(repair.quotedCost).toLocaleString()}원
             </p>
           </div>
         </>

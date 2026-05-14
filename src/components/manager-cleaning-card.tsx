@@ -1,6 +1,7 @@
 import { CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
 import { CleaningStatusBadge } from '@/components/cleaning-status-badge'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { calculateManagerPayout } from '@/lib/manager-payout'
 import type { ManagerCleaning } from '@/lib/hooks/use-manager'
 
 type ManagerCleaningCardProps = {
@@ -79,9 +80,9 @@ export function ManagerCleaningCard({
       <div className="mt-3 border-t border-dashed border-outline-strong" />
 
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-[13px] text-ink-muted">청소 금액</p>
+        <p className="text-[13px] text-ink-muted">정산 예정</p>
         <p className="text-[15px] font-semibold text-ink">
-          {cleaning.finalPrice.toLocaleString()}원
+          {calculateManagerPayout(cleaning.finalPrice).toLocaleString()}원
         </p>
       </div>
     </div>

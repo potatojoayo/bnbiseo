@@ -213,7 +213,6 @@ export type ManagerRepairListItem = {
   propertyName: string | null
   propertyAddress: string | null
   propertyAddressDetail: string | null
-  hostName: string | null
 }
 
 export type ManagerRepairDetail = {
@@ -238,8 +237,6 @@ export type ManagerRepairDetail = {
   propertyName: string | null
   propertyAddress: string | null
   propertyAddressDetail: string | null
-  hostName: string | null
-  hostPhone: string | null
   photos: Array<{
     id: string
     storagePath: string

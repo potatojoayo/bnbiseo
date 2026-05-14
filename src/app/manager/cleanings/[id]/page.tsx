@@ -23,6 +23,7 @@ import { api, ApiError } from '@/lib/api-client'
 import { useManagerCleaning, useManagerCleaningReport, useManagerOpenCleanings, useInvalidateManager, type ManagerCleaningDetail, type ManagerCleaningReport } from '@/lib/hooks/use-manager'
 import type { UploadedManagerCleaningImage } from '@/lib/manager-cleaning-image-upload'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
+import { calculateManagerPayout } from '@/lib/manager-payout'
 import { useEffect, useMemo, useState } from 'react'
 
 const SPACE_CATEGORY_LABELS: Record<ManagerCleaningDetail['spaces'][number]['category'], string> = {
@@ -266,8 +267,8 @@ export default function ManagerCleaningDetailPage() {
             />
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-[13px] text-ink-muted">청소 금액</p>
-            <p className="text-[15px] font-semibold text-ink">{previewCleaning.finalPrice.toLocaleString()}원</p>
+            <p className="text-[13px] text-ink-muted">정산 예정</p>
+            <p className="text-[15px] font-semibold text-ink">{calculateManagerPayout(previewCleaning.finalPrice).toLocaleString()}원</p>
           </div>
           {previewCleaning.memo && (
             <>

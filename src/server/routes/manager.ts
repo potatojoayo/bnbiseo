@@ -1203,12 +1203,9 @@ async function getManagerRepairDetail(id: string) {
       propertyName: properties.name,
       propertyAddress: properties.address,
       propertyAddressDetail: properties.addressDetail,
-      hostName: profiles.fullName,
-      hostPhone: profiles.phone,
     })
     .from(repairRequests)
     .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
-    .leftJoin(profiles, eq(repairRequests.hostId, profiles.id))
     .where(eq(repairRequests.id, id))
     .limit(1)
 
@@ -1341,11 +1338,9 @@ managerRoutes.get('/repairs/open', async (c) => {
       propertyName: properties.name,
       propertyAddress: properties.address,
       propertyAddressDetail: properties.addressDetail,
-      hostName: profiles.fullName,
     })
     .from(repairRequests)
     .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
-    .leftJoin(profiles, eq(repairRequests.hostId, profiles.id))
     .where(and(
       eq(repairRequests.status, 'submitted'),
       isNull(repairRequests.managerId),
@@ -1375,11 +1370,9 @@ managerRoutes.get('/repairs/me', async (c) => {
       propertyName: properties.name,
       propertyAddress: properties.address,
       propertyAddressDetail: properties.addressDetail,
-      hostName: profiles.fullName,
     })
     .from(repairRequests)
     .leftJoin(properties, eq(repairRequests.propertyId, properties.id))
-    .leftJoin(profiles, eq(repairRequests.hostId, profiles.id))
     .where(and(
       eq(repairRequests.managerId, managerId),
       ne(repairRequests.status, 'cancelled'),

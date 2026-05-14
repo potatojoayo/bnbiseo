@@ -11,9 +11,7 @@ import {
   CreditCardIcon,
   HomeIcon,
   MapPinIcon,
-  PhoneIcon,
   PlusIcon,
-  UserIcon,
   XIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -29,7 +27,8 @@ import { LoadingButton } from '@/components/ui/loading-button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { CompoundInput, FloatingInput, FloatingTextarea, CompoundField } from '@/components/ui/floating-input'
 import { CalendarPicker } from '@/components/calendar-picker'
-import { ALL_TIME_SLOTS, cn, formatDateLabel, formatKoreanPhone, formatTimeKorean, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
+import { ALL_TIME_SLOTS, cn, formatDateLabel, formatTimeKorean, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
+import { calculateManagerPayout } from '@/lib/manager-payout'
 import { uploadRepairCompletionImage, type UploadedRepairImage } from '@/lib/repair-image-upload'
 import { CheckIcon } from 'lucide-react'
 import { ReadOnlyPhotoGallery } from '@/components/read-only-photo-gallery'
@@ -146,25 +145,6 @@ export default function ManagerRepairDetailPage() {
         )}
       </div>
 
-      {/* 호스트 정보 */}
-      <div className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-2.5 mb-4">
-        <div className="flex items-center gap-2.5">
-          <UserIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
-          <span className="text-[14px] text-ink">{repair.hostName || '-'}</span>
-        </div>
-        {repair.hostPhone && (
-          <div className="flex items-center gap-2.5">
-            <PhoneIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
-            <a
-              href={`tel:${repair.hostPhone.replace(/\D/g, '')}`}
-              className="text-[13px] text-ink-muted underline underline-offset-2 transition-colors hover:text-ink"
-            >
-              {formatKoreanPhone(repair.hostPhone)}
-            </a>
-          </div>
-        )}
-      </div>
-
       {/* 일정 및 증상 */}
       <div className="rounded-xl border border-outline-dim px-4 py-4 flex flex-col gap-2.5 mb-4">
         <div className="flex items-center gap-2.5">
@@ -233,7 +213,7 @@ export default function ManagerRepairDetailPage() {
           <div className="flex items-center gap-2.5">
             <CreditCardIcon size={16} className="text-ink-muted shrink-0" strokeWidth={1.5} />
             <span className="text-[14px] text-ink font-medium">
-              견적 {repair.quotedCost.toLocaleString()}원
+              정산 예정 {calculateManagerPayout(repair.quotedCost).toLocaleString()}원
             </span>
           </div>
           {repair.quoteNote && (
@@ -378,7 +358,7 @@ export default function ManagerRepairDetailPage() {
             </DrawerHeader>
             <div className="space-y-4">
               <p className="text-[14px] leading-relaxed text-ink-muted">
-                한 번 배정받은 요청은 호스트에게 연락해 일정·견적을 조율하고 견적서를 발송해야 해요.
+                한 번 배정받은 요청은 비앤비서를 통해 일정·견적을 조율하고 견적서를 발송해야 해요.
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -538,6 +518,15 @@ function QuoteDrawer({
                   borderRadius="12px"
                 />
               </CompoundInput>
+              {(() => {
+                const costNum = parseInt(cost.replace(/,/g, ''), 10)
+                if (!costNum || costNum <= 0) return null
+                return (
+                  <p className="-mt-2 px-1 text-[12px] text-ink-muted">
+                    정산 예정 {calculateManagerPayout(costNum).toLocaleString()}원 (부가세·플랫폼 수수료 20% 차감)
+                  </p>
+                )
+              })()}
 
               <CompoundInput>
                 <FloatingTextarea
@@ -769,7 +758,7 @@ function CompleteReportDrawer({
             <CompoundInput>
               <FloatingTextarea
                 label="추가 메모 (선택)"
-                placeholder="교체한 부품, 호스트 권고사항 등"
+                placeholder="교체한 부품, 권고사항 등"
                 value={additionalNotes}
                 onChange={(e) => setAdditionalNotes(e.target.value)}
                 borderRadius="12px"
