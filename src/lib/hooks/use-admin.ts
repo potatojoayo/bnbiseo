@@ -36,6 +36,7 @@ type Stats = {
 
 type CleaningRequest = {
   id: string
+  propertyId: string | null
   propertyName: string | null
   propertyAddress: string | null
   hostName: string | null

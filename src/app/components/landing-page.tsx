@@ -1,7 +1,7 @@
-import Link from "next/link";
 import Marquee from "react-fast-marquee";
 import { Logo } from "@/components/logo";
 import { CtaButton } from "./cta-button";
+import { LandingNavActions } from "./landing-nav-actions";
 import CleaningRequestDemo from "./cleaning-request-demo";
 import ChecklistDemo from "./checklist-demo";
 import PropertyCardDemo from "./property-card-demo";
@@ -95,13 +95,7 @@ export default function LandingPage() {
       <nav className="bg-surface sticky top-0 z-50 h-14 max-md:h-12 px-12 flex justify-between items-center border-b border-outline-dim max-md:px-6">
         <a href="#"><Logo /></a>
         <div className="flex items-center gap-5 max-md:gap-4">
-          <Link
-            href="/login"
-            className={`${FONT_BODY} text-sm font-medium text-on-surface hover:text-brand transition-colors`}
-          >
-            로그인
-          </Link>
-          <CtaButton className={`${FONT_BODY} bg-on-surface text-surface border-none px-5 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-brand hover:scale-[1.03]`}>무료 등록</CtaButton>
+          <LandingNavActions />
         </div>
       </nav>
 

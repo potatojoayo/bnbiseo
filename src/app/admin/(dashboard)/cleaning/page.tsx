@@ -76,6 +76,10 @@ export default function AdminCleaningPage() {
   const [statusTargetId, setStatusTargetId] = useState('')
   const [updating, setUpdating] = useState(false)
 
+  const [bankTransferOpen, setBankTransferOpen] = useState(false)
+  const [bankTransferTarget, setBankTransferTarget] = useState<{ id: string; amount: number } | null>(null)
+  const [confirmingBankTransfer, setConfirmingBankTransfer] = useState(false)
+
   const [filterOpen, setFilterOpen] = useState(false)
 
   const filterOptions: Array<{ value: CleaningFilter; label: string; count: number }> = [
@@ -127,6 +131,20 @@ export default function AdminCleaningPage() {
     setStatusOpen(false)
     invalidate.cleaning()
     invalidate.stats()
+  }
+
+  async function handleConfirmBankTransfer() {
+    if (!bankTransferTarget) return
+    setConfirmingBankTransfer(true)
+    try {
+      await api.post(`/admin/cleaning/${bankTransferTarget.id}/confirm-bank-transfer`)
+      invalidate.cleaning()
+      invalidate.stats()
+      setBankTransferOpen(false)
+      setBankTransferTarget(null)
+    } finally {
+      setConfirmingBankTransfer(false)
+    }
   }
 
   return (
@@ -182,9 +200,18 @@ export default function AdminCleaningPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paged.map((r) => (
+                {paged.map((r) => {
+                  const isBankTransferPending = r.status === 'pending_payment' && r.paymentMethod === 'bank_transfer'
+                  return (
                   <TableRow key={r.id}>
-                    <TableCell>{r.propertyName || '숙소'}</TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/admin/cleaning/${r.id}`}
+                        className="text-ink underline-offset-2 hover:text-brand hover:underline"
+                      >
+                        {r.propertyName || '숙소'}
+                      </Link>
+                    </TableCell>
                     <TableCell>
                       {formatDateLabel(r.scheduledDate)} {formatTimeKorean(r.scheduledTime)}
                       {r.cleaningType === 'urgent' && <span className="text-brand ml-1 text-[11px]">긴급</span>}
@@ -195,6 +222,17 @@ export default function AdminCleaningPage() {
                     <TableCell><StatusBadge status={r.status} paymentMethod={r.paymentMethod} /></TableCell>
                     <TableCell>
                       <div className="flex gap-1.5">
+                        {isBankTransferPending && (
+                          <button
+                            onClick={() => {
+                              setBankTransferTarget({ id: r.id, amount: r.finalPrice })
+                              setBankTransferOpen(true)
+                            }}
+                            className="rounded-md bg-brand px-2.5 py-1 text-[11px] font-medium text-white"
+                          >
+                            입금확인
+                          </button>
+                        )}
                         {r.status === 'pending' && (
                           <button onClick={() => { setAssignTargetId(r.id); setAssignOpen(true) }} className="rounded-md bg-ink px-2.5 py-1 text-[11px] font-medium text-white">배정</button>
                         )}
@@ -204,7 +242,8 @@ export default function AdminCleaningPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
@@ -270,6 +309,48 @@ export default function AdminCleaningPage() {
                 ))}
               </div>
             )}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Confirm Bank Transfer Drawer */}
+      <Drawer
+        open={bankTransferOpen}
+        onOpenChange={(open) => {
+          setBankTransferOpen(open)
+          if (!open) setBankTransferTarget(null)
+        }}
+      >
+        <DrawerContent>
+          <div className="w-full px-5 pb-8">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-[18px] font-semibold text-ink">입금 확인 처리</DrawerTitle>
+            </DrawerHeader>
+            <p className="mb-6 text-[14px] leading-relaxed text-ink-muted">
+              호스트가{' '}
+              <span className="font-semibold text-ink">
+                {(bankTransferTarget?.amount ?? 0).toLocaleString()}원
+              </span>
+              을 입금했음을 확인했나요? 확인 시 청소 요청이 정식 접수되고 매니저 풀에 노출됩니다.
+            </p>
+            <div className="flex flex-col gap-2">
+              <LoadingButton
+                type="button"
+                loading={confirmingBankTransfer}
+                loadingText="처리 중..."
+                onClick={handleConfirmBankTransfer}
+              >
+                입금 확인 완료
+              </LoadingButton>
+              <button
+                type="button"
+                onClick={() => setBankTransferOpen(false)}
+                disabled={confirmingBankTransfer}
+                className="h-12 rounded-lg text-[15px] font-semibold text-ink-muted transition-colors active:bg-surface-soft disabled:opacity-50"
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </DrawerContent>
       </Drawer>
