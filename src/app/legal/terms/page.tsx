@@ -44,7 +44,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-[16px] font-semibold mb-2">제5조 (서비스 이용료 및 결제)</h2>
           <ol className="list-decimal list-inside text-ink-muted flex flex-col gap-1">
-            <li>청소 서비스 이용료는 숙소 면적, 방 수, 욕실 수 등을 기준으로 산정됩니다.</li>
+            <li>청소 서비스 이용료는 숙소 면적, 침대 수, 화장실 수를 기준으로 산정됩니다.</li>
             <li>수리 서비스 이용료는 회사가 수리 요청 내용을 검토 후 견적으로 산정하여 이용자에게 안내하며, 이용자가 견적에 동의하고 결제를 완료한 시점에 방문 일정이 확정됩니다.</li>
             <li>결제는 토스페이먼츠를 통해 진행되며, 카드 결제를 지원합니다.</li>
             <li>당일 청소 요청 시 긴급 할증(50%)이 적용됩니다.</li>

@@ -37,6 +37,7 @@ export const linenWashLocationEnum = pgEnum('linen_wash_location', [
 export const fixtureCategoryEnum = pgEnum('fixture_category', [
   'lighting',
   'furniture',
+  'bedding',
   'faucet',
   'boiler',
   'appliance',

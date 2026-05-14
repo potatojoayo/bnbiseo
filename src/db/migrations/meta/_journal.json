@@ -197,6 +197,13 @@
       "when": 1778664407393,
       "tag": "0027_add_payment_method_to_cleaning",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1778736498536,
+      "tag": "0028_hot_slapstick",
+      "breakpoints": true
     }
   ]
 }

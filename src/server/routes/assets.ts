@@ -8,7 +8,7 @@ import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth
 const AssetSchema = z.object({
   propertyId: z.string().uuid(),
   category: z.enum([
-    'lighting', 'faucet', 'boiler', 'appliance', 'lock',
+    'lighting', 'bedding', 'faucet', 'boiler', 'appliance', 'lock',
     'ac', 'washer', 'dryer', 'vent', 'other',
   ]),
   name: z.string().min(1, { message: '시설물 이름을 입력해주세요.' }).trim(),

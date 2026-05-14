@@ -47,6 +47,7 @@ type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
 type AssetCategory =
   | 'lighting'
   | 'furniture'
+  | 'bedding'
   | 'faucet'
   | 'boiler'
   | 'appliance'

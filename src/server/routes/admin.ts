@@ -779,6 +779,7 @@ const FixtureRegistrationSchema = z.object({
   category: z.enum([
     'lighting',
     'furniture',
+    'bedding',
     'faucet',
     'boiler',
     'appliance',
@@ -825,6 +826,7 @@ const CreateFixtureSchema = z.object({
   category: z.enum([
     'lighting',
     'furniture',
+    'bedding',
     'faucet',
     'boiler',
     'appliance',

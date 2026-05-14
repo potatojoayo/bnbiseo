@@ -1,0 +1,1 @@
+ALTER TYPE "public"."fixture_category" ADD VALUE 'bedding' BEFORE 'faucet';

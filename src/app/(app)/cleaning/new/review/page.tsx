@@ -132,8 +132,7 @@ export default function CleaningReviewPage() {
   const priceInfo = selectedProperty?.pyeong
     ? calculateCleaningPrice({
         pyeong: selectedProperty.pyeong,
-        livingRooms: selectedProperty.livingRooms ?? 0,
-        bedrooms: selectedProperty.bedrooms ?? 0,
+        beddings: selectedProperty.beddings ?? 0,
         bathrooms: selectedProperty.bathrooms ?? 0,
         isUrgent,
         linenWash,

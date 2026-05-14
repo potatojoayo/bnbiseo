@@ -342,6 +342,15 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ error: '숙소 면적 정보가 필요해요' }, 400)
   }
 
+  const beddingFixtures = await db
+    .select({ id: propertyAssets.id })
+    .from(propertyAssets)
+    .where(and(
+      eq(propertyAssets.propertyId, propertyId),
+      eq(propertyAssets.category, 'bedding'),
+      eq(propertyAssets.isActive, true),
+    ))
+
   // Guard: linenWash requires the property to have a configured linen wash location
   if (linenWash && !property.linenWashLocation) {
     return c.json({ error: '이 숙소는 침구류 세탁 옵션이 설정되어 있지 않아요.' }, 400)
@@ -350,8 +359,7 @@ cleaningRoutes.post('/', async (c) => {
   // Calculate price
   const priceResult = calculateCleaningPrice({
     pyeong: summary.pyeong,
-    livingRooms: summary.livingRooms ?? 0,
-    bedrooms: summary.bedrooms ?? 0,
+    beddings: beddingFixtures.length,
     bathrooms: summary.bathrooms ?? 0,
     isUrgent,
     linenWash,

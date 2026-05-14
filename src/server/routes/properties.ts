@@ -91,12 +91,29 @@ propertiesRoutes.get('/', async (c) => {
       .where(inArray(propertySpaces.propertyId, propertyIds))
     : []
 
+  const beddingAssets = propertyIds.length > 0
+    ? await db
+      .select({ propertyId: propertyAssets.propertyId })
+      .from(propertyAssets)
+      .where(and(
+        inArray(propertyAssets.propertyId, propertyIds),
+        eq(propertyAssets.category, 'bedding'),
+        eq(propertyAssets.isActive, true),
+      ))
+    : []
+
+  const beddingCounts = new Map<string, number>()
+  for (const row of beddingAssets) {
+    beddingCounts.set(row.propertyId, (beddingCounts.get(row.propertyId) ?? 0) + 1)
+  }
+
   const summaries = summarizeSpacesByProperty(spaces)
 
   return c.json(
     result.map((property) => ({
       ...property,
       ...summaries.get(property.id),
+      beddings: beddingCounts.get(property.id) ?? 0,
     })),
   )
 })
@@ -140,6 +157,7 @@ propertiesRoutes.get('/:id', async (c) => {
       modelNumber: propertyAssets.modelNumber,
       specNotes: propertyAssets.specNotes,
       notes: propertyAssets.notes,
+      isActive: propertyAssets.isActive,
     })
     .from(propertyAssets)
     .where(eq(propertyAssets.propertyId, id))
@@ -162,9 +180,12 @@ propertiesRoutes.get('/:id', async (c) => {
     ...assetPhotos.map((photo) => photo.thumbnailStoragePath),
   ])
 
+  const beddings = assets.filter((asset) => asset.category === 'bedding' && asset.isActive).length
+
   return c.json({
     ...property,
     ...summarizeSpaces(spaces),
+    beddings,
     spaces: spaces.map((space) => ({
       ...space,
       photos: spacePhotos

@@ -108,6 +108,7 @@ export function FixtureForm({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="lighting">조명</SelectItem>
+            <SelectItem value="bedding">침구/침대</SelectItem>
             <SelectItem value="faucet">수도/배관</SelectItem>
             <SelectItem value="boiler">보일러</SelectItem>
             <SelectItem value="appliance">가전</SelectItem>

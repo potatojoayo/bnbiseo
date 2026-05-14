@@ -97,6 +97,7 @@ type User = {
 type FixtureCategory =
   | 'lighting'
   | 'furniture'
+  | 'bedding'
   | 'faucet'
   | 'boiler'
   | 'appliance'

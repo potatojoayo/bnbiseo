@@ -6,6 +6,7 @@ export type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
 export type AssetCategory =
   | 'lighting'
   | 'furniture'
+  | 'bedding'
   | 'faucet'
   | 'boiler'
   | 'appliance'
@@ -26,6 +27,7 @@ export type Property = {
   livingRooms: number | null
   bedrooms: number | null
   bathrooms: number | null
+  beddings: number | null
   airbnbListingId: string | null
   linenWashLocation: 'in_house' | 'external' | null
   activatedAt?: string | null

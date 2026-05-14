@@ -17,23 +17,16 @@ export const LINEN_WASH_LABELS: Record<LinenWashLocation, string> = {
 }
 
 export const CLEANING_PRICING = {
-  areaTiers: [
-    { min: 1, max: 10, pricePerPyeong: 2500 },
-    { min: 11, max: 20, pricePerPyeong: 2200 },
-    { min: 21, max: 33, pricePerPyeong: 2000 },
-    { min: 34, max: 50, pricePerPyeong: 1800 },
-    { min: 51, max: Infinity, pricePerPyeong: 1600 },
-  ],
-  perBedroom: 8000,
-  perBathroom: 10000,
+  pricePerPyeong: 5000,
+  perBedding: 5000,
+  perBathroom: 5000,
   minimumCharge: 35000,
   urgentSurchargeRate: 1.5,
 } as const
 
 export function calculateCleaningPrice(input: {
   pyeong: number
-  livingRooms: number
-  bedrooms: number
+  beddings: number
   bathrooms: number
   isUrgent?: boolean
   linenWash?: boolean
@@ -41,24 +34,19 @@ export function calculateCleaningPrice(input: {
 }) {
   const {
     pyeong,
-    livingRooms,
-    bedrooms,
+    beddings,
     bathrooms,
     isUrgent = false,
     linenWash = false,
     linenWashLocation = null,
   } = input
-  const tier = CLEANING_PRICING.areaTiers.find(
-    (t) => pyeong >= t.min && pyeong <= t.max,
-  )
-  const pricePerPyeong = tier?.pricePerPyeong ?? 1600
 
-  const areaCharge = pyeong * pricePerPyeong
-  const roomCharge = (livingRooms + bedrooms) * CLEANING_PRICING.perBedroom
+  const areaCharge = pyeong * CLEANING_PRICING.pricePerPyeong
+  const beddingCharge = beddings * CLEANING_PRICING.perBedding
   const bathroomCharge = bathrooms * CLEANING_PRICING.perBathroom
 
   const baseSubtotal = Math.max(
-    areaCharge + roomCharge + bathroomCharge,
+    areaCharge + beddingCharge + bathroomCharge,
     CLEANING_PRICING.minimumCharge,
   )
 

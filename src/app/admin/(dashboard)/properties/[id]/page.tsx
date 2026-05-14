@@ -25,6 +25,7 @@ import {
 type FixtureCategory =
   | 'lighting'
   | 'furniture'
+  | 'bedding'
   | 'faucet'
   | 'boiler'
   | 'appliance'
@@ -81,6 +82,7 @@ const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
 const CATEGORY_LABELS: Record<FixtureCategory, string> = {
   lighting: '조명',
   furniture: '가구',
+  bedding: '침구/침대',
   faucet: '수도/배관',
   boiler: '보일러',
   appliance: '가전',

@@ -27,6 +27,7 @@ import {
 type FixtureCategory =
   | 'lighting'
   | 'furniture'
+  | 'bedding'
   | 'faucet'
   | 'boiler'
   | 'appliance'
@@ -69,6 +70,7 @@ type RegistrationCache = {
 const CATEGORY_OPTIONS: Array<{ value: FixtureCategory; label: string }> = [
   { value: 'lighting', label: '조명' },
   { value: 'furniture', label: '가구' },
+  { value: 'bedding', label: '침구/침대' },
   { value: 'faucet', label: '수도/배관' },
   { value: 'boiler', label: '보일러' },
   { value: 'appliance', label: '가전' },

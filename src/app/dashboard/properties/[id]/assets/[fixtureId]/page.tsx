@@ -13,6 +13,7 @@ import { FixturePhotoGallery } from './components/fixture-photo-gallery'
 
 const fixtureCategoryLabel: Record<string, string> = {
   lighting: '조명',
+  bedding: '침구/침대',
   faucet: '수도/배관',
   boiler: '보일러',
   appliance: '가전',

@@ -49,8 +49,7 @@ export default function NewCleaningPage() {
   const priceInfo = selectedProperty?.pyeong
     ? calculateCleaningPrice({
         pyeong: selectedProperty.pyeong,
-        livingRooms: selectedProperty.livingRooms ?? 0,
-        bedrooms: selectedProperty.bedrooms ?? 0,
+        beddings: selectedProperty.beddings ?? 0,
         bathrooms: selectedProperty.bathrooms ?? 0,
         isUrgent,
         linenWash,
@@ -392,16 +391,8 @@ export default function NewCleaningPage() {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">기본 요금</p>
                   <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    숙소 면적(평수)에 따라 기본 청소 비용이 산정됩니다.
-                    <span className="block text-[13px] text-ink-muted mt-1">10평 이하 2,500원/평 · 11~20평 2,200원/평 · 21평+ 2,000원/평</span>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">추가 요금</p>
-                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    방과 욕실 수에 따라 추가 비용이 발생해요.
-                    <span className="block text-[13px] text-ink-muted mt-1">침실 1개당 8,000원 · 욕실 1개당 10,000원</span>
+                    평수, 침대, 화장실 수를 기준으로 청소비가 산정됩니다.
+                    <span className="block text-[13px] text-ink-muted mt-1">1평당 5,000원 · 침대 1개당 5,000원 · 화장실 1개당 5,000원</span>
                   </div>
                 </div>
 
@@ -422,7 +413,7 @@ export default function NewCleaningPage() {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">최소 금액</p>
                   <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    기본 청소 요금은 최소 35,000원부터 시작해요.
+                    기본 청소 요금은 최소 35,000원부터 시작합니다.
                   </div>
                 </div>
               </div>
