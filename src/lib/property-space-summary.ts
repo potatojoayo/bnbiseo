@@ -1,4 +1,4 @@
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 
 export type PropertySpaceSummary = {
   pyeong: number | null

@@ -24,7 +24,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 
 type SpacePhoto = {
   id?: string
@@ -57,6 +57,9 @@ const CATEGORY_OPTIONS: Array<{ value: SpaceCategory; label: string }> = [
   { value: 'living_room', label: '거실' },
   { value: 'bedroom', label: '침실' },
   { value: 'bathroom', label: '화장실' },
+  { value: 'veranda', label: '베란다' },
+  { value: 'exterior', label: '외부' },
+  { value: 'other', label: '기타' },
 ]
 
 export default function AdminSpaceEditPage() {

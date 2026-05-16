@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api-client'
 import { useAuth } from '@/lib/auth-provider'
 
-export type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+export type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 export type AssetCategory =
   | 'lighting'
   | 'furniture'
@@ -63,6 +63,21 @@ export type PropertyAsset = {
   photos: PropertyPhoto[]
 }
 
+export type CleaningPrepPhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
+
+export type CleaningPrepPhotosByKind = {
+  cleaning_closet: CleaningPrepPhoto[]
+  extra_linen: CleaningPrepPhoto[]
+  trash_disposal: CleaningPrepPhoto[]
+  linen_wash_external: CleaningPrepPhoto[]
+}
+
 export type PropertyDetail = Property & {
   entrancePassword: string | null
   doorLockPassword: string | null
@@ -71,6 +86,9 @@ export type PropertyDetail = Property & {
   cleaningClosetLocation: string | null
   extraLinenLocation: string | null
   trashDisposalLocation: string | null
+  linenWashExternalAddress: string | null
+  linenWashExternalAddressDetail: string | null
+  cleaningPrepPhotos: CleaningPrepPhotosByKind
   spaces: PropertySpace[]
   assets: PropertyAsset[]
 }

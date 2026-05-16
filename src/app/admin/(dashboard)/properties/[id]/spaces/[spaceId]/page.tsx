@@ -17,7 +17,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 type FixtureCategory =
   | 'lighting'
   | 'furniture'
@@ -36,6 +36,9 @@ const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
   living_room: '거실',
   bedroom: '침실',
   bathroom: '화장실',
+  veranda: '베란다',
+  exterior: '외부',
+  other: '기타',
 }
 
 const CATEGORY_LABELS: Record<FixtureCategory, string> = {

@@ -34,6 +34,13 @@ export const linenWashLocationEnum = pgEnum('linen_wash_location', [
   'external',
 ])
 
+export const cleaningPrepPhotoKindEnum = pgEnum('cleaning_prep_photo_kind', [
+  'cleaning_closet',
+  'extra_linen',
+  'trash_disposal',
+  'linen_wash_external',
+])
+
 export const fixtureCategoryEnum = pgEnum('fixture_category', [
   'lighting',
   'furniture',
@@ -53,6 +60,9 @@ export const propertySpaceCategoryEnum = pgEnum('property_space_category', [
   'living_room',
   'bedroom',
   'bathroom',
+  'veranda',
+  'exterior',
+  'other',
 ])
 
 export const cleaningStatusEnum = pgEnum('cleaning_status', [
@@ -152,6 +162,8 @@ export const properties = pgTable('properties', {
   extraLinenLocation: text('extra_linen_location'),
   trashDisposalLocation: text('trash_disposal_location'),
   linenWashLocation: linenWashLocationEnum('linen_wash_location'),
+  linenWashExternalAddress: text('linen_wash_external_address'),
+  linenWashExternalAddressDetail: text('linen_wash_external_address_detail'),
   qrToken: uuid('qr_token').defaultRandom().notNull(),
   activatedAt: timestamp('activated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -270,6 +282,18 @@ export const propertySpacePhotos = pgTable('property_space_photos', {
   storagePath: text('storage_path').notNull(),
   thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
   caption: text('caption'),
+  sortOrder: smallint('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+export const propertyCleaningPrepPhotos = pgTable('property_cleaning_prep_photos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  propertyId: uuid('property_id')
+    .notNull()
+    .references(() => properties.id, { onDelete: 'cascade' }),
+  kind: cleaningPrepPhotoKindEnum('kind').notNull(),
+  storagePath: text('storage_path').notNull(),
+  thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
   sortOrder: smallint('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })

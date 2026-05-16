@@ -12,6 +12,7 @@ import {
   managers,
   propertyAssets,
   propertyAssetPhotos,
+  propertyCleaningPrepPhotos,
   propertySpaces,
   propertySpacePhotos,
   repairRequests,
@@ -799,6 +800,13 @@ const FixtureRegistrationSchema = z.object({
   photos: z.array(PhotoUploadSchema).min(1, '사진을 최소 1장 추가해주세요.'),
 })
 
+const CleaningPrepPhotosByKindSchema = z.object({
+  cleaning_closet: z.array(PhotoUploadSchema).optional(),
+  extra_linen: z.array(PhotoUploadSchema).optional(),
+  trash_disposal: z.array(PhotoUploadSchema).optional(),
+  linen_wash_external: z.array(PhotoUploadSchema).optional(),
+})
+
 const PropertyRegistrationSchema = z.object({
   entrancePassword: z.string().optional(),
   doorLockPassword: z.string().min(1),
@@ -808,6 +816,9 @@ const PropertyRegistrationSchema = z.object({
   extraLinenLocation: z.string().optional(),
   trashDisposalLocation: z.string().optional(),
   linenWashLocation: z.enum(['in_house', 'external']).nullable().optional(),
+  linenWashExternalAddress: z.string().nullable().optional(),
+  linenWashExternalAddressDetail: z.string().nullable().optional(),
+  cleaningPrepPhotos: CleaningPrepPhotosByKindSchema.optional(),
   fixtures: z.array(FixtureRegistrationSchema),
 })
 
@@ -820,6 +831,9 @@ const PropertyRegistrationDraftSchema = z.object({
   extraLinenLocation: z.string().optional(),
   trashDisposalLocation: z.string().optional(),
   linenWashLocation: z.enum(['in_house', 'external']).nullable().optional(),
+  linenWashExternalAddress: z.string().nullable().optional(),
+  linenWashExternalAddressDetail: z.string().nullable().optional(),
+  cleaningPrepPhotos: CleaningPrepPhotosByKindSchema.optional(),
 })
 
 const CreateFixtureSchema = z.object({
@@ -849,7 +863,7 @@ const CreateFixtureSchema = z.object({
 const SignedUploadSchema = z.object({
   propertyId: z.string().uuid(),
   fileName: z.string().min(1),
-  kind: z.enum(['assets', 'spaces']).optional(),
+  kind: z.enum(['assets', 'spaces', 'cleaning-prep']).optional(),
 })
 
 const ManagerAvatarUploadSchema = z.object({
@@ -857,7 +871,7 @@ const ManagerAvatarUploadSchema = z.object({
 })
 
 const PropertySpaceSchema = z.object({
-  category: z.enum(['living_room', 'bedroom', 'bathroom']),
+  category: z.enum(['living_room', 'bedroom', 'bathroom', 'veranda', 'exterior', 'other']),
   floor: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(1),
   name: z.string().min(1),
   pyeong: z.coerce.number().int().positive(),
@@ -1183,6 +1197,8 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       extraLinenLocation: properties.extraLinenLocation,
       trashDisposalLocation: properties.trashDisposalLocation,
       linenWashLocation: properties.linenWashLocation,
+      linenWashExternalAddress: properties.linenWashExternalAddress,
+      linenWashExternalAddressDetail: properties.linenWashExternalAddressDetail,
       hostName: profiles.fullName,
       hostEmail: profiles.email,
       hostPhone: profiles.phone,
@@ -1250,13 +1266,26 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       .where(inArray(propertySpacePhotos.propertySpaceId, spaceIds))
     : []
 
+  const prepPhotoRows = await db
+    .select({
+      id: propertyCleaningPrepPhotos.id,
+      kind: propertyCleaningPrepPhotos.kind,
+      storagePath: propertyCleaningPrepPhotos.storagePath,
+      thumbnailStoragePath: propertyCleaningPrepPhotos.thumbnailStoragePath,
+      sortOrder: propertyCleaningPrepPhotos.sortOrder,
+    })
+    .from(propertyCleaningPrepPhotos)
+    .where(eq(propertyCleaningPrepPhotos.propertyId, id))
+
   const signedUrlMap = await createSignedUrlMap([
     ...fixturePhotoRows.map((photo) => photo.storagePath),
     ...spacePhotoRows.map((photo) => photo.storagePath),
+    ...prepPhotoRows.map((photo) => photo.storagePath),
   ])
   const thumbnailSignedUrlMap = await createSignedUrlMap([
     ...fixturePhotoRows.map((photo) => photo.thumbnailStoragePath),
     ...spacePhotoRows.map((photo) => photo.thumbnailStoragePath),
+    ...prepPhotoRows.map((photo) => photo.thumbnailStoragePath),
   ])
 
   const fixturesWithPhotos = propertyFixtures.map((fixture) => ({
@@ -1287,9 +1316,50 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
       })),
   }))
 
+  const cleaningPrepPhotosByKind = {
+    cleaning_closet: [] as Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>,
+    extra_linen: [] as Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>,
+    trash_disposal: [] as Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>,
+    linen_wash_external: [] as Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>,
+  }
+  for (const photo of prepPhotoRows.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))) {
+    cleaningPrepPhotosByKind[photo.kind].push({
+      id: photo.id,
+      storagePath: photo.storagePath,
+      thumbnailStoragePath: photo.thumbnailStoragePath,
+      signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+      thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+    })
+  }
+
   return c.json({
     ...property,
     ...summarizeSpaces(spaces),
+    cleaningPrepPhotos: cleaningPrepPhotosByKind,
     spaces: spacesWithPhotos,
     fixtures: fixturesWithPhotos,
   })
@@ -1372,23 +1442,71 @@ adminRoutes.post('/properties/:id/registration/draft', async (c) => {
     return warnJson(c, { errors: validated.error.flatten().fieldErrors }, 400)
   }
 
-  const [updated] = await db
-    .update(properties)
-    .set({
-      entrancePassword: validated.data.entrancePassword?.trim() || null,
-      doorLockPassword: validated.data.doorLockPassword?.trim() || null,
-      wifiSsid: validated.data.wifiSsid?.trim() || null,
-      wifiPassword: validated.data.wifiPassword?.trim() || null,
-      cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
-      extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
-      trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
-      linenWashLocation: validated.data.linenWashLocation ?? null,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
-    .returning({ id: properties.id })
+  const linenWashLocation = validated.data.linenWashLocation ?? null
+  const linenWashExternalAddress
+    = linenWashLocation === 'external'
+      ? validated.data.linenWashExternalAddress?.trim() || null
+      : null
+  const linenWashExternalAddressDetail
+    = linenWashLocation === 'external'
+      ? validated.data.linenWashExternalAddressDetail?.trim() || null
+      : null
 
-  if (!updated) {
+  const result = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(properties)
+      .set({
+        entrancePassword: validated.data.entrancePassword?.trim() || null,
+        doorLockPassword: validated.data.doorLockPassword?.trim() || null,
+        wifiSsid: validated.data.wifiSsid?.trim() || null,
+        wifiPassword: validated.data.wifiPassword?.trim() || null,
+        cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
+        extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
+        trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
+        linenWashLocation,
+        linenWashExternalAddress,
+        linenWashExternalAddressDetail,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
+      .returning({ id: properties.id })
+
+    if (!updated) return null
+
+    if (validated.data.cleaningPrepPhotos) {
+      const kinds: Array<keyof typeof validated.data.cleaningPrepPhotos> = [
+        'cleaning_closet',
+        'extra_linen',
+        'trash_disposal',
+        'linen_wash_external',
+      ]
+      for (const kind of kinds) {
+        const next = validated.data.cleaningPrepPhotos[kind]
+        if (!next) continue
+        await tx
+          .delete(propertyCleaningPrepPhotos)
+          .where(and(
+            eq(propertyCleaningPrepPhotos.propertyId, id),
+            eq(propertyCleaningPrepPhotos.kind, kind),
+          ))
+        if (next.length > 0) {
+          await tx.insert(propertyCleaningPrepPhotos).values(
+            next.map((photo, index) => ({
+              propertyId: id,
+              kind,
+              storagePath: photo.storagePath,
+              thumbnailStoragePath: photo.thumbnailStoragePath,
+              sortOrder: index,
+            })),
+          )
+        }
+      }
+    }
+
+    return updated
+  })
+
+  if (!result) {
     return warnJson(c, { error: '숙소를 찾을 수 없어요' }, 404)
   }
 
@@ -1670,6 +1788,15 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
   }
 
   const wasPendingActivation = property.status === 'pending_activation'
+  const linenWashLocation = validated.data.linenWashLocation ?? null
+  const linenWashExternalAddress
+    = linenWashLocation === 'external'
+      ? validated.data.linenWashExternalAddress?.trim() || null
+      : null
+  const linenWashExternalAddressDetail
+    = linenWashLocation === 'external'
+      ? validated.data.linenWashExternalAddressDetail?.trim() || null
+      : null
 
   await db.transaction(async (tx) => {
     await tx
@@ -1682,7 +1809,9 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
         cleaningClosetLocation: validated.data.cleaningClosetLocation?.trim() || null,
         extraLinenLocation: validated.data.extraLinenLocation?.trim() || null,
         trashDisposalLocation: validated.data.trashDisposalLocation?.trim() || null,
-        linenWashLocation: validated.data.linenWashLocation ?? null,
+        linenWashLocation,
+        linenWashExternalAddress,
+        linenWashExternalAddressDetail,
         // 최초 등록 완료 시에만 active로 전환 + activatedAt 기록. 이미 active인 숙소 수정 시 덮어쓰지 않음.
         ...(wasPendingActivation
           ? { status: 'active' as const, activatedAt: new Date() }
@@ -1690,6 +1819,36 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
         updatedAt: new Date(),
       })
       .where(eq(properties.id, id))
+
+    if (validated.data.cleaningPrepPhotos) {
+      const kinds: Array<keyof typeof validated.data.cleaningPrepPhotos> = [
+        'cleaning_closet',
+        'extra_linen',
+        'trash_disposal',
+        'linen_wash_external',
+      ]
+      for (const kind of kinds) {
+        const next = validated.data.cleaningPrepPhotos[kind]
+        if (!next) continue
+        await tx
+          .delete(propertyCleaningPrepPhotos)
+          .where(and(
+            eq(propertyCleaningPrepPhotos.propertyId, id),
+            eq(propertyCleaningPrepPhotos.kind, kind),
+          ))
+        if (next.length > 0) {
+          await tx.insert(propertyCleaningPrepPhotos).values(
+            next.map((photo, index) => ({
+              propertyId: id,
+              kind,
+              storagePath: photo.storagePath,
+              thumbnailStoragePath: photo.thumbnailStoragePath,
+              sortOrder: index,
+            })),
+          )
+        }
+      }
+    }
 
     const existingFixtures = await tx
       .select({ id: propertyAssets.id })

@@ -14,6 +14,7 @@ import {
   properties,
   propertyAssets,
   propertyAssetPhotos,
+  propertyCleaningPrepPhotos,
   propertySpaces,
   propertySpacePhotos,
   repairCompletionPhotos,
@@ -131,6 +132,9 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
       cleaningClosetLocation: properties.cleaningClosetLocation,
       extraLinenLocation: properties.extraLinenLocation,
       trashDisposalLocation: properties.trashDisposalLocation,
+      linenWashLocation: properties.linenWashLocation,
+      linenWashExternalAddress: properties.linenWashExternalAddress,
+      linenWashExternalAddressDetail: properties.linenWashExternalAddressDetail,
     })
     .from(cleaningRequests)
     .innerJoin(properties, eq(cleaningRequests.propertyId, properties.id))
@@ -216,6 +220,16 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     })
     .from(cleaningRequestPhotos)
     .where(eq(cleaningRequestPhotos.cleaningRequestId, request.id))
+  const prepPhotos = await db
+    .select({
+      id: propertyCleaningPrepPhotos.id,
+      kind: propertyCleaningPrepPhotos.kind,
+      storagePath: propertyCleaningPrepPhotos.storagePath,
+      thumbnailStoragePath: propertyCleaningPrepPhotos.thumbnailStoragePath,
+      sortOrder: propertyCleaningPrepPhotos.sortOrder,
+    })
+    .from(propertyCleaningPrepPhotos)
+    .where(eq(propertyCleaningPrepPhotos.propertyId, request.propertyId))
   const summary = summarizeSpaces(spaces)
   const propertySpaceNames = spaces.map((space) => space.name)
 
@@ -223,12 +237,54 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     ...requestPhotos.map((photo) => photo.storagePath),
     ...spacePhotos.map((photo) => photo.storagePath),
     ...assetPhotos.map((photo) => photo.storagePath),
+    ...prepPhotos.map((photo) => photo.storagePath),
   ])
   const thumbnailSignedUrlMap = await createSignedUrlMap([
     ...requestPhotos.map((photo) => photo.thumbnailStoragePath),
     ...spacePhotos.map((photo) => photo.thumbnailStoragePath),
     ...assetPhotos.map((photo) => photo.thumbnailStoragePath),
+    ...prepPhotos.map((photo) => photo.thumbnailStoragePath),
   ])
+
+  const cleaningPrepPhotosByKind = {
+    cleaning_closet: [] as Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>,
+    extra_linen: [] as Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>,
+    trash_disposal: [] as Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>,
+    linen_wash_external: [] as Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>,
+  }
+  for (const photo of prepPhotos.sort((a, b) => a.sortOrder - b.sortOrder)) {
+    cleaningPrepPhotosByKind[photo.kind].push({
+      id: photo.id,
+      storagePath: photo.storagePath,
+      thumbnailStoragePath: photo.thumbnailStoragePath,
+      signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+      thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+    })
+  }
 
   return {
     ...request,
@@ -237,6 +293,7 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     propertyLivingRooms: summary.livingRooms,
     propertyBedrooms: summary.bedrooms,
     propertyBathrooms: summary.bathrooms,
+    cleaningPrepPhotos: cleaningPrepPhotosByKind,
     cleaningPhotos: requestPhotos
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((photo) => ({

@@ -43,7 +43,7 @@ type CleaningRequestDetail = CleaningRequest & {
   }>
 }
 
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 type AssetCategory =
   | 'lighting'
   | 'furniture'

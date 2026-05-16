@@ -109,7 +109,7 @@ type FixtureCategory =
   | 'vent'
   | 'other'
 
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 
 type RegistrationDetail = {
   id: string
@@ -129,6 +129,38 @@ type RegistrationDetail = {
   extraLinenLocation: string | null
   trashDisposalLocation: string | null
   linenWashLocation: 'in_house' | 'external' | null
+  linenWashExternalAddress: string | null
+  linenWashExternalAddressDetail: string | null
+  cleaningPrepPhotos: {
+    cleaning_closet: Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>
+    extra_linen: Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>
+    trash_disposal: Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>
+    linen_wash_external: Array<{
+      id: string
+      storagePath: string
+      thumbnailStoragePath: string
+      signedUrl: string | null
+      thumbnailSignedUrl: string | null
+    }>
+  }
   hostName: string | null
   hostEmail: string | null
   hostPhone: string | null

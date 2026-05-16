@@ -9,6 +9,7 @@ import {
   properties,
   propertyAssets,
   propertyAssetPhotos,
+  propertyCleaningPrepPhotos,
   propertySpaces,
   propertySpacePhotos,
 } from '@/db/schema'
@@ -29,6 +30,18 @@ const CreatePropertySchema = z.object({
   airbnbListingId: z.string().optional(),
 })
 
+const CleaningPrepPhotoSchema = z.object({
+  storagePath: z.string().min(1),
+  thumbnailStoragePath: z.string().min(1),
+})
+
+const CleaningPrepPhotosByKindSchema = z.object({
+  cleaning_closet: z.array(CleaningPrepPhotoSchema).optional(),
+  extra_linen: z.array(CleaningPrepPhotoSchema).optional(),
+  trash_disposal: z.array(CleaningPrepPhotoSchema).optional(),
+  linen_wash_external: z.array(CleaningPrepPhotoSchema).optional(),
+})
+
 const UpdatePropertySchema = z.object({
   // Editable only while status is 'pending_activation' (used by onboarding edit flow)
   name: z.string().min(1, { message: '숙소 이름을 입력해주세요.' }).trim().optional(),
@@ -43,6 +56,15 @@ const UpdatePropertySchema = z.object({
   cleaningClosetLocation: z.string().nullable().optional(),
   extraLinenLocation: z.string().nullable().optional(),
   trashDisposalLocation: z.string().nullable().optional(),
+  linenWashLocation: z.enum(['in_house', 'external']).nullable().optional(),
+  linenWashExternalAddress: z.string().nullable().optional(),
+  linenWashExternalAddressDetail: z.string().nullable().optional(),
+  cleaningPrepPhotos: CleaningPrepPhotosByKindSchema.optional(),
+})
+
+const SignedUploadSchema = z.object({
+  fileName: z.string().min(1),
+  kind: z.literal('cleaning-prep'),
 })
 
 export const propertiesRoutes = new Hono<AuthEnv>()
@@ -170,22 +192,44 @@ propertiesRoutes.get('/:id', async (c) => {
       .where(inArray(propertyAssetPhotos.fixtureId, assetIds))
     : []
 
+  const prepPhotos = await db
+    .select()
+    .from(propertyCleaningPrepPhotos)
+    .where(eq(propertyCleaningPrepPhotos.propertyId, id))
+
   const signedUrlMap = await createSignedUrlMap([
     ...spacePhotos.map((photo) => photo.storagePath),
     ...assetPhotos.map((photo) => photo.storagePath),
+    ...prepPhotos.map((photo) => photo.storagePath),
   ])
 
   const thumbnailSignedUrlMap = await createSignedUrlMap([
     ...spacePhotos.map((photo) => photo.thumbnailStoragePath),
     ...assetPhotos.map((photo) => photo.thumbnailStoragePath),
+    ...prepPhotos.map((photo) => photo.thumbnailStoragePath),
   ])
 
   const beddings = assets.filter((asset) => asset.category === 'bedding' && asset.isActive).length
+
+  const cleaningPrepPhotosByKind = {
+    cleaning_closet: [] as Array<typeof prepPhotos[number] & { signedUrl: string | null; thumbnailSignedUrl: string | null }>,
+    extra_linen: [] as Array<typeof prepPhotos[number] & { signedUrl: string | null; thumbnailSignedUrl: string | null }>,
+    trash_disposal: [] as Array<typeof prepPhotos[number] & { signedUrl: string | null; thumbnailSignedUrl: string | null }>,
+    linen_wash_external: [] as Array<typeof prepPhotos[number] & { signedUrl: string | null; thumbnailSignedUrl: string | null }>,
+  }
+  for (const photo of prepPhotos.sort((a, b) => a.sortOrder - b.sortOrder)) {
+    cleaningPrepPhotosByKind[photo.kind].push({
+      ...photo,
+      signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+      thumbnailSignedUrl: thumbnailSignedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+    })
+  }
 
   return c.json({
     ...property,
     ...summarizeSpaces(spaces),
     beddings,
+    cleaningPrepPhotos: cleaningPrepPhotosByKind,
     spaces: spaces.map((space) => ({
       ...space,
       photos: spacePhotos
@@ -302,23 +346,110 @@ propertiesRoutes.patch('/:id', async (c) => {
     'cleaningClosetLocation',
     'extraLinenLocation',
     'trashDisposalLocation',
+    'linenWashExternalAddress',
+    'linenWashExternalAddressDetail',
   ] as const
   for (const field of anytimeFields) {
     const next = trimToNullable(validated.data[field])
     if (next !== undefined) updatePayload[field] = next
   }
+  if (validated.data.linenWashLocation !== undefined) {
+    updatePayload.linenWashLocation = validated.data.linenWashLocation
+    if (validated.data.linenWashLocation !== 'external') {
+      updatePayload.linenWashExternalAddress = null
+      updatePayload.linenWashExternalAddressDetail = null
+    }
+  }
 
-  const [updated] = await db
-    .update(properties)
-    .set(updatePayload)
-    .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
-    .returning()
+  const result = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(properties)
+      .set(updatePayload)
+      .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
+      .returning({ id: properties.id })
 
-  if (!updated) {
+    if (!updated) return null
+
+    if (validated.data.cleaningPrepPhotos) {
+      const kinds: Array<keyof typeof validated.data.cleaningPrepPhotos> = [
+        'cleaning_closet',
+        'extra_linen',
+        'trash_disposal',
+        'linen_wash_external',
+      ]
+      for (const kind of kinds) {
+        const next = validated.data.cleaningPrepPhotos[kind]
+        if (!next) continue
+        await tx
+          .delete(propertyCleaningPrepPhotos)
+          .where(and(
+            eq(propertyCleaningPrepPhotos.propertyId, id),
+            eq(propertyCleaningPrepPhotos.kind, kind),
+          ))
+        if (next.length > 0) {
+          await tx.insert(propertyCleaningPrepPhotos).values(
+            next.map((photo, index) => ({
+              propertyId: id,
+              kind,
+              storagePath: photo.storagePath,
+              thumbnailStoragePath: photo.thumbnailStoragePath,
+              sortOrder: index,
+            })),
+          )
+        }
+      }
+    }
+
+    return updated
+  })
+
+  if (!result) {
     return c.json({ error: '숙소를 찾을 수 없거나 권한이 없습니다.' }, 404)
   }
 
-  return c.json(updated)
+  return c.json({ success: true })
+})
+
+// Signed upload URL for host cleaning prep photos
+propertiesRoutes.post('/:id/upload-url', async (c) => {
+  const profileId = c.get('profileId')
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  const validated = SignedUploadSchema.safeParse(body)
+
+  if (!validated.success) {
+    return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [property] = await db
+    .select({ id: properties.id })
+    .from(properties)
+    .where(and(eq(properties.id, id), eq(properties.hostId, profileId), isNull(properties.deletedAt)))
+    .limit(1)
+
+  if (!property) {
+    return c.json({ error: '숙소를 찾을 수 없거나 권한이 없습니다.' }, 404)
+  }
+
+  const ext = validated.data.fileName.split('.').pop()?.toLowerCase() || 'jpg'
+  const fileId = crypto.randomUUID()
+  const originalPath = `properties/${id}/${validated.data.kind}/original/${fileId}.${ext}`
+  const thumbnailStoragePath = `properties/${id}/${validated.data.kind}/thumb/${fileId}.jpg`
+
+  const supabaseAdmin = getSupabaseAdmin()
+  const [{ data: originalData, error: originalError }, { data: thumbnailData, error: thumbnailError }] = await Promise.all([
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(originalPath),
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(thumbnailStoragePath),
+  ])
+
+  if (originalError || thumbnailError || !originalData || !thumbnailData) {
+    return c.json({ error: originalError?.message || thumbnailError?.message || '업로드 URL을 만들 수 없어요.' }, 400)
+  }
+
+  return c.json({
+    original: { path: originalPath, token: originalData.token },
+    thumbnail: { path: thumbnailStoragePath, token: thumbnailData.token },
+  })
 })
 
 // Soft delete property

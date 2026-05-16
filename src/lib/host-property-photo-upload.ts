@@ -2,30 +2,23 @@
 
 import { api, supabase } from '@/lib/api-client'
 
-export type AdminImageKind = 'spaces' | 'assets' | 'cleaning-prep'
+export type HostPropertyPhotoKind = 'cleaning-prep'
 
-export type UploadedAdminImage = {
+export type UploadedHostPropertyPhoto = {
   storagePath: string
   thumbnailStoragePath: string
   previewUrl: string
 }
 
 type UploadUrlResponse = {
-  original: {
-    path: string
-    token: string
-  }
-  thumbnail: {
-    path: string
-    token: string
-  }
+  original: { path: string; token: string }
+  thumbnail: { path: string; token: string }
 }
 
 function loadImage(file: File) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
     const objectUrl = URL.createObjectURL(file)
-
     image.onload = () => {
       URL.revokeObjectURL(objectUrl)
       resolve(image)
@@ -43,45 +36,27 @@ async function createThumbnailBlob(file: File, size = 320) {
   const canvas = document.createElement('canvas')
   canvas.width = size
   canvas.height = size
-
   const context = canvas.getContext('2d')
-  if (!context) {
-    throw new Error('썸네일을 만들 수 없어요.')
-  }
+  if (!context) throw new Error('썸네일을 만들 수 없어요.')
 
   const sourceSize = Math.min(image.width, image.height)
   const sourceX = (image.width - sourceSize) / 2
   const sourceY = (image.height - sourceSize) / 2
-
-  context.drawImage(
-    image,
-    sourceX,
-    sourceY,
-    sourceSize,
-    sourceSize,
-    0,
-    0,
-    size,
-    size,
-  )
+  context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size)
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, 'image/jpeg', 0.8)
   })
-
-  if (!blob) {
-    throw new Error('썸네일을 만들 수 없어요.')
-  }
-
+  if (!blob) throw new Error('썸네일을 만들 수 없어요.')
   return blob
 }
 
-export async function uploadAdminImage(
+export async function uploadHostPropertyPhoto(
   propertyId: string,
-  kind: AdminImageKind,
+  kind: HostPropertyPhotoKind,
   file: File,
-) {
-  const signed = await api.post<UploadUrlResponse>(`/admin/properties/${propertyId}/registration/upload-url`, {
+): Promise<UploadedHostPropertyPhoto> {
+  const signed = await api.post<UploadUrlResponse>(`/properties/${propertyId}/upload-url`, {
     fileName: file.name,
     kind,
   })
@@ -104,5 +79,5 @@ export async function uploadAdminImage(
     storagePath: signed.original.path,
     thumbnailStoragePath: signed.thumbnail.path,
     previewUrl: URL.createObjectURL(file),
-  } satisfies UploadedAdminImage
+  }
 }

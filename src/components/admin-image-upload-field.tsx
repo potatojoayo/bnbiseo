@@ -19,6 +19,7 @@ type AdminImageUploadFieldProps = {
   description: string
   emptyText: string
   onError?: (message: string | null) => void
+  upload?: (file: File) => Promise<UploadedAdminImage>
 }
 
 export function AdminImageUploadField({
@@ -30,6 +31,7 @@ export function AdminImageUploadField({
   description,
   emptyText,
   onError,
+  upload,
 }: AdminImageUploadFieldProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -46,7 +48,8 @@ export function AdminImageUploadField({
       const uploadedImages: UploadedAdminImage[] = []
 
       for (const file of Array.from(files)) {
-        uploadedImages.push(await uploadAdminImage(propertyId, kind, file))
+        const uploaded = upload ? await upload(file) : await uploadAdminImage(propertyId, kind, file)
+        uploadedImages.push(uploaded)
       }
 
       onChange([...images, ...uploadedImages])
@@ -87,7 +90,7 @@ export function AdminImageUploadField({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-outline-strong px-3 text-[13px] font-medium text-ink transition-colors hover:bg-surface-soft"
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-outline-strong px-3 text-[13px] font-medium text-ink transition-colors hover:bg-surface-soft"
         >
           <ImagePlusIcon size={14} />
           사진 추가

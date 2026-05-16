@@ -18,19 +18,27 @@ import {
   FloatingTextarea,
 } from '@/components/ui/floating-input'
 
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 
 const CATEGORY_OPTIONS: Array<{ value: SpaceCategory; label: string }> = [
   { value: 'living_room', label: '거실' },
   { value: 'bedroom', label: '침실' },
   { value: 'bathroom', label: '화장실' },
+  { value: 'veranda', label: '베란다' },
+  { value: 'exterior', label: '외부' },
+  { value: 'other', label: '기타' },
 ]
 
 const CATEGORY_PREFIX: Record<SpaceCategory, string> = {
   living_room: '거실',
   bedroom: '침실',
   bathroom: '화장실',
+  veranda: '베란다',
+  exterior: '외부',
+  other: '기타',
 }
+
+const SINGLE_INSTANCE_CATEGORIES: SpaceCategory[] = ['living_room', 'veranda', 'exterior', 'other']
 
 function getSuggestedName(
   category: SpaceCategory,
@@ -41,7 +49,7 @@ function getSuggestedName(
   const floorPrefix = floor > 1 ? `${floor}층 ` : ''
   const count = spaces.filter((space) => space.category === category && space.floor === floor).length
 
-  if (category === 'living_room') {
+  if (SINGLE_INSTANCE_CATEGORIES.includes(category)) {
     return count === 0 ? `${floorPrefix}${prefix}` : `${floorPrefix}${prefix}${count + 1}`
   }
 

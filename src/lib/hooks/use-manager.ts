@@ -46,7 +46,7 @@ export type ManagerCleaning = {
   propertyBathrooms: number | null
 }
 
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 type AssetCategory =
   | 'lighting'
   | 'furniture'
@@ -61,6 +61,14 @@ type AssetCategory =
   | 'other'
 type InspectionStatus = 'normal' | 'caution' | 'defective'
 
+type CleaningPrepPhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
+
 export type ManagerCleaningDetail = ManagerCleaning & {
   entrancePassword: string | null
   doorLockPassword: string | null
@@ -69,6 +77,15 @@ export type ManagerCleaningDetail = ManagerCleaning & {
   cleaningClosetLocation: string | null
   extraLinenLocation: string | null
   trashDisposalLocation: string | null
+  linenWashLocation: 'in_house' | 'external' | null
+  linenWashExternalAddress: string | null
+  linenWashExternalAddressDetail: string | null
+  cleaningPrepPhotos: {
+    cleaning_closet: CleaningPrepPhoto[]
+    extra_linen: CleaningPrepPhoto[]
+    trash_disposal: CleaningPrepPhoto[]
+    linen_wash_external: CleaningPrepPhoto[]
+  }
   cleaningPhotos: Array<{
     id: string
     storagePath: string

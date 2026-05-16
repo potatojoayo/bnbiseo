@@ -15,6 +15,8 @@ import { cn, formatKoreanPhone } from '@/lib/utils'
 import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { CompoundField, CompoundInput, FloatingInput } from '@/components/ui/floating-input'
+import { AdminImageUploadField } from '@/components/admin-image-upload-field'
+import type { UploadedAdminImage } from '@/lib/admin-image-upload'
 import {
   Drawer,
   DrawerContent,
@@ -36,7 +38,7 @@ type FixtureCategory =
   | 'vent'
   | 'other'
 
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom'
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 
 type RegistrationDetail = {
   spaces: Array<{
@@ -77,6 +79,9 @@ const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
   living_room: '거실',
   bedroom: '침실',
   bathroom: '화장실',
+  veranda: '베란다',
+  exterior: '외부',
+  other: '기타',
 }
 
 const CATEGORY_LABELS: Record<FixtureCategory, string> = {
@@ -136,6 +141,21 @@ export default function AdminPropertyRegistrationPage() {
   )
 }
 
+type CleaningPrepPhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
+
+type CleaningPrepPhotosByKind = {
+  cleaning_closet: CleaningPrepPhoto[]
+  extra_linen: CleaningPrepPhoto[]
+  trash_disposal: CleaningPrepPhoto[]
+  linen_wash_external: CleaningPrepPhoto[]
+}
+
 function AdminPropertyRegistrationForm({
   propertyId,
   mode,
@@ -160,6 +180,9 @@ function AdminPropertyRegistrationForm({
     extraLinenLocation: string | null
     trashDisposalLocation: string | null
     linenWashLocation: 'in_house' | 'external' | null
+    linenWashExternalAddress: string | null
+    linenWashExternalAddressDetail: string | null
+    cleaningPrepPhotos: CleaningPrepPhotosByKind
     hostName: string | null
     hostEmail: string | null
     hostPhone: string | null
@@ -180,6 +203,28 @@ function AdminPropertyRegistrationForm({
   const [extraLinenLocation, setExtraLinenLocation] = useState(initialData.extraLinenLocation || '')
   const [trashDisposalLocation, setTrashDisposalLocation] = useState(initialData.trashDisposalLocation || '')
   const [linenWashLocation, setLinenWashLocation] = useState<'in_house' | 'external' | null>(initialData.linenWashLocation)
+  const [linenWashExternalAddress, setLinenWashExternalAddress] = useState(initialData.linenWashExternalAddress || '')
+  const [linenWashExternalAddressDetail, setLinenWashExternalAddressDetail] = useState(initialData.linenWashExternalAddressDetail || '')
+  const toUploadedImages = (photos: CleaningPrepPhoto[]): UploadedAdminImage[] =>
+    photos.map((photo) => ({
+      storagePath: photo.storagePath,
+      thumbnailStoragePath: photo.thumbnailStoragePath,
+      previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+    }))
+  const [cleaningClosetPhotos, setCleaningClosetPhotos] = useState<UploadedAdminImage[]>(
+    toUploadedImages(initialData.cleaningPrepPhotos.cleaning_closet),
+  )
+  const [extraLinenPhotos, setExtraLinenPhotos] = useState<UploadedAdminImage[]>(
+    toUploadedImages(initialData.cleaningPrepPhotos.extra_linen),
+  )
+  const [trashDisposalPhotos, setTrashDisposalPhotos] = useState<UploadedAdminImage[]>(
+    toUploadedImages(initialData.cleaningPrepPhotos.trash_disposal),
+  )
+  const [linenWashExternalPhotos, setLinenWashExternalPhotos] = useState<UploadedAdminImage[]>(
+    toUploadedImages(initialData.cleaningPrepPhotos.linen_wash_external),
+  )
+  const photosKey = (photos: UploadedAdminImage[]) =>
+    photos.map((photo) => photo.storagePath).join('|')
   const isEditingActive = mode === 'edit'
   const lastSavedRef = useRef<{
     entrancePassword: string
@@ -190,6 +235,12 @@ function AdminPropertyRegistrationForm({
     extraLinenLocation: string
     trashDisposalLocation: string
     linenWashLocation: 'in_house' | 'external' | null
+    linenWashExternalAddress: string
+    linenWashExternalAddressDetail: string
+    cleaningClosetPhotosKey: string
+    extraLinenPhotosKey: string
+    trashDisposalPhotosKey: string
+    linenWashExternalPhotosKey: string
   }>({
     entrancePassword: initialData.entrancePassword || '',
     doorLockPassword: initialData.doorLockPassword || '',
@@ -199,10 +250,22 @@ function AdminPropertyRegistrationForm({
     extraLinenLocation: initialData.extraLinenLocation || '',
     trashDisposalLocation: initialData.trashDisposalLocation || '',
     linenWashLocation: initialData.linenWashLocation,
+    linenWashExternalAddress: initialData.linenWashExternalAddress || '',
+    linenWashExternalAddressDetail: initialData.linenWashExternalAddressDetail || '',
+    cleaningClosetPhotosKey: photosKey(toUploadedImages(initialData.cleaningPrepPhotos.cleaning_closet)),
+    extraLinenPhotosKey: photosKey(toUploadedImages(initialData.cleaningPrepPhotos.extra_linen)),
+    trashDisposalPhotosKey: photosKey(toUploadedImages(initialData.cleaningPrepPhotos.trash_disposal)),
+    linenWashExternalPhotosKey: photosKey(toUploadedImages(initialData.cleaningPrepPhotos.linen_wash_external)),
   })
   const readyToAutosaveRef = useRef(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  type CleaningPrepPhotosPayload = {
+    cleaning_closet?: Array<{ storagePath: string; thumbnailStoragePath: string }>
+    extra_linen?: Array<{ storagePath: string; thumbnailStoragePath: string }>
+    trash_disposal?: Array<{ storagePath: string; thumbnailStoragePath: string }>
+    linen_wash_external?: Array<{ storagePath: string; thumbnailStoragePath: string }>
+  }
   const draftMutation = useMutation({
     mutationFn: (payload: {
       entrancePassword?: string
@@ -213,6 +276,9 @@ function AdminPropertyRegistrationForm({
       extraLinenLocation?: string
       trashDisposalLocation?: string
       linenWashLocation?: 'in_house' | 'external' | null
+      linenWashExternalAddress?: string | null
+      linenWashExternalAddressDetail?: string | null
+      cleaningPrepPhotos?: CleaningPrepPhotosPayload
     }) =>
       api.post(`/admin/properties/${propertyId}/registration/draft`, payload),
     onSuccess: (_, variables) => {
@@ -230,6 +296,8 @@ function AdminPropertyRegistrationForm({
                 extraLinenLocation: variables.extraLinenLocation ?? null,
                 trashDisposalLocation: variables.trashDisposalLocation ?? null,
                 linenWashLocation: variables.linenWashLocation ?? null,
+                linenWashExternalAddress: variables.linenWashExternalAddress ?? null,
+                linenWashExternalAddressDetail: variables.linenWashExternalAddressDetail ?? null,
               }
             : previous,
       )
@@ -244,6 +312,12 @@ function AdminPropertyRegistrationForm({
         extraLinenLocation: variables.extraLinenLocation || '',
         trashDisposalLocation: variables.trashDisposalLocation || '',
         linenWashLocation: variables.linenWashLocation ?? null,
+        linenWashExternalAddress: variables.linenWashExternalAddress || '',
+        linenWashExternalAddressDetail: variables.linenWashExternalAddressDetail || '',
+        cleaningClosetPhotosKey: photosKey(cleaningClosetPhotos),
+        extraLinenPhotosKey: photosKey(extraLinenPhotos),
+        trashDisposalPhotosKey: photosKey(trashDisposalPhotos),
+        linenWashExternalPhotosKey: photosKey(linenWashExternalPhotos),
       }
     },
   })
@@ -267,6 +341,10 @@ function AdminPropertyRegistrationForm({
   }
 
   async function saveDraft() {
+    const nextCleaningClosetKey = photosKey(cleaningClosetPhotos)
+    const nextExtraLinenKey = photosKey(extraLinenPhotos)
+    const nextTrashDisposalKey = photosKey(trashDisposalPhotos)
+    const nextLinenWashExternalKey = photosKey(linenWashExternalPhotos)
     const nextDraft = {
       entrancePassword,
       doorLockPassword,
@@ -276,10 +354,40 @@ function AdminPropertyRegistrationForm({
       extraLinenLocation,
       trashDisposalLocation,
       linenWashLocation,
+      linenWashExternalAddress,
+      linenWashExternalAddressDetail,
     }
 
+    const photoKindsChanged: CleaningPrepPhotosPayload = {}
+    if (nextCleaningClosetKey !== lastSavedRef.current.cleaningClosetPhotosKey) {
+      photoKindsChanged.cleaning_closet = cleaningClosetPhotos.map(({ storagePath, thumbnailStoragePath }) => ({
+        storagePath,
+        thumbnailStoragePath,
+      }))
+    }
+    if (nextExtraLinenKey !== lastSavedRef.current.extraLinenPhotosKey) {
+      photoKindsChanged.extra_linen = extraLinenPhotos.map(({ storagePath, thumbnailStoragePath }) => ({
+        storagePath,
+        thumbnailStoragePath,
+      }))
+    }
+    if (nextTrashDisposalKey !== lastSavedRef.current.trashDisposalPhotosKey) {
+      photoKindsChanged.trash_disposal = trashDisposalPhotos.map(({ storagePath, thumbnailStoragePath }) => ({
+        storagePath,
+        thumbnailStoragePath,
+      }))
+    }
+    if (nextLinenWashExternalKey !== lastSavedRef.current.linenWashExternalPhotosKey) {
+      photoKindsChanged.linen_wash_external = linenWashExternalPhotos.map(({ storagePath, thumbnailStoragePath }) => ({
+        storagePath,
+        thumbnailStoragePath,
+      }))
+    }
+    const hasPhotoChanges = Object.keys(photoKindsChanged).length > 0
+
     if (
-      nextDraft.entrancePassword === lastSavedRef.current.entrancePassword
+      !hasPhotoChanges
+      && nextDraft.entrancePassword === lastSavedRef.current.entrancePassword
       && nextDraft.doorLockPassword === lastSavedRef.current.doorLockPassword
       && nextDraft.wifiSsid === lastSavedRef.current.wifiSsid
       && nextDraft.wifiPassword === lastSavedRef.current.wifiPassword
@@ -287,6 +395,8 @@ function AdminPropertyRegistrationForm({
       && nextDraft.extraLinenLocation === lastSavedRef.current.extraLinenLocation
       && nextDraft.trashDisposalLocation === lastSavedRef.current.trashDisposalLocation
       && nextDraft.linenWashLocation === lastSavedRef.current.linenWashLocation
+      && nextDraft.linenWashExternalAddress === lastSavedRef.current.linenWashExternalAddress
+      && nextDraft.linenWashExternalAddressDetail === lastSavedRef.current.linenWashExternalAddressDetail
     ) {
       return
     }
@@ -301,6 +411,9 @@ function AdminPropertyRegistrationForm({
         extraLinenLocation: nextDraft.extraLinenLocation || undefined,
         trashDisposalLocation: nextDraft.trashDisposalLocation || undefined,
         linenWashLocation: nextDraft.linenWashLocation,
+        linenWashExternalAddress: nextDraft.linenWashExternalAddress || null,
+        linenWashExternalAddressDetail: nextDraft.linenWashExternalAddressDetail || null,
+        ...(hasPhotoChanges ? { cleaningPrepPhotos: photoKindsChanged } : {}),
       })
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : '임시 저장에 실패했어요.')
@@ -323,7 +436,22 @@ function AdminPropertyRegistrationForm({
         clearTimeout(debounceRef.current)
       }
     }
-  }, [entrancePassword, doorLockPassword, wifiSsid, wifiPassword, cleaningClosetLocation, extraLinenLocation, trashDisposalLocation, linenWashLocation])
+  }, [
+    entrancePassword,
+    doorLockPassword,
+    wifiSsid,
+    wifiPassword,
+    cleaningClosetLocation,
+    extraLinenLocation,
+    trashDisposalLocation,
+    linenWashLocation,
+    linenWashExternalAddress,
+    linenWashExternalAddressDetail,
+    cleaningClosetPhotos,
+    extraLinenPhotos,
+    trashDisposalPhotos,
+    linenWashExternalPhotos,
+  ])
 
   async function handleSubmit() {
     setSaving(true)
@@ -339,6 +467,26 @@ function AdminPropertyRegistrationForm({
         extraLinenLocation: extraLinenLocation || undefined,
         trashDisposalLocation: trashDisposalLocation || undefined,
         linenWashLocation,
+        linenWashExternalAddress: linenWashExternalAddress || null,
+        linenWashExternalAddressDetail: linenWashExternalAddressDetail || null,
+        cleaningPrepPhotos: {
+          cleaning_closet: cleaningClosetPhotos.map(({ storagePath, thumbnailStoragePath }) => ({
+            storagePath,
+            thumbnailStoragePath,
+          })),
+          extra_linen: extraLinenPhotos.map(({ storagePath, thumbnailStoragePath }) => ({
+            storagePath,
+            thumbnailStoragePath,
+          })),
+          trash_disposal: trashDisposalPhotos.map(({ storagePath, thumbnailStoragePath }) => ({
+            storagePath,
+            thumbnailStoragePath,
+          })),
+          linen_wash_external: linenWashExternalPhotos.map(({ storagePath, thumbnailStoragePath }) => ({
+            storagePath,
+            thumbnailStoragePath,
+          })),
+        },
         fixtures: initialData.fixtures.map((fixture) => ({
           id: fixture.id,
           category: fixture.category,
@@ -432,34 +580,77 @@ function AdminPropertyRegistrationForm({
           </CompoundInput>
         </section>
 
-        <section className="space-y-4">
+        <section className="space-y-6">
           <div>
             <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
-            <p className="mt-1 text-[13px] text-ink-muted">매니저가 청소·수리 시 활용하는 위치 정보예요.</p>
+            <p className="mt-1 text-[13px] text-ink-muted">매니저가 청소·수리 시 활용하는 위치 정보예요. 사진을 함께 등록하면 더 좋아요.</p>
           </div>
 
-          <CompoundInput>
-            <FloatingInput
-              label="청소 도구함 위치 (선택)"
-              value={cleaningClosetLocation}
-              onChange={(e) => handleDraftChange(setCleaningClosetLocation, e.target.value)}
-              placeholder="예: 현관 신발장 오른쪽 하단"
-              borderRadius="12px 12px 0 0"
+          <div className="space-y-3">
+            <CompoundInput>
+              <FloatingInput
+                label="청소 도구함 위치 (선택)"
+                value={cleaningClosetLocation}
+                onChange={(e) => handleDraftChange(setCleaningClosetLocation, e.target.value)}
+                placeholder="예: 현관 신발장 오른쪽 하단"
+                borderRadius="12px"
+              />
+            </CompoundInput>
+            <AdminImageUploadField
+              propertyId={propertyId}
+              kind="cleaning-prep"
+              images={cleaningClosetPhotos}
+              onChange={setCleaningClosetPhotos}
+              title="청소 도구함 사진"
+              description="실제 위치 사진을 여러 장 올리면 매니저가 빠르게 찾을 수 있어요."
+              emptyText="아직 추가된 사진이 없어요."
+              onError={setMessage}
             />
-            <FloatingInput
-              label="침구류 여분 위치 (선택)"
-              value={extraLinenLocation}
-              onChange={(e) => handleDraftChange(setExtraLinenLocation, e.target.value)}
-              placeholder="예: 안방 붙박이장 맨 위칸"
+          </div>
+
+          <div className="space-y-3">
+            <CompoundInput>
+              <FloatingInput
+                label="침구류 여분 위치 (선택)"
+                value={extraLinenLocation}
+                onChange={(e) => handleDraftChange(setExtraLinenLocation, e.target.value)}
+                placeholder="예: 안방 붙박이장 맨 위칸"
+                borderRadius="12px"
+              />
+            </CompoundInput>
+            <AdminImageUploadField
+              propertyId={propertyId}
+              kind="cleaning-prep"
+              images={extraLinenPhotos}
+              onChange={setExtraLinenPhotos}
+              title="침구류 여분 사진"
+              description="여분 침구가 보관된 모습을 사진으로 남겨주세요."
+              emptyText="아직 추가된 사진이 없어요."
+              onError={setMessage}
             />
-            <FloatingInput
-              label="쓰레기 배출 장소 (선택)"
-              value={trashDisposalLocation}
-              onChange={(e) => handleDraftChange(setTrashDisposalLocation, e.target.value)}
-              placeholder="예: 건물 뒷편 분리수거장"
-              borderRadius="0 0 12px 12px"
+          </div>
+
+          <div className="space-y-3">
+            <CompoundInput>
+              <FloatingInput
+                label="쓰레기 배출 장소 (선택)"
+                value={trashDisposalLocation}
+                onChange={(e) => handleDraftChange(setTrashDisposalLocation, e.target.value)}
+                placeholder="예: 건물 뒷편 분리수거장"
+                borderRadius="12px"
+              />
+            </CompoundInput>
+            <AdminImageUploadField
+              propertyId={propertyId}
+              kind="cleaning-prep"
+              images={trashDisposalPhotos}
+              onChange={setTrashDisposalPhotos}
+              title="쓰레기 배출 장소 사진"
+              description="배출 장소와 표지판이 보이는 사진이면 좋아요."
+              emptyText="아직 추가된 사진이 없어요."
+              onError={setMessage}
             />
-          </CompoundInput>
+          </div>
 
           <div>
             <p className="text-[13px] font-semibold text-ink mb-2">침구류 세탁 위치 (선택)</p>
@@ -506,6 +697,38 @@ function AdminPropertyRegistrationForm({
               })}
             </div>
           </div>
+
+          {linenWashLocation === 'external' && (
+            <div className="space-y-3 rounded-xl border border-outline-dim p-4">
+              <p className="text-[13px] font-semibold text-ink">외부 세탁소 정보</p>
+              <CompoundInput>
+                <FloatingInput
+                  label="기본 주소"
+                  value={linenWashExternalAddress}
+                  onChange={(e) => handleDraftChange(setLinenWashExternalAddress, e.target.value)}
+                  placeholder="예: 서울특별시 강남구 테헤란로 123"
+                  borderRadius="12px 12px 0 0"
+                />
+                <FloatingInput
+                  label="상세 주소 (선택)"
+                  value={linenWashExternalAddressDetail}
+                  onChange={(e) => handleDraftChange(setLinenWashExternalAddressDetail, e.target.value)}
+                  placeholder="예: 1층 코인세탁소"
+                  borderRadius="0 0 12px 12px"
+                />
+              </CompoundInput>
+              <AdminImageUploadField
+                propertyId={propertyId}
+                kind="cleaning-prep"
+                images={linenWashExternalPhotos}
+                onChange={setLinenWashExternalPhotos}
+                title="외부 세탁소 사진"
+                description="세탁소 외관·기기 사진을 올려두면 좋아요."
+                emptyText="아직 추가된 사진이 없어요."
+                onError={setMessage}
+              />
+            </div>
+          )}
         </section>
 
         <section className="space-y-4">
@@ -642,6 +865,48 @@ function AdminPropertyRegistrationForm({
   )
 }
 
+function CleaningPrepPhotoGrid({ photos }: { photos: CleaningPrepPhoto[] }) {
+  if (photos.length === 0) return null
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {photos.map((photo) => {
+        const url = photo.thumbnailSignedUrl || photo.signedUrl
+        return (
+          <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
+            {url ? (
+              <ImageWithSkeleton src={url} alt="" fill sizes="(max-width: 768px) 33vw, 240px" className="object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">사진 없음</div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function CleaningPrepReadGroup({
+  title,
+  text,
+  photos,
+}: {
+  title: string
+  text: string | null
+  photos: CleaningPrepPhoto[]
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-[13px] font-semibold text-ink">{title}</p>
+      <CompoundInput>
+        <CompoundField label="설명" borderRadius="12px">
+          <span className="block w-full text-[16px] text-ink">{text || '-'}</span>
+        </CompoundField>
+      </CompoundInput>
+      <CleaningPrepPhotoGrid photos={photos} />
+    </div>
+  )
+}
+
 function AdminPropertyDetailView({
   propertyId,
   property,
@@ -664,6 +929,9 @@ function AdminPropertyDetailView({
     extraLinenLocation: string | null
     trashDisposalLocation: string | null
     linenWashLocation: 'in_house' | 'external' | null
+    linenWashExternalAddress: string | null
+    linenWashExternalAddressDetail: string | null
+    cleaningPrepPhotos: CleaningPrepPhotosByKind
     hostName: string | null
     hostEmail: string | null
     hostPhone: string | null
@@ -769,26 +1037,47 @@ function AdminPropertyDetailView({
           <div>
             <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
           </div>
-          <CompoundInput>
-            <CompoundField label="청소 도구함 위치" borderRadius="12px 12px 0 0">
-              <span className="block w-full text-[16px] text-ink">{property.cleaningClosetLocation || '-'}</span>
-            </CompoundField>
-            <CompoundField label="침구류 여분 위치">
-              <span className="block w-full text-[16px] text-ink">{property.extraLinenLocation || '-'}</span>
-            </CompoundField>
-            <CompoundField label="쓰레기 배출 장소">
-              <span className="block w-full text-[16px] text-ink">{property.trashDisposalLocation || '-'}</span>
-            </CompoundField>
-            <CompoundField label="침구류 세탁 위치" borderRadius="0 0 12px 12px">
-              <span className="block w-full text-[16px] text-ink">
-                {property.linenWashLocation
-                  ? property.linenWashLocation === 'in_house'
-                    ? '숙소 내 세탁기/건조기 (+10,000원)'
-                    : '외부 코인 세탁기/건조기 (+20,000원)'
-                  : '-'}
-              </span>
-            </CompoundField>
-          </CompoundInput>
+          <CleaningPrepReadGroup
+            title="청소 도구함 위치"
+            text={property.cleaningClosetLocation}
+            photos={property.cleaningPrepPhotos.cleaning_closet}
+          />
+          <CleaningPrepReadGroup
+            title="침구류 여분 위치"
+            text={property.extraLinenLocation}
+            photos={property.cleaningPrepPhotos.extra_linen}
+          />
+          <CleaningPrepReadGroup
+            title="쓰레기 배출 장소"
+            text={property.trashDisposalLocation}
+            photos={property.cleaningPrepPhotos.trash_disposal}
+          />
+          <div className="space-y-2">
+            <p className="text-[13px] font-semibold text-ink">침구류 세탁 위치</p>
+            <CompoundInput>
+              <CompoundField label="옵션" borderRadius={property.linenWashLocation === 'external' ? '12px 12px 0 0' : '12px'}>
+                <span className="block w-full text-[16px] text-ink">
+                  {property.linenWashLocation
+                    ? property.linenWashLocation === 'in_house'
+                      ? '숙소 내 세탁기/건조기 (+10,000원)'
+                      : '외부 코인 세탁기/건조기 (+20,000원)'
+                    : '-'}
+                </span>
+              </CompoundField>
+              {property.linenWashLocation === 'external' && (
+                <CompoundField label="외부 세탁소 주소" borderRadius="0 0 12px 12px">
+                  <span className="block w-full text-[16px] text-ink">
+                    {property.linenWashExternalAddress
+                      ? `${property.linenWashExternalAddress}${property.linenWashExternalAddressDetail ? ` ${property.linenWashExternalAddressDetail}` : ''}`
+                      : '-'}
+                  </span>
+                </CompoundField>
+              )}
+            </CompoundInput>
+            {property.linenWashLocation === 'external' && property.cleaningPrepPhotos.linen_wash_external.length > 0 && (
+              <CleaningPrepPhotoGrid photos={property.cleaningPrepPhotos.linen_wash_external} />
+            )}
+          </div>
         </section>
 
         <section className="space-y-4">

@@ -30,6 +30,9 @@ const SPACE_CATEGORY_LABELS: Record<ManagerCleaningDetail['spaces'][number]['cat
   living_room: '거실',
   bedroom: '침실',
   bathroom: '화장실',
+  veranda: '베란다',
+  exterior: '외부',
+  other: '기타',
 }
 
 const ASSET_CATEGORY_LABELS: Record<ManagerCleaningDetail['assets'][number]['category'], string> = {
@@ -49,6 +52,50 @@ const ASSET_CATEGORY_LABELS: Record<ManagerCleaningDetail['assets'][number]['cat
 const CLEANING_TYPE_LABELS: Record<ManagerCleaningDetail['cleaningType'], string> = {
   standard: '일반 청소',
   urgent: '긴급 청소',
+}
+
+type ManagerPrepPhoto = ManagerCleaningDetail['cleaningPrepPhotos']['cleaning_closet'][number]
+
+function ManagerCleaningPrepPhotoGrid({ photos }: { photos: ManagerPrepPhoto[] }) {
+  if (photos.length === 0) return null
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {photos.map((photo) => {
+        const url = photo.thumbnailSignedUrl || photo.signedUrl
+        return (
+          <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
+            {url ? (
+              <ImageWithSkeleton src={url} alt="" fill sizes="(max-width: 768px) 33vw, 240px" className="object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">사진 없음</div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function ManagerCleaningPrepReadGroup({
+  title,
+  text,
+  photos,
+}: {
+  title: string
+  text: string | null
+  photos: ManagerPrepPhoto[]
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-[13px] font-semibold text-ink">{title}</p>
+      <CompoundInput>
+        <CompoundField label="설명" borderRadius="12px">
+          <span className="block w-full text-[16px] text-ink">{text || '-'}</span>
+        </CompoundField>
+      </CompoundInput>
+      <ManagerCleaningPrepPhotoGrid photos={photos} />
+    </div>
+  )
 }
 
 export default function ManagerCleaningDetailPage() {
@@ -441,17 +488,38 @@ export default function ManagerCleaningDetailPage() {
       {cleaning && (
       <section className="mt-7 space-y-4">
         <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
-        <CompoundInput>
-          <CompoundField label="청소 도구함 위치" borderRadius="12px 12px 0 0">
-            <span className="block w-full text-[16px] text-ink">{cleaning.cleaningClosetLocation || '-'}</span>
-          </CompoundField>
-          <CompoundField label="침구류 여분 위치">
-            <span className="block w-full text-[16px] text-ink">{cleaning.extraLinenLocation || '-'}</span>
-          </CompoundField>
-          <CompoundField label="쓰레기 배출 장소" borderRadius="0 0 12px 12px">
-            <span className="block w-full text-[16px] text-ink">{cleaning.trashDisposalLocation || '-'}</span>
-          </CompoundField>
-        </CompoundInput>
+        <ManagerCleaningPrepReadGroup
+          title="청소 도구함 위치"
+          text={cleaning.cleaningClosetLocation}
+          photos={cleaning.cleaningPrepPhotos.cleaning_closet}
+        />
+        <ManagerCleaningPrepReadGroup
+          title="침구류 여분 위치"
+          text={cleaning.extraLinenLocation}
+          photos={cleaning.cleaningPrepPhotos.extra_linen}
+        />
+        <ManagerCleaningPrepReadGroup
+          title="쓰레기 배출 장소"
+          text={cleaning.trashDisposalLocation}
+          photos={cleaning.cleaningPrepPhotos.trash_disposal}
+        />
+        {cleaning.linenWashLocation === 'external' && (
+          <div className="space-y-2">
+            <p className="text-[13px] font-semibold text-ink">외부 세탁소 주소</p>
+            <CompoundInput>
+              <CompoundField label="주소" borderRadius="12px">
+                <span className="block w-full text-[16px] text-ink">
+                  {cleaning.linenWashExternalAddress
+                    ? `${cleaning.linenWashExternalAddress}${cleaning.linenWashExternalAddressDetail ? ` ${cleaning.linenWashExternalAddressDetail}` : ''}`
+                    : '-'}
+                </span>
+              </CompoundField>
+            </CompoundInput>
+            {cleaning.cleaningPrepPhotos.linen_wash_external.length > 0 && (
+              <ManagerCleaningPrepPhotoGrid photos={cleaning.cleaningPrepPhotos.linen_wash_external} />
+            )}
+          </div>
+        )}
       </section>
       )}
 

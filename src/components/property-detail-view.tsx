@@ -13,6 +13,7 @@ import {
   usePropertyDetail,
   type SpaceCategory,
   type AssetCategory,
+  type CleaningPrepPhoto,
 } from '@/lib/hooks/use-properties'
 import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -38,6 +39,9 @@ const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
   living_room: '거실',
   bedroom: '침실',
   bathroom: '화장실',
+  veranda: '베란다',
+  exterior: '외부',
+  other: '기타',
 }
 
 const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
@@ -53,6 +57,48 @@ const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   dryer: '건조기',
   vent: '환기',
   other: '기타',
+}
+
+function CleaningPrepPhotoGrid({ photos }: { photos: CleaningPrepPhoto[] }) {
+  if (photos.length === 0) return null
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {photos.map((photo) => {
+        const url = photo.thumbnailSignedUrl || photo.signedUrl
+        return (
+          <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
+            {url ? (
+              <ImageWithSkeleton src={url} alt="" fill sizes="(max-width: 768px) 33vw, 240px" className="object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">사진 없음</div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function CleaningPrepReadGroup({
+  title,
+  text,
+  photos,
+}: {
+  title: string
+  text: string | null
+  photos: CleaningPrepPhoto[]
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-[13px] font-semibold text-ink">{title}</p>
+      <CompoundInput>
+        <CompoundField label="설명" borderRadius="12px">
+          <span className="block w-full text-[16px] text-ink">{text || '-'}</span>
+        </CompoundField>
+      </CompoundInput>
+      <CleaningPrepPhotoGrid photos={photos} />
+    </div>
+  )
 }
 
 export function PropertyDetailView({
@@ -308,17 +354,38 @@ export function PropertyDetailView({
                 수정하기
               </Link>
             </div>
-            <CompoundInput>
-              <CompoundField label="청소 도구함 위치" borderRadius="12px 12px 0 0">
-                <span className="block w-full text-[16px] text-ink">{property.cleaningClosetLocation || '-'}</span>
-              </CompoundField>
-              <CompoundField label="침구류 여분 위치">
-                <span className="block w-full text-[16px] text-ink">{property.extraLinenLocation || '-'}</span>
-              </CompoundField>
-              <CompoundField label="쓰레기 배출 장소" borderRadius="0 0 12px 12px">
-                <span className="block w-full text-[16px] text-ink">{property.trashDisposalLocation || '-'}</span>
-              </CompoundField>
-            </CompoundInput>
+            <CleaningPrepReadGroup
+              title="청소 도구함 위치"
+              text={property.cleaningClosetLocation}
+              photos={property.cleaningPrepPhotos.cleaning_closet}
+            />
+            <CleaningPrepReadGroup
+              title="침구류 여분 위치"
+              text={property.extraLinenLocation}
+              photos={property.cleaningPrepPhotos.extra_linen}
+            />
+            <CleaningPrepReadGroup
+              title="쓰레기 배출 장소"
+              text={property.trashDisposalLocation}
+              photos={property.cleaningPrepPhotos.trash_disposal}
+            />
+            {property.linenWashLocation === 'external' && (
+              <div className="space-y-2">
+                <p className="text-[13px] font-semibold text-ink">외부 세탁소 주소</p>
+                <CompoundInput>
+                  <CompoundField label="주소" borderRadius="12px">
+                    <span className="block w-full text-[16px] text-ink">
+                      {property.linenWashExternalAddress
+                        ? `${property.linenWashExternalAddress}${property.linenWashExternalAddressDetail ? ` ${property.linenWashExternalAddressDetail}` : ''}`
+                        : '-'}
+                    </span>
+                  </CompoundField>
+                </CompoundInput>
+                {property.cleaningPrepPhotos.linen_wash_external.length > 0 && (
+                  <CleaningPrepPhotoGrid photos={property.cleaningPrepPhotos.linen_wash_external} />
+                )}
+              </div>
+            )}
           </section>
 
           <section className="mt-7 space-y-4">
