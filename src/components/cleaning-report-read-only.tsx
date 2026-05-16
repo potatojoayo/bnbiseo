@@ -41,7 +41,6 @@ type Asset = {
 type Space = {
   id: string
   category: SpaceCategory
-  floor: number
   name: string
   pyeong: number
 }
@@ -247,7 +246,7 @@ export function CleaningReportReadOnly({
           <section key={space.id} className="space-y-3">
             <SectionHeader
               title={space.name}
-              description={`${space.floor}층 · ${SPACE_CATEGORY_LABELS[space.category]} · ${space.pyeong}평`}
+              description={`${SPACE_CATEGORY_LABELS[space.category]} · ${space.pyeong}평`}
             />
 
             {space.assets.length === 0 ? (

@@ -42,18 +42,16 @@ const SINGLE_INSTANCE_CATEGORIES: SpaceCategory[] = ['living_room', 'veranda', '
 
 function getSuggestedName(
   category: SpaceCategory,
-  floor: number,
-  spaces: Array<{ category: SpaceCategory; floor: number }>,
+  spaces: Array<{ category: SpaceCategory }>,
 ) {
   const prefix = CATEGORY_PREFIX[category]
-  const floorPrefix = floor > 1 ? `${floor}층 ` : ''
-  const count = spaces.filter((space) => space.category === category && space.floor === floor).length
+  const count = spaces.filter((space) => space.category === category).length
 
   if (SINGLE_INSTANCE_CATEGORIES.includes(category)) {
-    return count === 0 ? `${floorPrefix}${prefix}` : `${floorPrefix}${prefix}${count + 1}`
+    return count === 0 ? prefix : `${prefix}${count + 1}`
   }
 
-  return `${floorPrefix}${prefix}${count + 1}`
+  return `${prefix}${count + 1}`
 }
 
 export default function AdminSpaceCreatePage() {
@@ -63,7 +61,6 @@ export default function AdminSpaceCreatePage() {
   const { data, isLoading: loading, error } = useAdminPropertyRegistration(id)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const [floor, setFloor] = useState<1 | 2 | 3>(1)
   const [category, setCategory] = useState<SpaceCategory>('living_room')
   const [name, setName] = useState('')
   const [pyeong, setPyeong] = useState('')
@@ -71,13 +68,12 @@ export default function AdminSpaceCreatePage() {
   const [photos, setPhotos] = useState<UploadedAdminImage[]>([])
   const existingSpaces = data?.spaces ?? []
   const suggestedName = useMemo(
-    () => getSuggestedName(category, floor, existingSpaces),
-    [category, floor, existingSpaces],
+    () => getSuggestedName(category, existingSpaces),
+    [category, existingSpaces],
   )
   const createSpaceMutation = useMutation({
     mutationFn: (payload: {
       category: SpaceCategory
-      floor: 1 | 2 | 3
       name: string
       pyeong: string
       notes?: string
@@ -96,7 +92,6 @@ export default function AdminSpaceCreatePage() {
     try {
       await createSpaceMutation.mutateAsync({
         category,
-        floor,
         name: name.trim() || suggestedName,
         pyeong,
         notes: notes || undefined,
@@ -134,7 +129,7 @@ export default function AdminSpaceCreatePage() {
         <section className="space-y-4">
           <div>
             <p className="text-[16px] font-semibold text-ink">공간 정보</p>
-            <p className="mt-1 text-[13px] text-ink-muted">카테고리와 층수를 고르면 이름이 자동으로 채워져요.</p>
+            <p className="mt-1 text-[13px] text-ink-muted">카테고리를 고르면 이름이 자동으로 채워져요.</p>
           </div>
 
           <CompoundInput>
@@ -151,24 +146,6 @@ export default function AdminSpaceCreatePage() {
                   </option>
                 ))}
               </select>
-            </CompoundField>
-            <CompoundField label="층수 선택">
-              <div className="flex gap-2">
-                {[1, 2, 3].map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setFloor(value as 1 | 2 | 3)}
-                    className={`inline-flex h-9 min-w-0 flex-1 items-center justify-center rounded-lg border text-[14px] font-medium transition-colors ${
-                      floor === value
-                        ? 'border-ink bg-ink text-white'
-                        : 'border-outline-strong text-ink hover:bg-surface-soft'
-                    }`}
-                  >
-                    {value}층
-                  </button>
-                ))}
-              </div>
             </CompoundField>
             <FloatingInput
               label="공간 이름"

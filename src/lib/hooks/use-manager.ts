@@ -48,6 +48,14 @@ export type ManagerCleaning = {
 }
 
 type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
+
+export type CleaningSpacePhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
 type AssetCategory =
   | 'lighting'
   | 'furniture'
@@ -87,17 +95,17 @@ export type ManagerCleaningDetail = ManagerCleaning & {
     trash_disposal: CleaningPrepPhoto[]
     linen_wash_external: CleaningPrepPhoto[]
   }
-  cleaningPhotos: Array<{
-    id: string
-    storagePath: string
-    thumbnailStoragePath: string
-    signedUrl: string | null
-    thumbnailSignedUrl: string | null
+  cleaningPhotosBySpace: Array<{
+    spaceId: string
+    spaceName: string
+    category: SpaceCategory
+    before: CleaningSpacePhoto[]
+    after: CleaningSpacePhoto[]
   }>
+  legacyCleaningPhotos: Array<CleaningSpacePhoto & { kind: 'before' | 'after' }>
   spaces: Array<{
     id: string
     category: SpaceCategory
-    floor: number
     name: string
     pyeong: number
     notes: string | null

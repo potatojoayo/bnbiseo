@@ -22,6 +22,7 @@ import {
   FIRST_CLEANING_DISCOUNT,
 } from '@/lib/cleaning-pricing'
 import { summarizeSpaces } from '@/lib/property-space-summary'
+import { isPhotoSpaceCategory } from '@/lib/cleaning-photo-spaces'
 import {
   notifyCleaningBankTransferRequested,
   notifyCleaningCancelledByHost,
@@ -159,18 +160,22 @@ cleaningRoutes.get('/:id', async (c) => {
     return c.json({ error: '청소 요청을 찾을 수 없어요' }, 404)
   }
 
-  const spaces = await db
+  const spaceRows = await db
     .select({
+      id: propertySpaces.id,
       category: propertySpaces.category,
+      name: propertySpaces.name,
       pyeong: propertySpaces.pyeong,
     })
     .from(propertySpaces)
     .where(eq(propertySpaces.propertyId, request.propertyId))
 
-  const summary = summarizeSpaces(spaces)
+  const summary = summarizeSpaces(spaceRows)
   const cleaningPhotos = await db
     .select({
       id: cleaningRequestPhotos.id,
+      propertySpaceId: cleaningRequestPhotos.propertySpaceId,
+      kind: cleaningRequestPhotos.kind,
       storagePath: cleaningRequestPhotos.storagePath,
       thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
       sortOrder: cleaningRequestPhotos.sortOrder,
@@ -186,6 +191,35 @@ cleaningRoutes.get('/:id', async (c) => {
     ].filter((path): path is string => !!path),
   )
 
+  const toCleaningPhoto = (photo: typeof cleaningPhotos[number]) => ({
+    id: photo.id,
+    storagePath: photo.storagePath,
+    thumbnailStoragePath: photo.thumbnailStoragePath,
+    signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+    thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+  })
+
+  const cleaningPhotosBySpace = spaceRows
+    .filter((space) => isPhotoSpaceCategory(space.category))
+    .map((space) => ({
+      spaceId: space.id,
+      spaceName: space.name,
+      category: space.category,
+      before: cleaningPhotos
+        .filter((p) => p.propertySpaceId === space.id && p.kind === 'before')
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(toCleaningPhoto),
+      after: cleaningPhotos
+        .filter((p) => p.propertySpaceId === space.id && p.kind === 'after')
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(toCleaningPhoto),
+    }))
+
+  const legacyCleaningPhotos = cleaningPhotos
+    .filter((p) => p.propertySpaceId === null)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((photo) => ({ ...toCleaningPhoto(photo), kind: photo.kind }))
+
   return c.json({
     ...request,
     propertyPyeong: summary.pyeong,
@@ -197,15 +231,8 @@ cleaningRoutes.get('/:id', async (c) => {
     managerAvatarThumbnailSignedUrl: request.managerAvatarThumbnailStoragePath
       ? signedUrlMap.get(request.managerAvatarThumbnailStoragePath) ?? null
       : null,
-    cleaningPhotos: cleaningPhotos
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((photo) => ({
-        id: photo.id,
-        storagePath: photo.storagePath,
-        thumbnailStoragePath: photo.thumbnailStoragePath,
-        signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
-        thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
-      })),
+    cleaningPhotosBySpace,
+    legacyCleaningPhotos,
   })
 })
 
@@ -234,7 +261,6 @@ cleaningRoutes.get('/:id/report', async (c) => {
     .select({
       id: propertySpaces.id,
       category: propertySpaces.category,
-      floor: propertySpaces.floor,
       name: propertySpaces.name,
       pyeong: propertySpaces.pyeong,
     })

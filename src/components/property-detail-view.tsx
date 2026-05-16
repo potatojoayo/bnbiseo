@@ -420,7 +420,7 @@ export function PropertyDetailView({
                     <div className="px-4 py-4">
                       <p className="text-[15px] font-semibold text-ink">{space.name}</p>
                       <p className="mt-1 text-[13px] text-ink-muted">
-                        {space.floor}층 · {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
+                        {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
                       </p>
                       {space.notes && (
                         <p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink-muted">{space.notes}</p>

@@ -170,7 +170,6 @@ type RegistrationDetail = {
   spaces: Array<{
     id: string
     category: SpaceCategory
-    floor: number
     name: string
     pyeong: number
     notes: string | null
@@ -253,11 +252,22 @@ export type AdminCleaningDetail = {
   managerPhone: string | null
   managerAvatarSignedUrl: string | null
   managerAvatarThumbnailSignedUrl: string | null
-  cleaningPhotos: Array<{
-    id: string
-    signedUrl: string | null
-    thumbnailSignedUrl: string | null
+  cleaningPhotosBySpace: Array<{
+    spaceId: string
+    spaceName: string
+    category: 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
+    before: AdminCleaningPhoto[]
+    after: AdminCleaningPhoto[]
   }>
+  legacyCleaningPhotos: Array<AdminCleaningPhoto & { kind: 'before' | 'after' }>
+}
+
+export type AdminCleaningPhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
 }
 
 export function useAdminCleaningDetail(id: string) {

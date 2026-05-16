@@ -323,7 +323,7 @@ function ManagerCleaningReportEditor({
             <div className="space-y-1 px-1">
               <p className="text-[16px] font-semibold text-ink">{space.name}</p>
               <p className="text-[13px] text-ink-muted">
-                {space.floor}층 · {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
+                {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
               </p>
             </div>
 

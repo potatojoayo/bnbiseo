@@ -22,6 +22,7 @@ import {
 } from '@/db/schema'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
+import { isPhotoSpaceCategory } from '@/lib/cleaning-photo-spaces'
 import {
   notifyCleaningAssigned,
   notifyCleaningBankTransferConfirmed,
@@ -335,7 +336,6 @@ adminRoutes.get('/cleaning/:id', async (c) => {
         .select({
           id: propertySpaces.id,
           category: propertySpaces.category,
-          floor: propertySpaces.floor,
           name: propertySpaces.name,
           pyeong: propertySpaces.pyeong,
         })
@@ -346,6 +346,8 @@ adminRoutes.get('/cleaning/:id', async (c) => {
   const requestPhotoRows = await db
     .select({
       id: cleaningRequestPhotos.id,
+      propertySpaceId: cleaningRequestPhotos.propertySpaceId,
+      kind: cleaningRequestPhotos.kind,
       storagePath: cleaningRequestPhotos.storagePath,
       thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
       sortOrder: cleaningRequestPhotos.sortOrder,
@@ -362,6 +364,35 @@ adminRoutes.get('/cleaning/:id', async (c) => {
     ...(request.managerAvatarThumbnailStoragePath ? [request.managerAvatarThumbnailStoragePath] : []),
   ])
 
+  const toCleaningPhoto = (photo: typeof requestPhotoRows[number]) => ({
+    id: photo.id,
+    storagePath: photo.storagePath,
+    thumbnailStoragePath: photo.thumbnailStoragePath,
+    signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
+    thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
+  })
+
+  const cleaningPhotosBySpace = spaces
+    .filter((space) => isPhotoSpaceCategory(space.category))
+    .map((space) => ({
+      spaceId: space.id,
+      spaceName: space.name,
+      category: space.category,
+      before: requestPhotoRows
+        .filter((p) => p.propertySpaceId === space.id && p.kind === 'before')
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(toCleaningPhoto),
+      after: requestPhotoRows
+        .filter((p) => p.propertySpaceId === space.id && p.kind === 'after')
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(toCleaningPhoto),
+    }))
+
+  const legacyCleaningPhotos = requestPhotoRows
+    .filter((p) => p.propertySpaceId === null)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((photo) => ({ ...toCleaningPhoto(photo), kind: photo.kind }))
+
   return c.json({
     ...request,
     propertyPyeong: summary.pyeong,
@@ -374,13 +405,8 @@ adminRoutes.get('/cleaning/:id', async (c) => {
     managerAvatarThumbnailSignedUrl: request.managerAvatarThumbnailStoragePath
       ? signedUrlMap.get(request.managerAvatarThumbnailStoragePath) ?? null
       : null,
-    cleaningPhotos: requestPhotoRows
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((photo) => ({
-        id: photo.id,
-        signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
-        thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
-      })),
+    cleaningPhotosBySpace,
+    legacyCleaningPhotos,
   })
 })
 
@@ -876,7 +902,6 @@ const ManagerAvatarUploadSchema = z.object({
 
 const PropertySpaceSchema = z.object({
   category: z.enum(['living_room', 'bedroom', 'bathroom', 'veranda', 'exterior', 'other']),
-  floor: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(1),
   name: z.string().min(1),
   pyeong: z.coerce.number().int().positive(),
   notes: z.string().optional(),
@@ -1234,7 +1259,6 @@ adminRoutes.get('/properties/:id/registration', async (c) => {
     .select({
       id: propertySpaces.id,
       category: propertySpaces.category,
-      floor: propertySpaces.floor,
       name: propertySpaces.name,
       pyeong: propertySpaces.pyeong,
       notes: propertySpaces.notes,
@@ -1542,7 +1566,6 @@ adminRoutes.post('/properties/:id/registration/spaces', async (c) => {
       .values({
         propertyId,
         category: validated.data.category,
-        floor: validated.data.floor,
         name: validated.data.name.trim(),
         pyeong: validated.data.pyeong,
         notes: validated.data.notes?.trim() || null,
@@ -1591,7 +1614,6 @@ adminRoutes.patch('/properties/:id/registration/spaces/:spaceId', async (c) => {
       .update(propertySpaces)
       .set({
         category: validated.data.category,
-        floor: validated.data.floor,
         name: validated.data.name.trim(),
         pyeong: validated.data.pyeong,
         notes: validated.data.notes?.trim() || null,

@@ -22,7 +22,41 @@ import { formatDateLabel, formatTimeKorean, cn, formatKoreanPhone } from '@/lib/
 import { api } from '@/lib/api-client'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
-import { ReadOnlyPhotoGallery } from '@/components/read-only-photo-gallery'
+import type { CleaningPhotosBySpace, CleaningSpacePhoto } from '@/lib/hooks/use-cleaning'
+
+const SPACE_CATEGORY_LABELS: Record<CleaningPhotosBySpace['category'], string> = {
+  living_room: '거실',
+  bedroom: '침실',
+  bathroom: '화장실',
+  veranda: '베란다',
+  exterior: '외부',
+  other: '기타',
+}
+
+function SpacePhotoGrid({ photos, emptyText }: { photos: CleaningSpacePhoto[]; emptyText: string }) {
+  if (photos.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-outline-strong px-3 py-4 text-center text-[12px] text-ink-muted">
+        {emptyText}
+      </div>
+    )
+  }
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {photos.map((photo) => {
+        const url = photo.thumbnailSignedUrl || photo.signedUrl
+        return (
+          <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
+            {url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={url} alt="" className="h-full w-full object-cover" />
+            ) : null}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 import {
   Drawer,
   DrawerContent,
@@ -123,10 +157,9 @@ export default function CleaningDetailPage() {
       // ignore
     }
   }
-  const cleaningPhotos = cleaning.cleaningPhotos.map((photo) => ({
-    id: photo.id,
-    signedUrl: photo.signedUrl ?? photo.thumbnailSignedUrl,
-  }))
+  const photoSpaces = cleaning.cleaningPhotosBySpace
+  const showBeforePhotos = cleaning.status === 'in_progress' || cleaning.status === 'completed'
+  const showAfterPhotos = cleaning.status === 'completed'
 
   return (
     <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
@@ -310,31 +343,52 @@ export default function CleaningDetailPage() {
         </section>
       )}
 
-      {cleaning.status === 'completed' && (
-        <div className="mb-6 flex flex-col gap-5">
-          <ReadOnlyPhotoGallery
-            title="청소 사진"
-            photos={cleaningPhotos}
-            emptyMessage="등록된 청소 사진이 없어요."
-            titleClassName="mx-0"
-            emptyMessageClassName="text-center"
-            disableCarousel
-            imageClassName="object-contain"
-            useIntrinsicAspect
+      {showBeforePhotos && photoSpaces.length > 0 && (
+        <section className="mb-6 space-y-4">
+          <div>
+            <p className="text-[16px] font-semibold text-ink">공간별 청소 사진</p>
+            <p className="mt-1 text-[12px] text-ink-muted">
+              {showAfterPhotos
+                ? '매니저가 촬영한 공간별 청소 전/후 사진입니다.'
+                : '매니저가 도착해 촬영한 청소 전 현황입니다.'}
+            </p>
+          </div>
+          <div className="flex flex-col gap-4">
+            {photoSpaces.map((space) => (
+              <div key={space.spaceId} className="rounded-xl border border-outline-dim p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[15px] font-semibold text-ink">{space.spaceName}</p>
+                  <span className="text-[11px] font-medium text-ink-muted">
+                    {SPACE_CATEGORY_LABELS[space.category]}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[12px] font-semibold text-ink-muted tracking-wider uppercase">청소 전</p>
+                  <SpacePhotoGrid photos={space.before} emptyText="청소 전 사진이 없어요." />
+                </div>
+                {showAfterPhotos && (
+                  <div className="space-y-2">
+                    <p className="text-[12px] font-semibold text-ink-muted tracking-wider uppercase">청소 후</p>
+                    <SpacePhotoGrid photos={space.after} emptyText="청소 후 사진이 없어요." />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {cleaning.status === 'completed' && reportData && (
+        <section className="mb-6 space-y-3">
+          <p className="text-[16px] font-semibold text-ink">시설물 점검 리포트</p>
+          <CleaningReportReadOnly
+            propertyName={reportData.propertyName}
+            spaces={reportData.spaces}
+            assets={reportData.assets}
+            report={reportData.report}
+            showHeader={false}
           />
-          {reportData && (
-            <section className="space-y-3">
-              <p className="text-[16px] font-semibold text-ink">시설물 점검 리포트</p>
-              <CleaningReportReadOnly
-                propertyName={reportData.propertyName}
-                spaces={reportData.spaces}
-                assets={reportData.assets}
-                report={reportData.report}
-                showHeader={false}
-              />
-            </section>
-          )}
-        </div>
+        </section>
       )}
 
       {/* Process timeline */}

@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, ImagePlusIcon, XIcon } from 'lucide-react'
 import {
+  type CleaningPhotoKind,
   type UploadedManagerCleaningImage,
   uploadManagerCleaningImage,
 } from '@/lib/manager-cleaning-image-upload'
@@ -11,6 +12,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 type ManagerCleaningPhotoFieldProps = {
   cleaningId: string
+  propertySpaceId: string
+  kind: CleaningPhotoKind
+  title?: string
+  emptyText?: string
   images: UploadedManagerCleaningImage[]
   onChange: (images: UploadedManagerCleaningImage[]) => void
   onError?: (message: string | null) => void
@@ -19,6 +24,10 @@ type ManagerCleaningPhotoFieldProps = {
 
 export function ManagerCleaningPhotoField({
   cleaningId,
+  propertySpaceId,
+  kind,
+  title = '청소 사진',
+  emptyText = '첨부된 사진이 없어요.',
   images,
   onChange,
   onError,
@@ -37,7 +46,7 @@ export function ManagerCleaningPhotoField({
       const uploadedImages: UploadedManagerCleaningImage[] = []
 
       for (const file of Array.from(files)) {
-        uploadedImages.push(await uploadManagerCleaningImage(cleaningId, file))
+        uploadedImages.push(await uploadManagerCleaningImage(cleaningId, file, { kind, propertySpaceId }))
       }
 
       onChange([...images, ...uploadedImages])
@@ -70,12 +79,12 @@ export function ManagerCleaningPhotoField({
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[16px] font-semibold text-ink">청소 사진</p>
+        <p className="text-[14px] font-semibold text-ink">{title}</p>
         {!readOnly && (
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-outline-strong px-3 text-[12px] font-medium text-ink transition-colors hover:bg-surface-soft"
+            className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-outline-strong px-3 text-[12px] font-medium text-ink transition-colors hover:bg-surface-soft"
           >
             <ImagePlusIcon size={13} />
             사진 추가
@@ -96,7 +105,7 @@ export function ManagerCleaningPhotoField({
 
       {images.length === 0 && pendingCount === 0 ? (
         <div className="rounded-xl border border-dashed border-outline-strong px-4 py-5 text-center text-[13px] text-ink-muted">
-          첨부된 청소 사진이 없어요.
+          {emptyText}
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-3">

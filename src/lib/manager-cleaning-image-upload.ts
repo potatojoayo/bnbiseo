@@ -53,12 +53,20 @@ async function createThumbnailBlob(file: File, size = 320) {
   return blob
 }
 
-export async function uploadManagerCleaningImage(cleaningId: string, file: File) {
+export type CleaningPhotoKind = 'before' | 'after'
+
+export async function uploadManagerCleaningImage(
+  cleaningId: string,
+  file: File,
+  options: { kind: CleaningPhotoKind; propertySpaceId: string },
+) {
   const signed = await api.post<{
     original: { path: string; token: string }
     thumbnail: { path: string; token: string }
   }>(`/manager/cleanings/${cleaningId}/photos/upload-url`, {
     fileName: file.name,
+    kind: options.kind,
+    propertySpaceId: options.propertySpaceId,
   })
 
   const thumbnailBlob = await createThumbnailBlob(file)

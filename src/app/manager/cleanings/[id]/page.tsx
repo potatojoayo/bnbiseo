@@ -8,7 +8,6 @@ import { MapPinIcon } from 'lucide-react'
 import { ManagerCleaningPhotoField } from '@/components/manager-cleaning-photo-field'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { CleaningStatusBadge } from '@/components/cleaning-status-badge'
-import { ReadOnlyPhotoGallery } from '@/components/read-only-photo-gallery'
 import { CompoundField, CompoundInput } from '@/components/ui/floating-input'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -110,19 +109,29 @@ export default function ManagerCleaningDetailPage() {
   const [isClaimDrawerOpen, setIsClaimDrawerOpen] = useState(false)
   const [isActionDrawerOpen, setIsActionDrawerOpen] = useState(false)
   const [isSavingPhotos, setIsSavingPhotos] = useState(false)
-  const [cleaningPhotos, setCleaningPhotos] = useState<UploadedManagerCleaningImage[]>([])
-  const serverCleaningPhotos = useMemo(
-    () => (cleaning?.cleaningPhotos ?? []).map((photo) => ({
-      storagePath: photo.storagePath,
-      thumbnailStoragePath: photo.thumbnailStoragePath,
-      previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
-    })),
-    [cleaning?.cleaningPhotos],
-  )
+  const [photosBySpace, setPhotosBySpace] = useState<Record<string, { before: UploadedManagerCleaningImage[]; after: UploadedManagerCleaningImage[] }>>({})
+  const serverPhotosBySpace = useMemo(() => {
+    const result: Record<string, { before: UploadedManagerCleaningImage[]; after: UploadedManagerCleaningImage[] }> = {}
+    for (const group of cleaning?.cleaningPhotosBySpace ?? []) {
+      result[group.spaceId] = {
+        before: group.before.map((photo) => ({
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
+          previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+        })),
+        after: group.after.map((photo) => ({
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
+          previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+        })),
+      }
+    }
+    return result
+  }, [cleaning?.cleaningPhotosBySpace])
 
   useEffect(() => {
-    setCleaningPhotos(serverCleaningPhotos)
-  }, [serverCleaningPhotos])
+    setPhotosBySpace(serverPhotosBySpace)
+  }, [serverPhotosBySpace])
 
   const openCleaning = openCleanings.find((item) => item.id === id)
   const previewCleaning = cleaning ?? openCleaning
@@ -161,14 +170,22 @@ export default function ManagerCleaningDetailPage() {
       : null
   const canWriteReport = cleaning?.status === 'in_progress'
   const canViewReport = cleaning?.status === 'completed'
-  const canEditPhotos = cleaning?.status === 'in_progress'
-  const canViewPhotos = canEditPhotos || cleaning?.status === 'completed'
+  const canEditBeforePhotos = cleaning?.status === 'confirmed'
+  const canEditAfterPhotos = cleaning?.status === 'in_progress'
+  const canViewPhotos = !!cleaning && ['confirmed', 'in_progress', 'completed'].includes(cleaning.status)
   const canClaimCleaning = previewCleaning.status === 'pending'
   const allAssetsInspected = cleaning?.assets.every((asset) =>
     report?.report.assets.some((item) => item.assetId === asset.id && item.status),
   ) ?? false
-  const hasCleaningPhotos = cleaning ? cleaningPhotos.length > 0 : false
-  const canCompleteCleaning = allAssetsInspected && hasCleaningPhotos
+  const photoSpaces = cleaning?.cleaningPhotosBySpace ?? []
+  const allSpacesHaveBefore = photoSpaces.length > 0 && photoSpaces.every(
+    (space) => (photosBySpace[space.spaceId]?.before ?? []).length > 0,
+  )
+  const allSpacesHaveAfter = photoSpaces.length > 0 && photoSpaces.every(
+    (space) => (photosBySpace[space.spaceId]?.after ?? []).length > 0,
+  )
+  const canStartCleaning = allSpacesHaveBefore
+  const canCompleteCleaning = allAssetsInspected && allSpacesHaveAfter
 
   async function handleClaim() {
     setIsClaiming(true)
@@ -192,15 +209,34 @@ export default function ManagerCleaningDetailPage() {
     }
   }
 
-  async function saveCleaningPhotos(nextImages: UploadedManagerCleaningImage[]) {
+  async function saveSpacePhotos(
+    propertySpaceId: string,
+    kind: 'before' | 'after',
+    nextImages: UploadedManagerCleaningImage[],
+  ) {
     setIsSavingPhotos(true)
-    setCleaningPhotos(nextImages)
+    setPhotosBySpace((previous) => ({
+      ...previous,
+      [propertySpaceId]: {
+        before: previous[propertySpaceId]?.before ?? [],
+        after: previous[propertySpaceId]?.after ?? [],
+        [kind]: nextImages,
+      },
+    }))
 
     try {
       const saved = await api.post<{
         success: true
-        photos: ManagerCleaningDetail['cleaningPhotos']
+        photos: Array<{
+          id: string
+          storagePath: string
+          thumbnailStoragePath: string
+          signedUrl: string | null
+          thumbnailSignedUrl: string | null
+        }>
       }>(`/manager/cleanings/${id}/photos`, {
+        propertySpaceId,
+        kind,
         photos: nextImages.map((image) => ({
           storagePath: image.storagePath,
           thumbnailStoragePath: image.thumbnailStoragePath,
@@ -212,20 +248,26 @@ export default function ManagerCleaningDetailPage() {
         (previous) => previous
           ? {
               ...previous,
-              cleaningPhotos: saved.photos.map((photo) => {
-                const localPhoto = nextImages.find((image) => image.storagePath === photo.storagePath)
-
+              cleaningPhotosBySpace: previous.cleaningPhotosBySpace.map((group) => {
+                if (group.spaceId !== propertySpaceId) return group
+                const savedWithFallback = saved.photos.map((photo) => {
+                  const localPhoto = nextImages.find((image) => image.storagePath === photo.storagePath)
+                  return {
+                    ...photo,
+                    signedUrl: photo.signedUrl ?? localPhoto?.previewUrl ?? null,
+                    thumbnailSignedUrl: photo.thumbnailSignedUrl ?? localPhoto?.previewUrl ?? null,
+                  }
+                })
                 return {
-                  ...photo,
-                  signedUrl: photo.signedUrl ?? localPhoto?.previewUrl ?? null,
-                  thumbnailSignedUrl: photo.thumbnailSignedUrl ?? localPhoto?.previewUrl ?? null,
+                  ...group,
+                  [kind]: savedWithFallback,
                 }
               }),
             }
           : previous,
       )
     } catch (error) {
-      setCleaningPhotos(serverCleaningPhotos)
+      setPhotosBySpace(serverPhotosBySpace)
       if (error instanceof ApiError) {
         toast.error(error.message)
       } else {
@@ -395,34 +437,69 @@ export default function ManagerCleaningDetailPage() {
 
       {cleaning && (actionLabel || canWriteReport || canViewReport || canViewPhotos) && (
         <div className="mt-5 flex flex-col gap-3">
-          {canViewPhotos && (
-            canEditPhotos ? (
-              <ManagerCleaningPhotoField
-                cleaningId={id}
-                images={cleaningPhotos}
-                readOnly={false}
-                onError={(message) => {
-                  if (message) toast.error(message)
-                }}
-                onChange={(images) => {
-                  if (isSavingPhotos) return
-                  void saveCleaningPhotos(images)
-                }}
-              />
-            ) : (
-              <ReadOnlyPhotoGallery
-                title="청소 사진"
-                photos={cleaning.cleaningPhotos.map((photo) => ({
-                  id: photo.id,
-                  signedUrl: photo.signedUrl,
-                }))}
-                emptyMessage="등록된 청소 사진이 없어요."
-                emptyMessageClassName="text-center"
-                disableCarousel
-                imageClassName="object-contain"
-                useIntrinsicAspect
-              />
-            )
+          {canViewPhotos && photoSpaces.length > 0 && (
+            <section className="space-y-5">
+              <div>
+                <p className="text-[16px] font-semibold text-ink">공간별 청소 사진</p>
+                <p className="mt-1 text-[12px] text-ink-muted">
+                  {canEditBeforePhotos
+                    ? '모든 공간의 청소 전 사진을 1장 이상 올려야 청소를 시작할 수 있어요.'
+                    : canEditAfterPhotos
+                      ? '모든 공간의 청소 후 사진을 1장 이상 올려야 청소를 완료할 수 있어요.'
+                      : '청소 전/후 사진을 공간별로 확인하세요.'}
+                </p>
+              </div>
+              <div className="flex flex-col gap-6">
+                {photoSpaces.map((space) => {
+                  const beforeImages = photosBySpace[space.spaceId]?.before ?? []
+                  const afterImages = photosBySpace[space.spaceId]?.after ?? []
+                  const showBefore = canEditBeforePhotos || cleaning.status === 'in_progress' || cleaning.status === 'completed'
+                  const showAfter = canEditAfterPhotos || cleaning.status === 'completed'
+                  return (
+                    <div key={space.spaceId} className="rounded-xl border border-outline-dim p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[15px] font-semibold text-ink">{space.spaceName}</p>
+                        <span className="text-[11px] font-medium text-ink-muted">
+                          {SPACE_CATEGORY_LABELS[space.category]}
+                        </span>
+                      </div>
+                      {showBefore && (
+                        <ManagerCleaningPhotoField
+                          cleaningId={id}
+                          propertySpaceId={space.spaceId}
+                          kind="before"
+                          title="청소 전 사진"
+                          emptyText={canEditBeforePhotos ? '게스트가 사용한 현황을 사진으로 남겨주세요.' : '등록된 청소 전 사진이 없어요.'}
+                          images={beforeImages}
+                          readOnly={!canEditBeforePhotos}
+                          onError={(message) => { if (message) toast.error(message) }}
+                          onChange={(images) => {
+                            if (isSavingPhotos) return
+                            void saveSpacePhotos(space.spaceId, 'before', images)
+                          }}
+                        />
+                      )}
+                      {showAfter && (
+                        <ManagerCleaningPhotoField
+                          cleaningId={id}
+                          propertySpaceId={space.spaceId}
+                          kind="after"
+                          title="청소 후 사진"
+                          emptyText={canEditAfterPhotos ? '청소를 완료한 모습을 사진으로 남겨주세요.' : '등록된 청소 후 사진이 없어요.'}
+                          images={afterImages}
+                          readOnly={!canEditAfterPhotos}
+                          onError={(message) => { if (message) toast.error(message) }}
+                          onChange={(images) => {
+                            if (isSavingPhotos) return
+                            void saveSpacePhotos(space.spaceId, 'after', images)
+                          }}
+                        />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
           )}
           {canWriteReport && (
             <Link
@@ -446,13 +523,17 @@ export default function ManagerCleaningDetailPage() {
               variant="primary"
               loading={false}
               onClick={() => {
+                if (actionStatus === 'in_progress' && !canStartCleaning) {
+                  toast.info('모든 공간의 청소 전 사진을 1장 이상 등록한 뒤 청소를 시작할 수 있어요.')
+                  return
+                }
                 if (actionStatus === 'completed' && !canCompleteCleaning) {
-                  if (!allAssetsInspected && !hasCleaningPhotos) {
-                    toast.info('모든 시설물의 점검 상태를 선택하고 청소 사진을 1장 이상 등록한 뒤 청소를 완료할 수 있어요.')
+                  if (!allAssetsInspected && !allSpacesHaveAfter) {
+                    toast.info('모든 시설물 점검과 공간별 청소 후 사진을 등록한 뒤 청소를 완료할 수 있어요.')
                   } else if (!allAssetsInspected) {
                     toast.info('모든 시설물의 점검 상태를 선택한 뒤 청소를 완료할 수 있어요.')
                   } else {
-                    toast.info('청소 사진을 1장 이상 등록한 뒤 청소를 완료할 수 있어요.')
+                    toast.info('모든 공간의 청소 후 사진을 1장 이상 등록한 뒤 청소를 완료할 수 있어요.')
                   }
                   return
                 }
@@ -460,9 +541,13 @@ export default function ManagerCleaningDetailPage() {
               }}
               className={cn(
                 'h-12 w-full rounded-xl text-[15px] font-semibold',
+                actionStatus === 'in_progress' && !canStartCleaning && 'opacity-50',
                 actionStatus === 'completed' && !canCompleteCleaning && 'opacity-50',
               )}
-              aria-disabled={actionStatus === 'completed' && !canCompleteCleaning}
+              aria-disabled={
+                (actionStatus === 'in_progress' && !canStartCleaning) ||
+                (actionStatus === 'completed' && !canCompleteCleaning)
+              }
             >
               {actionLabel}
             </LoadingButton>
@@ -561,7 +646,7 @@ export default function ManagerCleaningDetailPage() {
                 <div className="px-4 py-4">
                   <p className="text-[15px] font-semibold text-ink">{space.name}</p>
                   <p className="mt-1 text-[13px] text-ink-muted">
-                    {space.floor}층 · {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
+                    {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
                   </p>
                   {space.notes && (
                     <p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink-muted">{space.notes}</p>

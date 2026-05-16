@@ -84,6 +84,11 @@ export const cleaningPlanEnum = pgEnum('cleaning_plan', [
   'regular',  // 정기 (월 3번째 청소부터 자동 적용)
 ])
 
+export const cleaningPhotoKindEnum = pgEnum('cleaning_photo_kind', [
+  'before', // 청소 전 (게스트 사용 현황)
+  'after',  // 청소 후
+])
+
 export const paymentMethodEnum = pgEnum('payment_method', [
   'card',          // 카드/간편 결제 (토스페이먼츠)
   'bank_transfer', // 무통장 입금
@@ -227,6 +232,8 @@ export const cleaningRequestPhotos = pgTable('cleaning_request_photos', {
   cleaningRequestId: uuid('cleaning_request_id')
     .notNull()
     .references(() => cleaningRequests.id, { onDelete: 'cascade' }),
+  propertySpaceId: uuid('property_space_id').references(() => propertySpaces.id, { onDelete: 'set null' }),
+  kind: cleaningPhotoKindEnum('kind').default('after').notNull(),
   storagePath: text('storage_path').notNull(),
   thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
   sortOrder: smallint('sort_order').default(0).notNull(),
@@ -272,7 +279,6 @@ export const propertySpaces = pgTable('property_spaces', {
     .notNull()
     .references(() => properties.id, { onDelete: 'cascade' }),
   category: propertySpaceCategoryEnum('category').notNull(),
-  floor: smallint('floor').default(1).notNull(),
   name: text('name').notNull(),
   pyeong: smallint('pyeong').notNull(),
   notes: text('notes'),

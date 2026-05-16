@@ -59,7 +59,6 @@ const CATEGORY_LABELS: Record<FixtureCategory, string> = {
 type SpaceDetail = {
   id: string
   category: SpaceCategory
-  floor: number
   name: string
   pyeong: number
   notes: string | null
@@ -156,7 +155,7 @@ export default function AdminSpaceDetailPage() {
         <section className="space-y-4">
           <div className="space-y-2">
             <p className="text-[14px] text-ink-muted">
-              {space.floor}층 · {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
+              {SPACE_CATEGORY_LABELS[space.category]} · {space.pyeong}평
             </p>
             {space.notes && (
               <p className="text-[14px] leading-relaxed text-ink-muted">{space.notes}</p>

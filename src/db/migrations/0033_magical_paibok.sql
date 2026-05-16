@@ -1,0 +1,1 @@
+ALTER TABLE "property_spaces" DROP COLUMN "floor";

@@ -44,7 +44,6 @@ export type PropertyPhoto = {
 export type PropertySpace = {
   id: string
   category: SpaceCategory
-  floor: number
   name: string
   pyeong: number
   notes: string | null

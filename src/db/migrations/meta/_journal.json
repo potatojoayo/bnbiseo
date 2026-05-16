@@ -225,6 +225,20 @@
       "when": 1778902638446,
       "tag": "0031_unique_madelyne_pryor",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1778905070225,
+      "tag": "0032_rapid_iron_fist",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1778906624343,
+      "tag": "0033_magical_paibok",
+      "breakpoints": true
     }
   ]
 }

@@ -36,7 +36,6 @@ type SpacePhoto = {
 type SpaceDetail = {
   id: string
   category: SpaceCategory
-  floor: number
   name: string
   pyeong: number
   notes: string | null
@@ -106,7 +105,6 @@ function AdminSpaceEditForm({
   const [deleting, setDeleting] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const [floor, setFloor] = useState<1 | 2 | 3>((space.floor as 1 | 2 | 3) || 1)
   const [category, setCategory] = useState<SpaceCategory>(space.category)
   const [name, setName] = useState(space.name)
   const [pyeong, setPyeong] = useState(String(space.pyeong))
@@ -123,7 +121,6 @@ function AdminSpaceEditForm({
   const updateMutation = useMutation({
     mutationFn: (payload: {
       category: SpaceCategory
-      floor: 1 | 2 | 3
       name: string
       pyeong: string
       notes?: string
@@ -141,7 +138,6 @@ function AdminSpaceEditForm({
                     ? {
                         ...item,
                         category: variables.category,
-                        floor: variables.floor,
                         name: variables.name,
                         pyeong: Number(variables.pyeong),
                         notes: variables.notes || null,
@@ -188,7 +184,6 @@ function AdminSpaceEditForm({
     try {
       await updateMutation.mutateAsync({
         category,
-        floor,
         name,
         pyeong,
         notes: notes || undefined,
@@ -261,24 +256,6 @@ function AdminSpaceEditForm({
                   </option>
                 ))}
               </select>
-            </CompoundField>
-            <CompoundField label="층수 선택">
-              <div className="flex gap-2">
-                {[1, 2, 3].map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setFloor(value as 1 | 2 | 3)}
-                    className={`inline-flex h-9 min-w-0 flex-1 items-center justify-center rounded-lg border text-[14px] font-medium transition-colors ${
-                      floor === value
-                        ? 'border-ink bg-ink text-white'
-                        : 'border-outline-strong text-ink hover:bg-surface-soft'
-                    }`}
-                  >
-                    {value}층
-                  </button>
-                ))}
-              </div>
             </CompoundField>
             <FloatingInput
               label="공간 이름"

@@ -25,6 +25,24 @@ type CleaningRequest = {
   propertyAddress: string | null
 }
 
+type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
+
+export type CleaningSpacePhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
+
+export type CleaningPhotosBySpace = {
+  spaceId: string
+  spaceName: string
+  category: SpaceCategory
+  before: CleaningSpacePhoto[]
+  after: CleaningSpacePhoto[]
+}
+
 type CleaningRequestDetail = CleaningRequest & {
   cancelledAt: string | null
   propertyAddressDetail: string | null
@@ -35,16 +53,9 @@ type CleaningRequestDetail = CleaningRequest & {
   managerPhone: string | null
   managerAvatarSignedUrl: string | null
   managerAvatarThumbnailSignedUrl: string | null
-  cleaningPhotos: Array<{
-    id: string
-    storagePath: string
-    thumbnailStoragePath: string
-    signedUrl: string | null
-    thumbnailSignedUrl: string | null
-  }>
+  cleaningPhotosBySpace: CleaningPhotosBySpace[]
+  legacyCleaningPhotos: Array<CleaningSpacePhoto & { kind: 'before' | 'after' }>
 }
-
-type SpaceCategory = 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
 type AssetCategory =
   | 'lighting'
   | 'furniture'
@@ -67,7 +78,6 @@ export type CleaningRequestReport = {
   spaces: Array<{
     id: string
     category: SpaceCategory
-    floor: number
     name: string
     pyeong: number
   }>
