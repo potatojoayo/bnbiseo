@@ -26,6 +26,7 @@ type ManagerPairedAfterFieldProps = {
   title?: string
   onChange: (next: Record<number, UploadedManagerCleaningImage>) => void
   onError?: (message: string | null) => void
+  onOpenLightbox?: (slot: number, kind: 'before' | 'after') => void
 }
 
 export function ManagerPairedAfterField({
@@ -37,6 +38,7 @@ export function ManagerPairedAfterField({
   title = '청소 사진',
   onChange,
   onError,
+  onOpenLightbox,
 }: ManagerPairedAfterFieldProps) {
   const inputRefs = useRef<Record<number, HTMLInputElement | null>>({})
   const [pendingSlot, setPendingSlot] = useState<number | null>(null)
@@ -82,15 +84,20 @@ export function ManagerPairedAfterField({
             <div key={before.id} className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <p className="text-[11px] text-ink-muted">청소 전 {slotLabel}</p>
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
-                  {beforeUrl ? (
+                {beforeUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenLightbox?.(slot, 'before')}
+                    disabled={!onOpenLightbox}
+                    className="relative block aspect-square w-full overflow-hidden rounded-lg bg-surface-soft transition-transform hover:scale-[1.02] disabled:cursor-default disabled:hover:scale-100"
+                  >
                     <ImageWithSkeleton src={beforeUrl} alt="" fill sizes="50vw" className="object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[11px] text-ink-faint">
-                      사진 없음
-                    </div>
-                  )}
-                </div>
+                  </button>
+                ) : (
+                  <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-surface-soft text-[11px] text-ink-faint">
+                    사진 없음
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -98,8 +105,15 @@ export function ManagerPairedAfterField({
                 <div className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
                   {after ? (
                     <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={after.previewUrl} alt="" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => onOpenLightbox?.(slot, 'after')}
+                        disabled={!onOpenLightbox}
+                        className="block h-full w-full disabled:cursor-default"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={after.previewUrl} alt="" className="h-full w-full object-cover" />
+                      </button>
                       {!readOnly && (
                         <>
                           <input

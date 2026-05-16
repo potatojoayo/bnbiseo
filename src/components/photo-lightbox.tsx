@@ -103,6 +103,9 @@ export function PhotoLightbox({ open, photos, startIndex, onClose }: PhotoLightb
           {photos.map((photo, index) => (
             <div
               key={index}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) onClose()
+              }}
               className="relative flex min-w-0 shrink-0 grow-0 basis-full items-center justify-center"
             >
               {photo.url ? (
@@ -110,10 +113,14 @@ export function PhotoLightbox({ open, photos, startIndex, onClose }: PhotoLightb
                 <img
                   src={photo.url}
                   alt=""
+                  onClick={(e) => e.stopPropagation()}
                   className="block max-h-[85dvh] w-full object-contain md:mx-auto md:max-h-[85dvh] md:w-auto md:max-w-[calc(100vw-200px)] md:rounded-2xl md:shadow-2xl"
                 />
               ) : (
-                <div className="flex h-[40dvh] w-full items-center justify-center text-[14px] text-ink-muted">
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex h-[40dvh] w-full items-center justify-center text-[14px] text-ink-muted"
+                >
                   사진을 불러올 수 없어요.
                 </div>
               )}

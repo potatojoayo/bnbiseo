@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { MapPinIcon } from 'lucide-react'
 import { ManagerCleaningPhotoField } from '@/components/manager-cleaning-photo-field'
 import { ManagerPairedAfterField } from '@/components/manager-paired-after-field'
+import { PhotoLightbox, type LightboxPhoto } from '@/components/photo-lightbox'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { CleaningStatusBadge } from '@/components/cleaning-status-badge'
 import { CompoundField, CompoundInput } from '@/components/ui/floating-input'
@@ -166,6 +167,36 @@ export default function ManagerCleaningDetailPage() {
     report?.report.assets.some((item) => item.assetId === asset.id && item.status),
   ) ?? false
   const photoSpaces = cleaning?.cleaningPhotosBySpace ?? []
+  const [openLightboxIndex, setOpenLightboxIndex] = useState<number | null>(null)
+  const { flatLightboxPhotos, lightboxIndexLookup } = useMemo(() => {
+    const flatLightboxPhotos: LightboxPhoto[] = []
+    const lightboxIndexLookup: Record<string, { before: number; after: number }> = {}
+    for (const space of photoSpaces) {
+      const sortedBefore = [...space.before].sort((a, b) => a.sortOrder - b.sortOrder)
+      const afterMap = photosBySpace[space.spaceId]?.afterBySlot ?? {}
+
+      sortedBefore.forEach((before, indexInSpace) => {
+        const slot = before.sortOrder
+        const afterLocal = afterMap[slot]
+        const slotLabel = `#${indexInSpace + 1}`
+
+        const beforeIdx = flatLightboxPhotos.length
+        flatLightboxPhotos.push({
+          url: before.signedUrl || before.thumbnailSignedUrl,
+          label: `${space.spaceName} · 청소 전 ${slotLabel}`,
+        })
+
+        const afterIdx = flatLightboxPhotos.length
+        flatLightboxPhotos.push({
+          url: afterLocal?.previewUrl ?? null,
+          label: `${space.spaceName} · 청소 후 ${slotLabel}`,
+        })
+
+        lightboxIndexLookup[`${space.spaceId}|${slot}`] = { before: beforeIdx, after: afterIdx }
+      })
+    }
+    return { flatLightboxPhotos, lightboxIndexLookup }
+  }, [photoSpaces, photosBySpace])
   const allSpacesHaveBefore = photoSpaces.length > 0 && photoSpaces.every(
     (space) => (photosBySpace[space.spaceId]?.before ?? []).length > 0,
   )
@@ -521,6 +552,11 @@ export default function ManagerCleaningDetailPage() {
                             if (isSavingPhotos) return
                             void saveAfterPhotos(space.spaceId, nextAfterBySlot)
                           }}
+                          onOpenLightbox={(slot, kind) => {
+                            const indices = lightboxIndexLookup[`${space.spaceId}|${slot}`]
+                            if (!indices) return
+                            setOpenLightboxIndex(kind === 'before' ? indices.before : indices.after)
+                          }}
                         />
                       )}
                     </div>
@@ -811,6 +847,13 @@ export default function ManagerCleaningDetailPage() {
           </DrawerContent>
         </Drawer>
       )}
+
+      <PhotoLightbox
+        open={openLightboxIndex !== null}
+        photos={flatLightboxPhotos}
+        startIndex={openLightboxIndex ?? 0}
+        onClose={() => setOpenLightboxIndex(null)}
+      />
     </div>
   )
 }
