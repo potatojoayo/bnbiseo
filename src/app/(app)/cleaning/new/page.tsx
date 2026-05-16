@@ -207,7 +207,7 @@ export default function NewCleaningPage() {
   }
 
   return (
-    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-0">
+    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-10">
       {/* Header */}
       <button
         type="button"
