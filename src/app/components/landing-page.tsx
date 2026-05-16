@@ -271,6 +271,36 @@ export default function LandingPage() {
 
       <hr className="border-t border-outline-dim mx-0" />
 
+      {/* Use Cases */}
+      <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
+        <div className={BADGE}>Use Cases</div>
+        <h2 className={SEC_TITLE}>
+          이럴 때
+          <br />
+          비앤비서를 찾으세요
+        </h2>
+        <p className={SEC_DESC}>
+          급한 상황부터 루틴 관리까지,<br className='sm:hidden'/> 호스트가 가장 많이 겪는 순간들이에요.
+        </p>
+
+        <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
+          {SCENARIOS.map((s, i) => (
+            <div
+              key={i}
+              className="bg-surface-dim rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
+            >
+              <div className="text-3xl mb-4">{s.icon}</div>
+              <div className="text-[17px] font-bold mb-2">{s.t}</div>
+              <div className="text-on-surface-subtle text-sm leading-relaxed">
+                {s.d}
+              </div>
+            </div>
+          ))}
+        </div>
+      </AnimatedSection>
+
+      <hr className="border-t border-outline-dim mx-0" />
+
       {/* Pricing */}
       <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
         <div className={BADGE}>Pricing</div>
@@ -400,36 +430,6 @@ export default function LandingPage() {
               청소 중 발견된 하자를 리포트로 알려드리고, 승인하시면 다음 방문에 수리까지 한 번에.
             </div>
           </div>
-        </div>
-      </AnimatedSection>
-
-      <hr className="border-t border-outline-dim mx-0" />
-
-      {/* Use Cases */}
-      <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
-        <div className={BADGE}>Use Cases</div>
-        <h2 className={SEC_TITLE}>
-          이럴 때
-          <br />
-          비앤비서를 찾으세요
-        </h2>
-        <p className={SEC_DESC}>
-          급한 상황부터 루틴 관리까지,<br className='sm:hidden'/> 호스트가 가장 많이 겪는 순간들이에요.
-        </p>
-
-        <div className="grid grid-cols-2 max-md:grid-cols-1 gap-4">
-          {SCENARIOS.map((s, i) => (
-            <div
-              key={i}
-              className="bg-surface-dim rounded-2xl p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
-            >
-              <div className="text-3xl mb-4">{s.icon}</div>
-              <div className="text-[17px] font-bold mb-2">{s.t}</div>
-              <div className="text-on-surface-subtle text-sm leading-relaxed">
-                {s.d}
-              </div>
-            </div>
-          ))}
         </div>
       </AnimatedSection>
 
