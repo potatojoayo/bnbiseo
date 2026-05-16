@@ -143,7 +143,10 @@ export default function CleaningDetailPage() {
       {/* Header */}
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() => {
+          if (window.history.length > 1) router.back()
+          else router.push('/home')
+        }}
         className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-surface-soft transition-colors text-ink"
       >
         <ChevronLeftIcon size={32} />
