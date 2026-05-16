@@ -325,6 +325,7 @@ export function PropertyDetailView({
             </CompoundInput>
           </section>
 
+          {/* 청소 준비 정보 섹션은 현재 호스트 화면에서 노출하지 않음
           <section className="mt-7 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
@@ -368,6 +369,7 @@ export function PropertyDetailView({
               </div>
             )}
           </section>
+          */}
 
           <section className="mt-7 space-y-4">
             <p className="text-[16px] font-semibold text-ink">공간 정보</p>

@@ -122,6 +122,38 @@ export default function ManagerCleaningDetailPage() {
     setPhotosBySpace(serverPhotosBySpace)
   }, [serverPhotosBySpace])
 
+  const [openLightboxIndex, setOpenLightboxIndex] = useState<number | null>(null)
+  const photoSpacesForLightbox = cleaning?.cleaningPhotosBySpace ?? []
+  const { flatLightboxPhotos, lightboxIndexLookup } = useMemo(() => {
+    const flatLightboxPhotos: LightboxPhoto[] = []
+    const lightboxIndexLookup: Record<string, { before: number; after: number }> = {}
+    for (const space of photoSpacesForLightbox) {
+      const sortedBefore = [...space.before].sort((a, b) => a.sortOrder - b.sortOrder)
+      const afterMap = photosBySpace[space.spaceId]?.afterBySlot ?? {}
+
+      sortedBefore.forEach((before, indexInSpace) => {
+        const slot = before.sortOrder
+        const afterLocal = afterMap[slot]
+        const slotLabel = `#${indexInSpace + 1}`
+
+        const beforeIdx = flatLightboxPhotos.length
+        flatLightboxPhotos.push({
+          url: before.signedUrl || before.thumbnailSignedUrl,
+          label: `${space.spaceName} · 청소 전 ${slotLabel}`,
+        })
+
+        const afterIdx = flatLightboxPhotos.length
+        flatLightboxPhotos.push({
+          url: afterLocal?.previewUrl ?? null,
+          label: `${space.spaceName} · 청소 후 ${slotLabel}`,
+        })
+
+        lightboxIndexLookup[`${space.spaceId}|${slot}`] = { before: beforeIdx, after: afterIdx }
+      })
+    }
+    return { flatLightboxPhotos, lightboxIndexLookup }
+  }, [photoSpacesForLightbox, photosBySpace])
+
   const openCleaning = openCleanings.find((item) => item.id === id)
   const previewCleaning = cleaning ?? openCleaning
 
@@ -166,37 +198,7 @@ export default function ManagerCleaningDetailPage() {
   const allAssetsInspected = cleaning?.assets.every((asset) =>
     report?.report.assets.some((item) => item.assetId === asset.id && item.status),
   ) ?? false
-  const photoSpaces = cleaning?.cleaningPhotosBySpace ?? []
-  const [openLightboxIndex, setOpenLightboxIndex] = useState<number | null>(null)
-  const { flatLightboxPhotos, lightboxIndexLookup } = useMemo(() => {
-    const flatLightboxPhotos: LightboxPhoto[] = []
-    const lightboxIndexLookup: Record<string, { before: number; after: number }> = {}
-    for (const space of photoSpaces) {
-      const sortedBefore = [...space.before].sort((a, b) => a.sortOrder - b.sortOrder)
-      const afterMap = photosBySpace[space.spaceId]?.afterBySlot ?? {}
-
-      sortedBefore.forEach((before, indexInSpace) => {
-        const slot = before.sortOrder
-        const afterLocal = afterMap[slot]
-        const slotLabel = `#${indexInSpace + 1}`
-
-        const beforeIdx = flatLightboxPhotos.length
-        flatLightboxPhotos.push({
-          url: before.signedUrl || before.thumbnailSignedUrl,
-          label: `${space.spaceName} · 청소 전 ${slotLabel}`,
-        })
-
-        const afterIdx = flatLightboxPhotos.length
-        flatLightboxPhotos.push({
-          url: afterLocal?.previewUrl ?? null,
-          label: `${space.spaceName} · 청소 후 ${slotLabel}`,
-        })
-
-        lightboxIndexLookup[`${space.spaceId}|${slot}`] = { before: beforeIdx, after: afterIdx }
-      })
-    }
-    return { flatLightboxPhotos, lightboxIndexLookup }
-  }, [photoSpaces, photosBySpace])
+  const photoSpaces = photoSpacesForLightbox
   const allSpacesHaveBefore = photoSpaces.length > 0 && photoSpaces.every(
     (space) => (photosBySpace[space.spaceId]?.before ?? []).length > 0,
   )
