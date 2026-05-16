@@ -416,8 +416,24 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Repair add-on */}
+        {/* AC cleaning add-on */}
         <div className="mt-6 bg-white rounded-xl border border-outline-dim p-5 flex items-center gap-4 transition-all duration-300 hover:scale-[1.02]">
+          <span className="text-2xl shrink-0">❄️</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline justify-between gap-3 mb-1 max-md:flex-col max-md:items-start max-md:gap-1">
+              <span className="text-sm font-bold">에어컨 청소</span>
+              <span className={`${FONT_DISPLAY} text-[15px] font-semibold tracking-tight text-brand shrink-0`}>
+                대당 90,000원
+              </span>
+            </div>
+            <div className="text-on-surface-subtle text-[12px] leading-relaxed">
+              등록된 에어컨 중 원하는 대수를 선택해 청소합니다. 첫 요청 시 30,000원 할인.
+            </div>
+          </div>
+        </div>
+
+        {/* Repair add-on */}
+        <div className="mt-3 bg-white rounded-xl border border-outline-dim p-5 flex items-center gap-4 transition-all duration-300 hover:scale-[1.02]">
           <span className="text-2xl shrink-0">🔧</span>
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline justify-between gap-3 mb-1 max-md:flex-col max-md:items-start max-md:gap-1">
