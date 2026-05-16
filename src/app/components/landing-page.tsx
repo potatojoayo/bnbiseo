@@ -448,13 +448,20 @@ export default function LandingPage() {
             오픈 기념 한정 혜택이에요.<br className='sm:hidden'/> 숙소 등록만 하면 바로 적용됩니다.
           </p>
 
-          <div className="flex flex-col md:flex-row gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {[
               {
                 emoji: "🎁",
                 title: "첫 청소 10,000원 할인",
                 desc: "숙소 무료 등록만 하면 즉시 적용",
                 value: "10,000원",
+                label: "할인",
+              },
+              {
+                emoji: "❄️",
+                title: "첫 에어컨 청소 30,000원 할인",
+                desc: "등록된 에어컨이 있다면 첫 요청에 적용",
+                value: "30,000원",
                 label: "할인",
               },
               {
@@ -467,7 +474,7 @@ export default function LandingPage() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="group relative md:flex-1 transition-transform duration-300 hover:scale-[1.02]"
+                className="group relative transition-transform duration-300 hover:scale-[1.02]"
                 style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.08)) drop-shadow(0 0 1px rgba(0,0,0,0.1))' }}
               >
                 <div className="ticket-card flex bg-white rounded-2xl">
