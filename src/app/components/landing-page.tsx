@@ -275,34 +275,128 @@ export default function LandingPage() {
       <AnimatedSection className={`${SECTION} py-24 max-md:py-16`}>
         <div className={BADGE}>Pricing</div>
         <h2 className={SEC_TITLE}>
-          단건 요청, 단건 결제
+          구독 없이, 쓴 만큼만
         </h2>
         <p className={SEC_DESC}>
-          구독 없이, 필요할 때만 쓰세요.
+          같은 숙소에서 한 달 3번째 청소부터 <span className="text-on-surface font-semibold">정기가가 자동 적용</span>돼요.
         </p>
 
+        {/* Room-based price cards */}
         <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4">
-          <div className="bg-white rounded-2xl border border-outline-dim p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]">
-            <div className="text-3xl mb-4">🧹</div>
-            <div className="text-[17px] font-bold mb-1">표준 청소</div>
-            <div className={`${FONT_DISPLAY} text-[28px] font-medium tracking-tight text-brand mb-3`}>35,000원~</div>
-            <div className="text-on-surface-subtle text-sm leading-relaxed">
-              면적·침구 수량 기준 산정. 에어비앤비 전문 호텔식 세팅 + 15항목 시설 점검 리포트 포함.
+          {[
+            { rooms: '2룸', regular: 40000, oneTime: 45000, note: null },
+            { rooms: '3룸', regular: 50000, oneTime: 55000, note: null },
+            { rooms: '4룸', regular: 80000, oneTime: 90000, note: '5룸 이상도 같은 패턴' },
+          ].map((tier) => (
+            <div
+              key={tier.rooms}
+              className="bg-white rounded-2xl border border-outline-dim p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]"
+            >
+              <div className="text-[17px] font-bold mb-5">{tier.rooms}</div>
+              <div className="mb-1.5 flex items-baseline gap-2">
+                <span className="text-[10px] font-bold tracking-widest uppercase text-on-surface-subtle">정기</span>
+                <span className={`${FONT_DISPLAY} text-[32px] max-md:text-[28px] font-medium tracking-tight text-brand leading-none`}>
+                  {tier.regular.toLocaleString()}<span className="text-[18px] ml-0.5">원</span>
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="text-[10px] font-bold tracking-widest uppercase text-on-surface-subtle">단건</span>
+                <span className="text-[15px] font-semibold text-on-surface-subtle">
+                  {tier.oneTime.toLocaleString()}원
+                </span>
+              </div>
+              {tier.note && (
+                <div className="text-[12px] text-on-surface-subtle border-t border-outline-dim/50 pt-3 mt-1">
+                  {tier.note}
+                </div>
+              )}
             </div>
+          ))}
+        </div>
+
+        {/* Included banner */}
+        <div className="mt-6 rounded-xl bg-surface-dim px-5 py-4 flex items-center gap-3 max-md:items-start">
+          <span className="text-xl shrink-0">✨</span>
+          <p className="text-sm leading-relaxed">
+            <span className="font-bold">호텔식 침구 세팅</span>
+            <span className="text-on-surface-subtle"> · </span>
+            <span className="font-bold">15항목 시설 점검 리포트</span>
+            <span className="text-on-surface-subtle"> 기본 포함</span>
+          </p>
+        </div>
+
+        {/* Add-ons + adjustments */}
+        <div className="mt-10">
+          <div className="text-on-surface-subtle text-xs font-semibold tracking-widest uppercase mb-4">옵션 · 할증 · 할인</div>
+          <div className="grid grid-cols-2 max-md:grid-cols-1 gap-3">
+            {[
+              {
+                icon: '🛏',
+                label: '추가 침대',
+                value: '+5,000원',
+                desc: '침실보다 침대가 많을 때 1개당',
+                tone: 'neutral' as const,
+              },
+              {
+                icon: '🧺',
+                label: '침구류 세탁',
+                value: '+10,000 / +20,000원',
+                desc: '숙소 내 세탁기 / 외부 코인세탁',
+                tone: 'neutral' as const,
+              },
+              {
+                icon: '🚨',
+                label: '당일(긴급) 요청',
+                value: '×1.5 할증',
+                desc: '체크인 직전 펑크 발생 시',
+                tone: 'warn' as const,
+              },
+              {
+                icon: '🎁',
+                label: '첫 청소 할인',
+                value: '-10,000원',
+                desc: '숙소 등록만 하면 자동 적용',
+                tone: 'good' as const,
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="bg-white rounded-xl border border-outline-dim p-5 flex items-center gap-4 transition-all duration-300 hover:scale-[1.02]"
+              >
+                <span className="text-2xl shrink-0">{item.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline justify-between gap-3 mb-1">
+                    <span className="text-sm font-bold">{item.label}</span>
+                    <span
+                      className={`${FONT_DISPLAY} text-[15px] font-semibold tracking-tight shrink-0 ${
+                        item.tone === 'good'
+                          ? 'text-brand'
+                          : item.tone === 'warn'
+                            ? 'text-red-500'
+                            : 'text-on-surface'
+                      }`}
+                    >
+                      {item.value}
+                    </span>
+                  </div>
+                  <div className="text-on-surface-subtle text-[12px] leading-relaxed">{item.desc}</div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="bg-white rounded-2xl border border-outline-dim p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]">
-            <div className="text-3xl mb-4">🚨</div>
-            <div className="text-[17px] font-bold mb-1">긴급 청소</div>
-            <div className={`${FONT_DISPLAY} text-[28px] font-medium tracking-tight text-brand mb-3`}>당일 대응</div>
-            <div className="text-on-surface-subtle text-sm leading-relaxed">
-              이모님 펑크, 급한 체크인 대응. 별도 할증이 있지만, 이리저리 사람 찾을 필요 없이 바로 해결.
+        </div>
+
+        {/* Repair add-on */}
+        <div className="mt-6 bg-white rounded-xl border border-outline-dim p-5 flex items-center gap-4 transition-all duration-300 hover:scale-[1.02]">
+          <span className="text-2xl shrink-0">🔧</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline justify-between gap-3 mb-1 max-md:flex-col max-md:items-start max-md:gap-1">
+              <span className="text-sm font-bold">수리 서비스</span>
+              <span className={`${FONT_DISPLAY} text-[15px] font-semibold tracking-tight text-brand shrink-0`}>
+                건별 견적
+              </span>
             </div>
-          </div>
-          <div className="bg-white rounded-2xl border border-outline-dim p-7 max-md:p-5 transition-all duration-300 hover:scale-[1.02]">
-            <div className="text-3xl mb-4">🔧</div>
-            <div className="text-[17px] font-bold mb-1">수리 서비스</div>
-            <div className={`${FONT_DISPLAY} text-[28px] font-medium tracking-tight text-brand mb-3`}>건별 견적</div>
-            <div className="text-on-surface-subtle text-sm leading-relaxed">
+            <div className="text-on-surface-subtle text-[12px] leading-relaxed">
               청소 중 발견된 하자를 리포트로 알려드리고, 승인하시면 다음 방문에 수리까지 한 번에.
             </div>
           </div>
