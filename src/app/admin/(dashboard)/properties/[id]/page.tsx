@@ -16,6 +16,7 @@ import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/us
 import { LoadingButton } from '@/components/ui/loading-button'
 import { CompoundField, CompoundInput, FloatingInput } from '@/components/ui/floating-input'
 import { AdminImageUploadField } from '@/components/admin-image-upload-field'
+import { CleaningPrepPhotoGrid } from '@/components/cleaning-prep-photo-grid'
 import type { UploadedAdminImage } from '@/lib/admin-image-upload'
 import {
   Drawer,
@@ -861,26 +862,6 @@ function AdminPropertyRegistrationForm({
         </div>
       </div>
     </>
-  )
-}
-
-function CleaningPrepPhotoGrid({ photos }: { photos: CleaningPrepPhoto[] }) {
-  if (photos.length === 0) return null
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {photos.map((photo) => {
-        const url = photo.thumbnailSignedUrl || photo.signedUrl
-        return (
-          <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
-            {url ? (
-              <ImageWithSkeleton src={url} alt="" fill sizes="(max-width: 768px) 33vw, 240px" className="object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">사진 없음</div>
-            )}
-          </div>
-        )
-      })}
-    </div>
   )
 }
 

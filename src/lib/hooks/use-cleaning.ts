@@ -31,6 +31,7 @@ export type CleaningSpacePhoto = {
   id: string
   storagePath: string
   thumbnailStoragePath: string
+  sortOrder: number
   signedUrl: string | null
   thumbnailSignedUrl: string | null
 }

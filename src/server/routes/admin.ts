@@ -368,6 +368,7 @@ adminRoutes.get('/cleaning/:id', async (c) => {
     id: photo.id,
     storagePath: photo.storagePath,
     thumbnailStoragePath: photo.thumbnailStoragePath,
+    sortOrder: photo.sortOrder,
     signedUrl: signedUrlMap.get(photo.storagePath) ?? null,
     thumbnailSignedUrl: signedUrlMap.get(photo.thumbnailStoragePath) ?? null,
   })

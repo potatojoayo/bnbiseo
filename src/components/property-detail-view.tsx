@@ -18,6 +18,7 @@ import {
 import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
+import { CleaningPrepPhotoGrid } from '@/components/cleaning-prep-photo-grid'
 import { CompoundField, CompoundInput } from '@/components/ui/floating-input'
 import {
   Drawer,
@@ -57,26 +58,6 @@ const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   dryer: '건조기',
   vent: '환기',
   other: '기타',
-}
-
-function CleaningPrepPhotoGrid({ photos }: { photos: CleaningPrepPhoto[] }) {
-  if (photos.length === 0) return null
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {photos.map((photo) => {
-        const url = photo.thumbnailSignedUrl || photo.signedUrl
-        return (
-          <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
-            {url ? (
-              <ImageWithSkeleton src={url} alt="" fill sizes="(max-width: 768px) 33vw, 240px" className="object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-[12px] text-ink-faint">사진 없음</div>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
 }
 
 function CleaningPrepReadGroup({

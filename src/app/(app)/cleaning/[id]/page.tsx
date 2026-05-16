@@ -22,7 +22,9 @@ import { formatDateLabel, formatTimeKorean, cn, formatKoreanPhone } from '@/lib/
 import { api } from '@/lib/api-client'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
-import type { CleaningPhotosBySpace, CleaningSpacePhoto } from '@/lib/hooks/use-cleaning'
+import type { CleaningPhotosBySpace } from '@/lib/hooks/use-cleaning'
+import { CleaningPrepPhotoGrid } from '@/components/cleaning-prep-photo-grid'
+import { CleaningPairPhotos } from '@/components/cleaning-pair-photos'
 
 const SPACE_CATEGORY_LABELS: Record<CleaningPhotosBySpace['category'], string> = {
   living_room: '거실',
@@ -31,31 +33,6 @@ const SPACE_CATEGORY_LABELS: Record<CleaningPhotosBySpace['category'], string> =
   veranda: '베란다',
   exterior: '외부',
   other: '기타',
-}
-
-function SpacePhotoGrid({ photos, emptyText }: { photos: CleaningSpacePhoto[]; emptyText: string }) {
-  if (photos.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-outline-strong px-3 py-4 text-center text-[12px] text-ink-muted">
-        {emptyText}
-      </div>
-    )
-  }
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {photos.map((photo) => {
-        const url = photo.thumbnailSignedUrl || photo.signedUrl
-        return (
-          <div key={photo.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-soft">
-            {url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={url} alt="" className="h-full w-full object-cover" />
-            ) : null}
-          </div>
-        )
-      })}
-    </div>
-  )
 }
 import {
   Drawer,
@@ -353,28 +330,34 @@ export default function CleaningDetailPage() {
                 : '매니저가 도착해 촬영한 청소 전 현황입니다.'}
             </p>
           </div>
-          <div className="flex flex-col gap-4">
-            {photoSpaces.map((space) => (
-              <div key={space.spaceId} className="rounded-xl border border-outline-dim p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-[15px] font-semibold text-ink">{space.spaceName}</p>
-                  <span className="text-[11px] font-medium text-ink-muted">
-                    {SPACE_CATEGORY_LABELS[space.category]}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[12px] font-semibold text-ink-muted tracking-wider uppercase">청소 전</p>
-                  <SpacePhotoGrid photos={space.before} emptyText="청소 전 사진이 없어요." />
-                </div>
-                {showAfterPhotos && (
-                  <div className="space-y-2">
-                    <p className="text-[12px] font-semibold text-ink-muted tracking-wider uppercase">청소 후</p>
-                    <SpacePhotoGrid photos={space.after} emptyText="청소 후 사진이 없어요." />
+          {showAfterPhotos ? (
+            <CleaningPairPhotos
+              spaces={photoSpaces.map((space) => ({
+                spaceId: space.spaceId,
+                spaceName: space.spaceName,
+                categoryLabel: SPACE_CATEGORY_LABELS[space.category],
+                before: space.before,
+                after: space.after,
+              }))}
+            />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {photoSpaces.map((space) => (
+                <div key={space.spaceId} className="rounded-xl border border-outline-dim p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[15px] font-semibold text-ink">{space.spaceName}</p>
+                    <span className="text-[11px] font-medium text-ink-muted">
+                      {SPACE_CATEGORY_LABELS[space.category]}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  <div className="space-y-2">
+                    <p className="text-[12px] font-semibold text-ink-muted tracking-wider uppercase">청소 전</p>
+                    <CleaningPrepPhotoGrid photos={space.before} emptyText="청소 전 사진이 없어요." />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
