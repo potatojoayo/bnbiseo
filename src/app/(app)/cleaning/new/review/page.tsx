@@ -352,7 +352,7 @@ export default function CleaningReviewPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <span className="text-[14px] text-ink-muted">최종 결제 금액</span>
-                <span className="inline-flex h-[20px] items-center rounded-md bg-surface-soft px-1.5 text-[11px] font-semibold text-ink">
+                <span className="inline-flex h-[20px] items-center rounded-md bg-ink px-1.5 text-[11px] font-semibold text-white">
                   {CLEANING_PLAN_LABELS[priceInfo.plan]}
                 </span>
               </div>

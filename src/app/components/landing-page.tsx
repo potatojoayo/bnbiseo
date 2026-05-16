@@ -39,7 +39,7 @@ const STEPS = [
   {
     icon: "✅",
     t: "호텔식 세팅 + 시설 점검 리포트",
-    d: "에어비앤비 전문 호텔식 세팅은 기본. 매 청소마다 15항목 시설 점검 후 사진 리포트를 보내드려요.",
+    d: "에어비앤비 전문 호텔식 세팅은 기본. 매 청소마다 시설 점검 후 사진 리포트를 보내드려요.",
   },
 ];
 
@@ -48,7 +48,7 @@ const MARQUEE_ITEMS = [
   "호텔식 세팅",
   "당일 긴급 대응",
   "시설 점검 리포트",
-  "15항목 체크리스트",
+  "시설 점검 체크리스트",
   "단건 요청 단건 결제",
   "숙소 정보 무료 등록",
   "담배냄새 특수 청소",
@@ -68,7 +68,7 @@ const SCENARIOS = [
   {
     icon: "📊",
     t: "시설 상태를 보고받고 싶을 때",
-    d: "15항목 체크리스트 + 사진 리포트. 전구, 수전, 도어락, 보일러까지 매번 확인해 드려요.",
+    d: "시설 점검 체크리스트 + 사진 리포트. 전구, 수전, 도어락, 보일러까지 매번 확인해 드려요.",
   },
   {
     icon: "🚬",
@@ -253,7 +253,7 @@ export default function LandingPage() {
               {[
                 { icon: "🧹", label: "청소", steps: "에어비앤비 전문 매니저가 호텔식 세팅. 35,000원부터.", time: "터치 한 번" },
                 { icon: "🚨", label: "긴급 대응", steps: "할증만 내면 당일 매니저 출동. 해외에서도, 새벽에도.", time: "당일 해결" },
-                { icon: "📋", label: "시설 점검", steps: "매 청소마다 15항목 체크리스트 + 사진 리포트 전송", time: "첫 청소 시" },
+                { icon: "📋", label: "시설 점검", steps: "매 청소마다 시설 점검 체크리스트 + 사진 리포트 전송", time: "첫 청소 시" },
               ].map((item, i) => (
                 <div key={i} className="flex gap-3 py-4 first:pt-0 last:pb-0">
                   <span className="text-lg shrink-0 mt-0.5">{item.icon}</span>
@@ -350,7 +350,7 @@ export default function LandingPage() {
           <p className="text-sm leading-relaxed">
             <span className="font-bold">호텔식 침구 세팅</span>
             <span className="text-on-surface-subtle"> · </span>
-            <span className="font-bold">15항목 시설 점검 리포트</span>
+            <span className="font-bold">시설 점검 리포트</span>
             <span className="text-on-surface-subtle"> 기본 포함</span>
           </p>
         </div>

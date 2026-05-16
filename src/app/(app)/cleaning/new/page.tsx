@@ -360,7 +360,7 @@ export default function NewCleaningPage() {
                 <span className="text-[14px] text-ink-muted">
                   {isUrgent ? '긴급 청소 금액' : '청소 금액'}
                 </span>
-                <span className="inline-flex h-[20px] items-center rounded-md bg-surface-soft px-1.5 text-[11px] font-semibold text-ink">
+                <span className="inline-flex h-[20px] items-center rounded-md bg-ink px-1.5 text-[11px] font-semibold text-white">
                   {CLEANING_PLAN_LABELS[priceInfo.plan]}
                 </span>
               </div>
@@ -444,7 +444,7 @@ export default function NewCleaningPage() {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">포함 서비스</p>
                   <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    호텔식 침구 세팅과 15항목 시설 점검 리포트가 기본 포함됩니다.
+                    호텔식 침구 세팅과 시설 점검 리포트가 기본 포함됩니다.
                   </div>
                 </div>
 

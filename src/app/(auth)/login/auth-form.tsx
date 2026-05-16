@@ -159,13 +159,13 @@ export function AuthForm() {
         return
       }
       setStep('profile')
+      setPending(false)
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         setStep('profile')
       } else {
         setMessage('프로필 확인 중 오류가 발생했습니다.')
       }
-    } finally {
       setPending(false)
     }
   }

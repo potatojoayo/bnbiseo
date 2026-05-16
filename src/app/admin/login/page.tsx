@@ -16,6 +16,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [navigating, setNavigating] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,11 +44,20 @@ export default function AdminLoginPage() {
         return
       }
 
+      setNavigating(true)
       router.replace('/admin')
     } catch {
       setError('로그인에 실패했습니다.')
       setLoading(false)
     }
+  }
+
+  if (navigating) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-white px-6">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />
+      </div>
+    )
   }
 
   return (

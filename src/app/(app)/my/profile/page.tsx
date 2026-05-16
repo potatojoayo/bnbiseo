@@ -152,9 +152,8 @@ export default function ProfilePage() {
           }`}
         >
           <span
-            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
-              marketingOptedIn ? 'translate-x-[22px]' : 'translate-x-0.5'
-            }`}
+            className="absolute top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-white shadow transition-[left] duration-200"
+            style={{ left: marketingOptedIn ? '22px' : '2px' }}
           />
         </button>
       </div>

@@ -149,13 +149,9 @@ function AssetReadOnlyCard({
           </span>
         </div>
 
-        {memo ? (
+        {memo && (
           <div className="mt-4 rounded-2xl bg-surface-subtle px-4 py-3">
             <p className="text-[14px] leading-relaxed text-ink">{memo}</p>
-          </div>
-        ) : (
-          <div className="mt-4 rounded-2xl border border-dashed border-outline-dim px-4 py-3 text-[13px] text-ink-faint">
-            기록된 메모가 없어요.
           </div>
         )}
       </div>
@@ -242,18 +238,14 @@ export function CleaningReportReadOnly({
       </section>
 
       <div className="mt-8 flex flex-col gap-7">
-        {groupedSpaces.map((space) => (
-          <section key={space.id} className="space-y-3">
-            <SectionHeader
-              title={space.name}
-              description={`${SPACE_CATEGORY_LABELS[space.category]} · ${space.pyeong}평`}
-            />
-
-            {space.assets.length === 0 ? (
-              <div className="rounded-[24px] border border-dashed border-outline-strong bg-surface-subtle px-4 py-6 text-center text-[14px] text-ink-muted">
-                등록된 시설물이 없어요.
-              </div>
-            ) : (
+        {groupedSpaces
+          .filter((space) => space.assets.length > 0)
+          .map((space) => (
+            <section key={space.id} className="space-y-3">
+              <SectionHeader
+                title={space.name}
+                description={`${SPACE_CATEGORY_LABELS[space.category]} · ${space.pyeong}평`}
+              />
               <div className="flex flex-col gap-3">
                 {space.assets.map((asset) => (
                   <AssetReadOnlyCard
@@ -263,9 +255,8 @@ export function CleaningReportReadOnly({
                   />
                 ))}
               </div>
-            )}
-          </section>
-        ))}
+            </section>
+          ))}
 
         {uncategorizedAssets.length > 0 && (
           <section className="space-y-3">

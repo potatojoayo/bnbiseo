@@ -61,7 +61,7 @@ export default function ManagerLoginPage() {
     setMessage(undefined)
   }
 
-  if (authLoading || (user && managerLoading)) {
+  if (authLoading || (user && managerLoading) || (user && pending)) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-white px-6">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-outline-dim border-t-ink-muted" />

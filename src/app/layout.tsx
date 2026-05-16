@@ -41,6 +41,12 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.bnbiseo.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  formatDetection: {
+    telephone: false,
+    address: false,
+    email: false,
+    date: false,
+  },
   title: "에어비앤비 청소·시설관리 | 마포·서대문 비앤비서",
   description:
     "에어비앤비 전문 호텔식 청소 + 15항목 시설 점검 리포트. 이모님 펑크에도 당일 긴급 대응. 마포구·서대문구 호스트 전용.",
