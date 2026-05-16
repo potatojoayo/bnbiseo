@@ -79,6 +79,11 @@ export const cleaningTypeEnum = pgEnum('cleaning_type', [
   'urgent',       // 긴급 청소 (당일)
 ])
 
+export const cleaningPlanEnum = pgEnum('cleaning_plan', [
+  'one_time', // 단건 (월 1·2번째 청소)
+  'regular',  // 정기 (월 3번째 청소부터 자동 적용)
+])
+
 export const paymentMethodEnum = pgEnum('payment_method', [
   'card',          // 카드/간편 결제 (토스페이먼츠)
   'bank_transfer', // 무통장 입금
@@ -199,6 +204,7 @@ export const cleaningRequests = pgTable('cleaning_requests', {
   managerId: uuid('manager_id')
     .references(() => managers.id, { onDelete: 'set null' }),
   cleaningType: cleaningTypeEnum('cleaning_type').default('standard').notNull(),
+  cleaningPlan: cleaningPlanEnum('cleaning_plan').default('one_time').notNull(),
   status: cleaningStatusEnum('status').default('pending').notNull(),
   scheduledDate: text('scheduled_date').notNull(), // YYYY-MM-DD
   scheduledTime: text('scheduled_time').notNull(), // HH:MM

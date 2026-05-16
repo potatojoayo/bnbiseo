@@ -29,11 +29,12 @@ export function ManagerCleaningCard({
           <p className="text-[15px] font-semibold text-ink">
             {cleaning.propertyName || '숙소'}
           </p>
-          {cleaning.cleaningType === 'urgent' && (
-            <p className="mt-1 text-[12px] font-medium text-brand">
-              긴급 청소
-            </p>
-          )}
+          <p className="mt-1 text-[12px] font-medium text-ink-muted">
+            {cleaning.cleaningType === 'urgent' && (
+              <span className="text-brand mr-1.5">긴급 청소</span>
+            )}
+            <span>{cleaning.cleaningPlan === 'regular' ? '정기' : '단건'}</span>
+          </p>
         </div>
         {showStatus && (
           <CleaningStatusBadge

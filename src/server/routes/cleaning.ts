@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
-import { eq, and, desc, inArray, isNull } from 'drizzle-orm'
+import { eq, and, desc, gte, lt, inArray, isNotNull, isNull, ne } from 'drizzle-orm'
 import { db } from '@/db'
 import {
   cleaningInspectionAssetPhotos,
@@ -16,7 +16,11 @@ import {
   propertySpaces,
 } from '@/db/schema'
 import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
-import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT } from '@/lib/cleaning-pricing'
+import {
+  calculateCleaningPrice,
+  determineCleaningPlan,
+  FIRST_CLEANING_DISCOUNT,
+} from '@/lib/cleaning-pricing'
 import { summarizeSpaces } from '@/lib/property-space-summary'
 import {
   notifyCleaningBankTransferRequested,
@@ -49,6 +53,16 @@ function getSupabaseAdmin() {
   )
 }
 
+/** KST 기준 청구월의 시작/다음 달 시작 시점 (UTC Date 반환) */
+function getKstMonthBounds(now: Date = new Date()) {
+  const kstNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+  const year = kstNow.getFullYear()
+  const month = kstNow.getMonth() // 0-11
+  const monthStart = new Date(Date.UTC(year, month, 1, -9, 0, 0, 0))
+  const monthEnd = new Date(Date.UTC(year, month + 1, 1, -9, 0, 0, 0))
+  return { monthStart, monthEnd }
+}
+
 async function createSignedUrlMap(paths: string[]) {
   const map = new Map<string, string | null>()
   if (paths.length === 0) return map
@@ -75,6 +89,7 @@ cleaningRoutes.get('/', async (c) => {
       propertyId: cleaningRequests.propertyId,
       hostId: cleaningRequests.hostId,
       cleaningType: cleaningRequests.cleaningType,
+      cleaningPlan: cleaningRequests.cleaningPlan,
       status: cleaningRequests.status,
       scheduledDate: cleaningRequests.scheduledDate,
       scheduledTime: cleaningRequests.scheduledTime,
@@ -110,6 +125,7 @@ cleaningRoutes.get('/:id', async (c) => {
       propertyId: cleaningRequests.propertyId,
       hostId: cleaningRequests.hostId,
       cleaningType: cleaningRequests.cleaningType,
+      cleaningPlan: cleaningRequests.cleaningPlan,
       status: cleaningRequests.status,
       scheduledDate: cleaningRequests.scheduledDate,
       scheduledTime: cleaningRequests.scheduledTime,
@@ -338,8 +354,8 @@ cleaningRoutes.post('/', async (c) => {
 
   const summary = summarizeSpaces(spaces)
 
-  if (!summary.pyeong) {
-    return c.json({ error: '숙소 면적 정보가 필요해요' }, 400)
+  if (!summary.bedrooms) {
+    return c.json({ error: '숙소 침실 정보가 필요해요' }, 400)
   }
 
   const beddingFixtures = await db
@@ -356,11 +372,26 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ error: '이 숙소는 침구류 세탁 옵션이 설정되어 있지 않아요.' }, 400)
   }
 
+  // 청구월 내 이 숙소의 결제완료(미취소) 청소 건수로 정기/단건 결정
+  const { monthStart, monthEnd } = getKstMonthBounds()
+  const paidThisMonth = await db
+    .select({ id: cleaningRequests.id })
+    .from(cleaningRequests)
+    .where(and(
+      eq(cleaningRequests.propertyId, propertyId),
+      isNotNull(cleaningRequests.paidAt),
+      gte(cleaningRequests.paidAt, monthStart),
+      lt(cleaningRequests.paidAt, monthEnd),
+      ne(cleaningRequests.status, 'cancelled'),
+    ))
+
+  const plan = determineCleaningPlan(paidThisMonth.length)
+
   // Calculate price
   const priceResult = calculateCleaningPrice({
-    pyeong: summary.pyeong,
+    bedrooms: summary.bedrooms,
     beddings: beddingFixtures.length,
-    bathrooms: summary.bathrooms ?? 0,
+    plan,
     isUrgent,
     linenWash,
     linenWashLocation: property.linenWashLocation,
@@ -387,6 +418,7 @@ cleaningRoutes.post('/', async (c) => {
       propertyId,
       hostId: profileId,
       cleaningType: isUrgent ? 'urgent' : 'standard',
+      cleaningPlan: plan,
       status: 'pending_payment',
       scheduledDate,
       scheduledTime,

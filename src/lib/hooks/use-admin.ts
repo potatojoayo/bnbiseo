@@ -8,6 +8,7 @@ type PendingItem = {
   scheduledDate: string
   scheduledTime: string
   cleaningType: string
+  cleaningPlan: 'regular' | 'one_time'
   finalPrice: number
   propertyName: string | null
   hostName: string | null
@@ -18,6 +19,7 @@ type ScheduleItem = {
   scheduledTime: string
   status: string
   cleaningType: string
+  cleaningPlan: 'regular' | 'one_time'
   propertyName: string | null
   managerName: string | null
 }
@@ -44,6 +46,7 @@ type CleaningRequest = {
   managerId: string | null
   managerName: string | null
   cleaningType: string
+  cleaningPlan: 'regular' | 'one_time'
   status: string
   scheduledDate: string
   scheduledTime: string
@@ -224,6 +227,7 @@ export type AdminCleaningDetail = {
   hostId: string | null
   managerId: string | null
   cleaningType: string
+  cleaningPlan: 'regular' | 'one_time'
   status: string
   scheduledDate: string
   scheduledTime: string

@@ -4,8 +4,14 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BanknoteIcon, ChevronDownIcon, ChevronLeftIcon, CreditCardIcon } from 'lucide-react'
 import { loadTossPayments } from '@tosspayments/tosspayments-sdk'
-import { cn, getToday } from '@/lib/utils'
-import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT, LINEN_WASH_LABELS } from '@/lib/cleaning-pricing'
+import { cn, getToday, countPaidCleaningsThisMonth } from '@/lib/utils'
+import {
+  CLEANING_PLAN_LABELS,
+  FIRST_CLEANING_DISCOUNT,
+  LINEN_WASH_LABELS,
+  calculateCleaningPrice,
+  determineCleaningPlan,
+} from '@/lib/cleaning-pricing'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
 import { useAuth } from '@/lib/auth-provider'
@@ -129,11 +135,16 @@ export default function CleaningReviewPage() {
   const isUrgent = date === getToday()
   const selectedProperty = properties.find((p) => p.id === propertyId)
 
-  const priceInfo = selectedProperty?.pyeong
+  const paidThisMonth = selectedProperty
+    ? countPaidCleaningsThisMonth(cleaningHistory, selectedProperty.id)
+    : 0
+  const plan = determineCleaningPlan(paidThisMonth)
+
+  const priceInfo = selectedProperty?.bedrooms
     ? calculateCleaningPrice({
-        pyeong: selectedProperty.pyeong,
+        bedrooms: selectedProperty.bedrooms,
         beddings: selectedProperty.beddings ?? 0,
-        bathrooms: selectedProperty.bathrooms ?? 0,
+        plan,
         isUrgent,
         linenWash,
         linenWashLocation: selectedProperty.linenWashLocation,
@@ -339,7 +350,12 @@ export default function CleaningReviewPage() {
         {priceInfo && (
           <div className="rounded-xl border border-ink-faint px-4 py-4">
             <div className="flex items-center justify-between">
-              <span className="text-[14px] text-ink-muted">최종 결제 금액</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[14px] text-ink-muted">최종 결제 금액</span>
+                <span className="inline-flex h-[20px] items-center rounded-md bg-surface-soft px-1.5 text-[11px] font-semibold text-ink">
+                  {CLEANING_PLAN_LABELS[priceInfo.plan]}
+                </span>
+              </div>
               <div className="text-right">
                 {isFirstCleaning && (
                   <span className="text-[14px] text-ink-faint line-through mr-2">

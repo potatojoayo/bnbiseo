@@ -198,6 +198,9 @@ export default function AdminCleaningDetailPage() {
               {cleaning.cleaningType === 'urgent' && (
                 <span className="ml-1.5 text-[12px] text-brand">긴급</span>
               )}
+              <span className="ml-1.5 text-[12px] text-ink-muted">
+                · {cleaning.cleaningPlan === 'regular' ? '정기' : '단건'}
+              </span>
             </span>
           </div>
           <div className="flex items-center gap-2.5">

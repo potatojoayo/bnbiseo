@@ -243,6 +243,9 @@ export default function CleaningDetailPage() {
             {cleaning.cleaningType === 'urgent' && (
               <span className="text-brand ml-1.5 text-[12px]">긴급</span>
             )}
+            <span className="text-ink-muted ml-1.5 text-[12px]">
+              · {cleaning.cleaningPlan === 'regular' ? '정기' : '단건'}
+            </span>
           </span>
         </div>
         <div className="flex items-center gap-2.5">

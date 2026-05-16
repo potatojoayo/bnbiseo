@@ -7,8 +7,17 @@ import { CheckIcon, ChevronLeftIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { CalendarPicker } from '@/components/calendar-picker'
 import { PropertyCard } from '@/components/property-card'
-import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime } from '@/lib/utils'
-import { calculateCleaningPrice, FIRST_CLEANING_DISCOUNT, LINEN_WASH_PRICING, LINEN_WASH_LABELS } from '@/lib/cleaning-pricing'
+import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime, countPaidCleaningsThisMonth } from '@/lib/utils'
+import {
+  CLEANING_PLAN_LABELS,
+  EXTRA_BED_PRICE,
+  FIRST_CLEANING_DISCOUNT,
+  LINEN_WASH_LABELS,
+  LINEN_WASH_PRICING,
+  REGULAR_PLAN_THRESHOLD,
+  calculateCleaningPrice,
+  determineCleaningPlan,
+} from '@/lib/cleaning-pricing'
 import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
 import { useProperties } from '@/lib/hooks/use-properties'
 import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
@@ -46,11 +55,16 @@ export default function NewCleaningPage() {
   const selectedProperty = activeProperties.find((p) => p.id === selectedPropertyId)
   const timeSlots = getAvailableTimeSlots(date)
 
-  const priceInfo = selectedProperty?.pyeong
+  const paidThisMonth = selectedProperty
+    ? countPaidCleaningsThisMonth(cleaningHistory, selectedProperty.id)
+    : 0
+  const plan = determineCleaningPlan(paidThisMonth)
+
+  const priceInfo = selectedProperty?.bedrooms
     ? calculateCleaningPrice({
-        pyeong: selectedProperty.pyeong,
+        bedrooms: selectedProperty.bedrooms,
         beddings: selectedProperty.beddings ?? 0,
-        bathrooms: selectedProperty.bathrooms ?? 0,
+        plan,
         isUrgent,
         linenWash,
         linenWashLocation: selectedProperty.linenWashLocation,
@@ -342,9 +356,14 @@ export default function NewCleaningPage() {
         {priceInfo && (
           <div className="rounded-xl border border-ink-faint px-4 py-4">
             <div className="flex items-center justify-between">
-              <span className="text-[14px] text-ink-muted">
-                {isUrgent ? '긴급 청소 금액' : '청소 금액'}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[14px] text-ink-muted">
+                  {isUrgent ? '긴급 청소 금액' : '청소 금액'}
+                </span>
+                <span className="inline-flex h-[20px] items-center rounded-md bg-surface-soft px-1.5 text-[11px] font-semibold text-ink">
+                  {CLEANING_PLAN_LABELS[priceInfo.plan]}
+                </span>
+              </div>
               <div className="text-right">
                 {isFirstCleaning && (
                   <span className="text-[14px] text-ink-faint line-through mr-2">
@@ -364,6 +383,11 @@ export default function NewCleaningPage() {
             {isUrgent && (
               <p className="text-[12px] text-ink-muted mt-1">
                 긴급 할증 50% 포함
+              </p>
+            )}
+            {priceInfo.plan === 'one_time' && (
+              <p className="text-[12px] text-ink-muted mt-1">
+                이번 달 {REGULAR_PLAN_THRESHOLD + 1}번째 청소부터 정기가가 자동 적용돼요.
               </p>
             )}
           </div>
@@ -389,10 +413,31 @@ export default function NewCleaningPage() {
 
               <div className="flex flex-col gap-5 mt-2">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">기본 요금</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">기본 요금 (침실 수 기준)</p>
                   <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    평수, 침대, 화장실 수를 기준으로 청소비가 산정됩니다.
-                    <span className="block text-[13px] text-ink-muted mt-1">1평당 5,000원 · 침대 1개당 5,000원 · 화장실 1개당 5,000원</span>
+                    <div className="grid grid-cols-3 gap-y-1.5 text-[13px]">
+                      <span className="text-ink-muted">방 수</span>
+                      <span className="text-ink-muted text-right">정기</span>
+                      <span className="text-ink-muted text-right">단건</span>
+                      <span>2룸</span><span className="text-right">40,000원</span><span className="text-right">45,000원</span>
+                      <span>3룸</span><span className="text-right">50,000원</span><span className="text-right">55,000원</span>
+                      <span>4룸</span><span className="text-right">80,000원</span><span className="text-right">90,000원</span>
+                    </div>
+                    <p className="mt-2 text-[12px] text-ink-muted">5룸 이상은 동일한 패턴으로 산정됩니다.</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">정기 / 단건</p>
+                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
+                    같은 숙소의 결제완료 청소가 이번 달 {REGULAR_PLAN_THRESHOLD}건이 되면, 다음 청소부터 정기가가 자동 적용됩니다.
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">추가 침대</p>
+                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
+                    침실당 침대 1개는 무료, 초과 침대 1개당 {EXTRA_BED_PRICE.toLocaleString()}원이 추가됩니다.
                   </div>
                 </div>
 
@@ -406,14 +451,7 @@ export default function NewCleaningPage() {
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">긴급 청소</p>
                   <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    당일 요청 시 긴급 청소로 진행되며, 50% 할증이 적용됩니다.
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">최소 금액</p>
-                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
-                    기본 청소 요금은 최소 35,000원부터 시작합니다.
+                    당일 요청 시 긴급 청소로 진행되며, 기본 금액에 50% 할증이 적용됩니다.
                   </div>
                 </div>
               </div>

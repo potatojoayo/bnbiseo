@@ -304,7 +304,12 @@ export default function ManagerCleaningDetailPage() {
           <div className="mt-3 border-t border-outline-dim" />
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-[13px] text-ink-muted">청소 유형</p>
-            <p className="text-[14px] font-medium text-ink">{CLEANING_TYPE_LABELS[previewCleaning.cleaningType]}</p>
+            <p className="text-[14px] font-medium text-ink">
+              {CLEANING_TYPE_LABELS[previewCleaning.cleaningType]}
+              <span className="ml-1.5 text-[12px] text-ink-muted">
+                · {previewCleaning.cleaningPlan === 'regular' ? '정기' : '단건'}
+              </span>
+            </p>
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-[13px] text-ink-muted">요청 상태</p>

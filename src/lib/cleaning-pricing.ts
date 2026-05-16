@@ -5,6 +5,7 @@ export const MIN_BOOKING_LEAD_HOURS = 3
 export const FIRST_CLEANING_DISCOUNT = 10000
 
 export type LinenWashLocation = 'in_house' | 'external'
+export type CleaningPlan = 'regular' | 'one_time'
 
 export const LINEN_WASH_PRICING: Record<LinenWashLocation, number> = {
   in_house: 10000,
@@ -16,39 +17,66 @@ export const LINEN_WASH_LABELS: Record<LinenWashLocation, string> = {
   external: '외부 코인 세탁기/건조기 이용',
 }
 
-export const CLEANING_PRICING = {
-  pricePerPyeong: 5000,
-  perBedding: 5000,
-  perBathroom: 5000,
-  minimumCharge: 35000,
-  urgentSurchargeRate: 1.5,
-} as const
+export const CLEANING_PLAN_LABELS: Record<CleaningPlan, string> = {
+  regular: '정기',
+  one_time: '단건',
+}
+
+/** 청구월의 결제완료 청소 건수가 이 값 이상이면 다음 청소부터 정기가 적용 */
+export const REGULAR_PLAN_THRESHOLD = 2
+
+/** 침실당 침대 1개 무료, 초과 1개당 추가금 */
+export const EXTRA_BED_PRICE = 5000
+
+/** 당일(긴급) 할증 배율 */
+export const URGENT_SURCHARGE_RATE = 1.5
+
+const REGULAR_BASE = { even: 40000, odd: 50000 } as const
+const ONE_TIME_BASE = { even: 45000, odd: 55000 } as const
+
+/**
+ * 방 수 기반 베이스 가격.
+ *  - 1룸은 2룸 가격
+ *  - 짝수 룸 = 2룸 × (n/2)
+ *  - 홀수 룸 = 3룸 × ((n-1)/2)
+ */
+export function getRoomBasePrice(bedrooms: number, plan: CleaningPlan): number {
+  const rooms = Math.max(bedrooms, 2)
+  const isEven = rooms % 2 === 0
+  const multiplier = isEven ? rooms / 2 : (rooms - 1) / 2
+  const base = plan === 'regular'
+    ? (isEven ? REGULAR_BASE.even : REGULAR_BASE.odd)
+    : (isEven ? ONE_TIME_BASE.even : ONE_TIME_BASE.odd)
+  return base * multiplier
+}
+
+/** 청구월 내 결제완료 청소 건수로 정기/단건 결정 */
+export function determineCleaningPlan(paidCountThisMonth: number): CleaningPlan {
+  return paidCountThisMonth >= REGULAR_PLAN_THRESHOLD ? 'regular' : 'one_time'
+}
 
 export function calculateCleaningPrice(input: {
-  pyeong: number
+  bedrooms: number
   beddings: number
-  bathrooms: number
+  plan: CleaningPlan
   isUrgent?: boolean
   linenWash?: boolean
   linenWashLocation?: LinenWashLocation | null
 }) {
   const {
-    pyeong,
+    bedrooms,
     beddings,
-    bathrooms,
+    plan,
     isUrgent = false,
     linenWash = false,
     linenWashLocation = null,
   } = input
 
-  const areaCharge = pyeong * CLEANING_PRICING.pricePerPyeong
-  const beddingCharge = beddings * CLEANING_PRICING.perBedding
-  const bathroomCharge = bathrooms * CLEANING_PRICING.perBathroom
+  const roomCharge = getRoomBasePrice(bedrooms, plan)
+  const extraBeds = Math.max(beddings - bedrooms, 0)
+  const extraBedCharge = extraBeds * EXTRA_BED_PRICE
 
-  const baseSubtotal = Math.max(
-    areaCharge + beddingCharge + bathroomCharge,
-    CLEANING_PRICING.minimumCharge,
-  )
+  const baseSubtotal = roomCharge + extraBedCharge
 
   const linenWashCharge = linenWash && linenWashLocation
     ? LINEN_WASH_PRICING[linenWashLocation]
@@ -57,10 +85,21 @@ export function calculateCleaningPrice(input: {
   const subtotal = baseSubtotal + linenWashCharge
 
   const urgentSurcharge = isUrgent
-    ? Math.round(baseSubtotal * (CLEANING_PRICING.urgentSurchargeRate - 1))
+    ? Math.round(baseSubtotal * (URGENT_SURCHARGE_RATE - 1))
     : 0
 
   const total = Math.ceil((subtotal + urgentSurcharge) / 1000) * 1000
 
-  return { subtotal, urgentSurcharge, linenWashCharge, total, isUrgent }
+  return {
+    plan,
+    isUrgent,
+    roomCharge,
+    extraBeds,
+    extraBedCharge,
+    baseSubtotal,
+    subtotal,
+    urgentSurcharge,
+    linenWashCharge,
+    total,
+  }
 }

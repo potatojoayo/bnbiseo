@@ -89,6 +89,36 @@ export function getDefaultTime(selectedDate: string): string {
 
 // ─── Phone Formatting ────────────────────────────────────────────────────────
 
+// ─── Cleaning plan helpers ───────────────────────────────────────────────────
+
+/** 청구월(KST) 시작/다음 달 시작 시점 (UTC Date) */
+export function getKstMonthBoundsUtc(now: Date = new Date()): { start: Date; end: Date } {
+  const kstNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+  const year = kstNow.getFullYear()
+  const month = kstNow.getMonth()
+  const start = new Date(Date.UTC(year, month, 1, -9, 0, 0, 0))
+  const end = new Date(Date.UTC(year, month + 1, 1, -9, 0, 0, 0))
+  return { start, end }
+}
+
+/** 특정 숙소의 이번 청구월 결제완료(미취소) 청소 건수 */
+export function countPaidCleaningsThisMonth(
+  cleanings: Array<{ propertyId: string; paidAt: string | null; status: string }>,
+  propertyId: string,
+  now: Date = new Date(),
+): number {
+  const { start, end } = getKstMonthBoundsUtc(now)
+  const startMs = start.getTime()
+  const endMs = end.getTime()
+  return cleanings.filter((cleaning) => {
+    if (cleaning.propertyId !== propertyId) return false
+    if (cleaning.status === 'cancelled') return false
+    if (!cleaning.paidAt) return false
+    const paidMs = new Date(cleaning.paidAt).getTime()
+    return paidMs >= startMs && paidMs < endMs
+  }).length
+}
+
 /** "+821012345678" → "010-1234-5678" (한국식 표기) */
 export function formatKoreanPhone(raw: string | null | undefined): string {
   if (!raw) return ''

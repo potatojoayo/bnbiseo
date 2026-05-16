@@ -7,6 +7,7 @@ type CleaningRequest = {
   propertyId: string
   hostId: string
   cleaningType: 'standard' | 'urgent'
+  cleaningPlan: 'regular' | 'one_time'
   status: 'pending_payment' | 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
   scheduledDate: string
   scheduledTime: string
