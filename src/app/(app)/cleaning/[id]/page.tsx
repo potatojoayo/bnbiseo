@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ChevronLeftIcon,
@@ -54,8 +54,15 @@ const STATUS_CONFIG: Record<CleaningStatus, { label: string; step: number }> = {
 const PROCESS_STEPS = [
   { num: 1, title: '결제 완료', desc: '청소 요청과 결제가 완료되었어요.' },
   { num: 2, title: '매니저 배정', desc: '비앤비서 전문 매니저가 배정되면 알림을 보내드려요.' },
-  { num: 3, title: '호텔식 청소 + 시설 점검', desc: '호텔식 침구 세팅과 15항목 시설 점검을 진행해요.' },
+  { num: 3, title: '호텔식 청소 + 시설 점검', desc: '호텔식 침구 세팅과 시설 점검을 진행해요.' },
   { num: 4, title: '점검 리포트 수신', desc: '청소 완료 후 사진과 함께 시설 점검 리포트를 받아요.' },
+]
+
+const AC_PROCESS_STEPS = [
+  { num: 1, title: '결제 완료', desc: '에어컨 청소 요청과 결제가 완료되었어요.' },
+  { num: 2, title: '매니저 배정', desc: '에어컨 청소 전문 매니저가 배정되면 알림을 보내드려요.' },
+  { num: 3, title: '에어컨 청소', desc: '선택하신 에어컨을 꼼꼼하게 청소해요.' },
+  { num: 4, title: '완료 사진 수신', desc: '청소 완료 후 에어컨별 청소 전/후 사진을 받아요.' },
 ]
 
 const BANK_NAME = process.env.NEXT_PUBLIC_BANK_NAME ?? ''
@@ -65,6 +72,8 @@ const BANK_HOLDER = process.env.NEXT_PUBLIC_BANK_HOLDER ?? ''
 export default function CleaningDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromNew = searchParams.get('from') === 'new'
   const id = params.id as string
   const { data: cleaning, isLoading } = useCleaningRequest(id)
   const { data: reportData } = useCleaningReport(id)
@@ -135,6 +144,9 @@ export default function CleaningDetailPage() {
     }
   }
   const photoSpaces = cleaning.cleaningPhotosBySpace
+  const photoAssets = cleaning.cleaningPhotosByAsset
+  const selectedAssets = cleaning.selectedAssets
+  const isAcService = cleaning.serviceType === 'ac'
   const showBeforePhotos = cleaning.status === 'in_progress' || cleaning.status === 'completed'
   const showAfterPhotos = cleaning.status === 'completed'
 
@@ -144,7 +156,8 @@ export default function CleaningDetailPage() {
       <button
         type="button"
         onClick={() => {
-          if (window.history.length > 1) router.back()
+          if (fromNew) router.replace('/home')
+          else if (window.history.length > 1) router.back()
           else router.push('/home')
         }}
         className="inline-flex items-center justify-center w-10 h-10 -ml-4 mb-3 rounded-full hover:bg-surface-soft transition-colors text-ink"
@@ -323,7 +336,65 @@ export default function CleaningDetailPage() {
         </section>
       )}
 
-      {showBeforePhotos && photoSpaces.length > 0 && (
+      {isAcService && selectedAssets.length > 0 && (
+        <section className="mb-6 space-y-3">
+          <p className="text-[16px] font-semibold text-ink">청소 대상 에어컨 ({selectedAssets.length}대)</p>
+          <div className="flex flex-col gap-2">
+            {selectedAssets.map((asset) => (
+              <div key={asset.id} className="rounded-xl border border-outline-dim px-4 py-3">
+                <p className="text-[14px] font-semibold text-ink">{asset.name}</p>
+                <p className="mt-0.5 text-[12px] text-ink-muted">
+                  {asset.location}
+                  {asset.brand || asset.modelNumber
+                    ? ` · ${[asset.brand, asset.modelNumber].filter(Boolean).join(' ')}`
+                    : ''}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {isAcService && showBeforePhotos && photoAssets.length > 0 && (
+        <section className="mb-6 space-y-4">
+          <div>
+            <p className="text-[16px] font-semibold text-ink">에어컨별 청소 사진</p>
+            <p className="mt-1 text-[12px] text-ink-muted">
+              {showAfterPhotos
+                ? '매니저가 촬영한 에어컨별 청소 전/후 사진입니다.'
+                : '매니저가 도착해 촬영한 청소 전 현황입니다.'}
+            </p>
+          </div>
+          {showAfterPhotos ? (
+            <CleaningPairPhotos
+              spaces={photoAssets.map((asset) => ({
+                spaceId: asset.assetId,
+                spaceName: asset.assetName,
+                categoryLabel: asset.location,
+                before: asset.before,
+                after: asset.after,
+              }))}
+            />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {photoAssets.map((asset) => (
+                <div key={asset.assetId} className="rounded-xl border border-outline-dim p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[15px] font-semibold text-ink">{asset.assetName}</p>
+                    <span className="text-[11px] font-medium text-ink-muted">{asset.location}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[12px] font-semibold text-ink-muted tracking-wider uppercase">청소 전</p>
+                    <CleaningPrepPhotoGrid photos={asset.before} emptyText="청소 전 사진이 없어요." />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {!isAcService && showBeforePhotos && photoSpaces.length > 0 && (
         <section className="mb-6 space-y-4">
           <div>
             <p className="text-[16px] font-semibold text-ink">공간별 청소 사진</p>
@@ -364,7 +435,7 @@ export default function CleaningDetailPage() {
         </section>
       )}
 
-      {cleaning.status === 'completed' && reportData && (
+      {!isAcService && cleaning.status === 'completed' && reportData && (
         <section className="mb-6 space-y-3">
           <p className="text-[16px] font-semibold text-ink">시설물 점검 리포트</p>
           <CleaningReportReadOnly
@@ -378,11 +449,13 @@ export default function CleaningDetailPage() {
       )}
 
       {/* Process timeline */}
-      {cleaning.status !== 'cancelled' && cleaning.status !== 'completed' && (
+      {cleaning.status !== 'cancelled' && cleaning.status !== 'completed' && (() => {
+        const steps = isAcService ? AC_PROCESS_STEPS : PROCESS_STEPS
+        return (
         <>
           <p className="text-[13px] font-medium text-ink-muted mb-3 px-1">진행 과정</p>
           <div className="flex flex-col gap-0 mb-6">
-            {PROCESS_STEPS.map((step, i) => {
+            {steps.map((step, i) => {
               const isDone = step.num <= currentStep
               return (
                 <div key={step.num} className="flex gap-3">
@@ -393,7 +466,7 @@ export default function CleaningDetailPage() {
                     )}>
                       {step.num}
                     </div>
-                    {i < PROCESS_STEPS.length - 1 && (
+                    {i < steps.length - 1 && (
                       <div className={cn(
                         'w-px flex-1 my-1',
                         isDone && i < currentStep - 1 ? 'bg-brand' : 'bg-outline-dim'
@@ -419,7 +492,8 @@ export default function CleaningDetailPage() {
             })}
           </div>
         </>
-      )}
+        )
+      })()}
 
       {/* Cancel button */}
       {canCancel && (

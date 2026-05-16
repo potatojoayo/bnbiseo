@@ -6,6 +6,7 @@ type CleaningRequest = {
   id: string
   propertyId: string
   hostId: string
+  serviceType: 'general' | 'ac'
   cleaningType: 'standard' | 'urgent'
   cleaningPlan: 'regular' | 'one_time'
   status: 'pending_payment' | 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
@@ -44,6 +45,22 @@ export type CleaningPhotosBySpace = {
   after: CleaningSpacePhoto[]
 }
 
+export type CleaningPhotosByAsset = {
+  assetId: string
+  assetName: string
+  location: string
+  before: CleaningSpacePhoto[]
+  after: CleaningSpacePhoto[]
+}
+
+export type CleaningSelectedAsset = {
+  id: string
+  name: string
+  location: string
+  brand: string | null
+  modelNumber: string | null
+}
+
 type CleaningRequestDetail = CleaningRequest & {
   cancelledAt: string | null
   propertyAddressDetail: string | null
@@ -55,6 +72,8 @@ type CleaningRequestDetail = CleaningRequest & {
   managerAvatarSignedUrl: string | null
   managerAvatarThumbnailSignedUrl: string | null
   cleaningPhotosBySpace: CleaningPhotosBySpace[]
+  cleaningPhotosByAsset: CleaningPhotosByAsset[]
+  selectedAssets: CleaningSelectedAsset[]
   legacyCleaningPhotos: Array<CleaningSpacePhoto & { kind: 'before' | 'after' }>
 }
 type AssetCategory =

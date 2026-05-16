@@ -4,6 +4,19 @@ export const MIN_BOOKING_LEAD_HOURS = 3
 /** 첫 청소 할인 금액 */
 export const FIRST_CLEANING_DISCOUNT = 10000
 
+/** 에어컨 청소 1대당 가격 */
+export const AC_PRICE_PER_UNIT = 90000
+
+/** 첫 에어컨 청소 할인 금액 */
+export const AC_FIRST_CLEANING_DISCOUNT = 30000
+
+export type CleaningServiceType = 'general' | 'ac'
+
+export const CLEANING_SERVICE_TYPE_LABELS: Record<CleaningServiceType, string> = {
+  general: '일반 청소',
+  ac: '에어컨 청소',
+}
+
 export type LinenWashLocation = 'in_house' | 'external'
 export type CleaningPlan = 'regular' | 'one_time'
 
@@ -53,6 +66,16 @@ export function getRoomBasePrice(bedrooms: number, plan: CleaningPlan): number {
 /** 청구월 내 결제완료 청소 건수로 정기/단건 결정 */
 export function determineCleaningPlan(paidCountThisMonth: number): CleaningPlan {
   return paidCountThisMonth >= REGULAR_PLAN_THRESHOLD ? 'regular' : 'one_time'
+}
+
+/** 에어컨 청소 가격 계산 (대수 × 90,000원, 할증 없음) */
+export function calculateAcCleaningPrice(input: { acCount: number }) {
+  const total = AC_PRICE_PER_UNIT * Math.max(input.acCount, 0)
+  return {
+    acCount: input.acCount,
+    pricePerUnit: AC_PRICE_PER_UNIT,
+    total,
+  }
 }
 
 export function calculateCleaningPrice(input: {

@@ -84,6 +84,11 @@ export const cleaningPlanEnum = pgEnum('cleaning_plan', [
   'regular',  // 정기 (월 3번째 청소부터 자동 적용)
 ])
 
+export const cleaningServiceTypeEnum = pgEnum('cleaning_service_type', [
+  'general', // 일반 청소 (숙소 전체)
+  'ac',      // 에어컨 청소 (선택한 에어컨만)
+])
+
 export const cleaningPhotoKindEnum = pgEnum('cleaning_photo_kind', [
   'before', // 청소 전 (게스트 사용 현황)
   'after',  // 청소 후
@@ -208,6 +213,7 @@ export const cleaningRequests = pgTable('cleaning_requests', {
     .references(() => profiles.id, { onDelete: 'cascade' }),
   managerId: uuid('manager_id')
     .references(() => managers.id, { onDelete: 'set null' }),
+  serviceType: cleaningServiceTypeEnum('service_type').default('general').notNull(),
   cleaningType: cleaningTypeEnum('cleaning_type').default('standard').notNull(),
   cleaningPlan: cleaningPlanEnum('cleaning_plan').default('one_time').notNull(),
   status: cleaningStatusEnum('status').default('pending').notNull(),
@@ -233,12 +239,28 @@ export const cleaningRequestPhotos = pgTable('cleaning_request_photos', {
     .notNull()
     .references(() => cleaningRequests.id, { onDelete: 'cascade' }),
   propertySpaceId: uuid('property_space_id').references(() => propertySpaces.id, { onDelete: 'set null' }),
+  propertyAssetId: uuid('property_asset_id').references(() => propertyAssets.id, { onDelete: 'set null' }),
   kind: cleaningPhotoKindEnum('kind').default('after').notNull(),
   storagePath: text('storage_path').notNull(),
   thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
   sortOrder: smallint('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
+
+export const cleaningRequestAssets = pgTable(
+  'cleaning_request_assets',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    cleaningRequestId: uuid('cleaning_request_id')
+      .notNull()
+      .references(() => cleaningRequests.id, { onDelete: 'cascade' }),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => propertyAssets.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('cleaning_request_assets_request_asset_idx').on(t.cleaningRequestId, t.assetId)],
+)
 
 export const propertyAssets = pgTable('property_assets', {
   id: uuid('id').primaryKey().defaultRandom(),

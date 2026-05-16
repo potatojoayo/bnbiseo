@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BrushCleaningIcon } from 'lucide-react'
+import { BrushCleaningIcon, SnowflakeIcon } from 'lucide-react'
 import { CleaningStatusBadge, type CleaningStatus } from '@/components/cleaning-status-badge'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
 
@@ -12,6 +12,7 @@ type HostCleaningRequestCardProps = {
     status: string
     finalPrice: number
     cleaningType: 'standard' | 'urgent'
+    serviceType?: 'general' | 'ac'
     paymentMethod?: 'card' | 'bank_transfer'
   }
   href: string
@@ -43,8 +44,23 @@ export function HostCleaningRequestCard({
         <div className="min-w-0">
           {showKindBadge && (
             <span className="mb-2 inline-flex h-6 items-center gap-1 rounded-full border border-outline-strong bg-surface-subtle px-2.5 text-[11px] font-medium text-ink">
-              <BrushCleaningIcon className="size-3" strokeWidth={2} />
-              청소
+              {request.serviceType === 'ac' ? (
+                <>
+                  <SnowflakeIcon className="size-3" strokeWidth={2} />
+                  에어컨 청소
+                </>
+              ) : (
+                <>
+                  <BrushCleaningIcon className="size-3" strokeWidth={2} />
+                  청소
+                </>
+              )}
+            </span>
+          )}
+          {!showKindBadge && request.serviceType === 'ac' && (
+            <span className="mb-1.5 inline-flex h-5 items-center gap-1 rounded-full bg-ink px-2 text-[11px] font-medium text-white">
+              <SnowflakeIcon className="size-3" strokeWidth={2.5} />
+              에어컨
             </span>
           )}
           <span className={cn('block text-[16px] font-semibold leading-snug', isCancelled ? 'text-ink-faint' : 'text-ink')}>

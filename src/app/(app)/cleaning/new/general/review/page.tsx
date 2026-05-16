@@ -123,7 +123,7 @@ export default function CleaningReviewPage() {
   // Redirect back to form if required params are missing
   useEffect(() => {
     if (!propertyId || !date || !time) {
-      router.replace('/cleaning/new')
+      router.replace('/cleaning/new/general')
     }
   }, [propertyId, date, time, router])
 
@@ -163,6 +163,7 @@ export default function CleaningReviewPage() {
         orderId: string
         finalPrice: number
       }>('/cleaning', {
+        serviceType: 'general',
         propertyId,
         scheduledDate: date,
         scheduledTime: time,
@@ -173,7 +174,7 @@ export default function CleaningReviewPage() {
       })
 
       if (paymentMethod === 'bank_transfer') {
-        router.replace(`/cleaning/${created.id}`)
+        router.replace(`/cleaning/${created.id}?from=new`)
         return
       }
 

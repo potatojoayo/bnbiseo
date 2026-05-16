@@ -4,6 +4,7 @@ import { and, asc, desc, eq, inArray, isNull, ne, or } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
 import {
+  cleaningRequestAssets,
   cleaningRequestPhotos,
   cleaningInspectionAssetPhotos,
   cleaningInspectionAssetReports,
@@ -62,11 +63,17 @@ const ReportPhotoUploadSchema = z.object({
   assetId: z.string().uuid(),
   fileName: z.string().min(1),
 })
-const CleaningPhotoUploadSchema = z.object({
-  fileName: z.string().min(1),
-  kind: z.enum(['before', 'after']),
-  propertySpaceId: z.string().uuid(),
-})
+const CleaningPhotoUploadSchema = z
+  .object({
+    fileName: z.string().min(1),
+    kind: z.enum(['before', 'after']),
+    propertySpaceId: z.string().uuid().optional(),
+    propertyAssetId: z.string().uuid().optional(),
+  })
+  .refine(
+    (data) => Boolean(data.propertySpaceId) !== Boolean(data.propertyAssetId),
+    { message: '공간 또는 자산 중 하나만 지정해주세요.' },
+  )
 const ReportPhotoSchema = z.object({
   storagePath: z.string().min(1),
   thumbnailStoragePath: z.string().min(1),
@@ -76,11 +83,17 @@ const CleaningPhotoSchema = z.object({
   thumbnailStoragePath: z.string().min(1),
   slotIndex: z.number().int().nonnegative().optional(),
 })
-const CleaningPhotosDraftSchema = z.object({
-  propertySpaceId: z.string().uuid(),
-  kind: z.enum(['before', 'after']),
-  photos: z.array(CleaningPhotoSchema).default([]),
-})
+const CleaningPhotosDraftSchema = z
+  .object({
+    propertySpaceId: z.string().uuid().optional(),
+    propertyAssetId: z.string().uuid().optional(),
+    kind: z.enum(['before', 'after']),
+    photos: z.array(CleaningPhotoSchema).default([]),
+  })
+  .refine(
+    (data) => Boolean(data.propertySpaceId) !== Boolean(data.propertyAssetId),
+    { message: '공간 또는 자산 중 하나만 지정해주세요.' },
+  )
 const InspectionAssetDraftSchema = z.object({
   assetId: z.string().uuid(),
   status: z.enum(['normal', 'caution', 'defective']).nullable().optional(),
@@ -124,6 +137,7 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
       scheduledTime: cleaningRequests.scheduledTime,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       memo: cleaningRequests.memo,
       linenWash: cleaningRequests.linenWash,
       finalPrice: cleaningRequests.finalPrice,
@@ -221,6 +235,7 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
       id: cleaningRequestPhotos.id,
       cleaningRequestId: cleaningRequestPhotos.cleaningRequestId,
       propertySpaceId: cleaningRequestPhotos.propertySpaceId,
+      propertyAssetId: cleaningRequestPhotos.propertyAssetId,
       kind: cleaningRequestPhotos.kind,
       storagePath: cleaningRequestPhotos.storagePath,
       thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
@@ -228,6 +243,20 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     })
     .from(cleaningRequestPhotos)
     .where(eq(cleaningRequestPhotos.cleaningRequestId, request.id))
+
+  const selectedAssetRows = request.serviceType === 'ac'
+    ? await db
+        .select({
+          id: propertyAssets.id,
+          name: propertyAssets.name,
+          location: propertyAssets.location,
+          brand: propertyAssets.brand,
+          modelNumber: propertyAssets.modelNumber,
+        })
+        .from(cleaningRequestAssets)
+        .innerJoin(propertyAssets, eq(cleaningRequestAssets.assetId, propertyAssets.id))
+        .where(eq(cleaningRequestAssets.cleaningRequestId, request.id))
+    : []
   const prepPhotos = await db
     .select({
       id: propertyCleaningPrepPhotos.id,
@@ -319,8 +348,20 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
         .map(toCleaningPhoto),
     }))
 
+  const cleaningPhotosByAsset = selectedAssetRows.map((asset) => ({
+    assetId: asset.id,
+    assetName: asset.name,
+    location: asset.location,
+    before: requestPhotos
+      .filter((p) => p.propertyAssetId === asset.id && p.kind === 'before')
+      .map(toCleaningPhoto),
+    after: requestPhotos
+      .filter((p) => p.propertyAssetId === asset.id && p.kind === 'after')
+      .map(toCleaningPhoto),
+  }))
+
   const legacyCleaningPhotos = requestPhotos
-    .filter((p) => p.propertySpaceId === null)
+    .filter((p) => p.propertySpaceId === null && p.propertyAssetId === null)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((photo) => ({
       ...toCleaningPhoto(photo),
@@ -336,6 +377,8 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     propertyBathrooms: summary.bathrooms,
     cleaningPrepPhotos: cleaningPrepPhotosByKind,
     cleaningPhotosBySpace,
+    cleaningPhotosByAsset,
+    selectedAssets: selectedAssetRows,
     legacyCleaningPhotos,
     spaces: spaces.map((space) => ({
       ...space,
@@ -597,13 +640,14 @@ managerRoutes.post('/cleanings/:id/photos/upload-url', async (c) => {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
   }
 
-  const { kind, propertySpaceId } = validated.data
+  const { kind, propertySpaceId, propertyAssetId } = validated.data
 
   const [request] = await db
     .select({
       id: cleaningRequests.id,
       status: cleaningRequests.status,
       propertyId: cleaningRequests.propertyId,
+      serviceType: cleaningRequests.serviceType,
     })
     .from(cleaningRequests)
     .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.managerId, managerId)))
@@ -621,18 +665,39 @@ managerRoutes.post('/cleanings/:id/photos/upload-url', async (c) => {
     return c.json({ error: '청소 후 사진은 청소 진행 중에만 올릴 수 있어요.' }, 400)
   }
 
-  const [space] = await db
-    .select({ id: propertySpaces.id, category: propertySpaces.category })
-    .from(propertySpaces)
-    .where(and(eq(propertySpaces.id, propertySpaceId), eq(propertySpaces.propertyId, request.propertyId)))
-    .limit(1)
-
-  if (!space) {
-    return c.json({ error: '해당 공간을 찾을 수 없어요.' }, 404)
-  }
-
-  if (!isPhotoSpaceCategory(space.category)) {
-    return c.json({ error: '이 공간은 청소 사진 업로드 대상이 아니에요.' }, 400)
+  let scopePath: string
+  if (propertyAssetId) {
+    if (request.serviceType !== 'ac') {
+      return c.json({ error: '이 청소 요청은 자산별 사진 업로드 대상이 아니에요.' }, 400)
+    }
+    const [link] = await db
+      .select({ id: cleaningRequestAssets.id })
+      .from(cleaningRequestAssets)
+      .where(and(
+        eq(cleaningRequestAssets.cleaningRequestId, request.id),
+        eq(cleaningRequestAssets.assetId, propertyAssetId),
+      ))
+      .limit(1)
+    if (!link) {
+      return c.json({ error: '해당 에어컨은 이 요청에 포함되어 있지 않아요.' }, 404)
+    }
+    scopePath = `assets/${propertyAssetId}`
+  } else {
+    if (request.serviceType !== 'general') {
+      return c.json({ error: '이 청소 요청은 공간별 사진 업로드 대상이 아니에요.' }, 400)
+    }
+    const [space] = await db
+      .select({ id: propertySpaces.id, category: propertySpaces.category })
+      .from(propertySpaces)
+      .where(and(eq(propertySpaces.id, propertySpaceId!), eq(propertySpaces.propertyId, request.propertyId)))
+      .limit(1)
+    if (!space) {
+      return c.json({ error: '해당 공간을 찾을 수 없어요.' }, 404)
+    }
+    if (!isPhotoSpaceCategory(space.category)) {
+      return c.json({ error: '이 공간은 청소 사진 업로드 대상이 아니에요.' }, 400)
+    }
+    scopePath = `spaces/${propertySpaceId}`
   }
 
   const extension = validated.data.fileName.includes('.')
@@ -640,8 +705,8 @@ managerRoutes.post('/cleanings/:id/photos/upload-url', async (c) => {
     : '.jpg'
   const safeExtension = extension.match(/^\.[a-z0-9]+$/) ? extension : '.jpg'
   const fileId = crypto.randomUUID()
-  const storagePath = `cleanings/${id}/photos/${kind}/${propertySpaceId}/original/${fileId}${safeExtension}`
-  const thumbnailStoragePath = `cleanings/${id}/photos/${kind}/${propertySpaceId}/thumb/${fileId}.jpg`
+  const storagePath = `cleanings/${id}/photos/${kind}/${scopePath}/original/${fileId}${safeExtension}`
+  const thumbnailStoragePath = `cleanings/${id}/photos/${kind}/${scopePath}/thumb/${fileId}.jpg`
   const supabaseAdmin = getSupabaseAdmin()
   const [{ data: originalData, error: originalError }, { data: thumbnailData, error: thumbnailError }] = await Promise.all([
     supabaseAdmin.storage.from('images').createSignedUploadUrl(storagePath),
@@ -674,13 +739,14 @@ managerRoutes.post('/cleanings/:id/photos', async (c) => {
     return c.json({ error: '청소 사진 정보가 올바르지 않아요.' }, 400)
   }
 
-  const { propertySpaceId, kind } = parsed.data
+  const { propertySpaceId, propertyAssetId, kind } = parsed.data
 
   const [request] = await db
     .select({
       id: cleaningRequests.id,
       status: cleaningRequests.status,
       propertyId: cleaningRequests.propertyId,
+      serviceType: cleaningRequests.serviceType,
     })
     .from(cleaningRequests)
     .where(and(eq(cleaningRequests.id, id), eq(cleaningRequests.managerId, managerId)))
@@ -698,10 +764,76 @@ managerRoutes.post('/cleanings/:id/photos', async (c) => {
     return c.json({ error: '청소 후 사진은 청소 진행 중에만 저장할 수 있어요.' }, 400)
   }
 
+  if (propertyAssetId) {
+    if (request.serviceType !== 'ac') {
+      return c.json({ error: '이 청소 요청은 자산별 사진 저장 대상이 아니에요.' }, 400)
+    }
+    const [link] = await db
+      .select({ id: cleaningRequestAssets.id })
+      .from(cleaningRequestAssets)
+      .where(and(
+        eq(cleaningRequestAssets.cleaningRequestId, request.id),
+        eq(cleaningRequestAssets.assetId, propertyAssetId),
+      ))
+      .limit(1)
+    if (!link) {
+      return c.json({ error: '해당 에어컨은 이 요청에 포함되어 있지 않아요.' }, 404)
+    }
+
+    await db.delete(cleaningRequestPhotos).where(and(
+      eq(cleaningRequestPhotos.cleaningRequestId, id),
+      eq(cleaningRequestPhotos.propertyAssetId, propertyAssetId),
+      eq(cleaningRequestPhotos.kind, kind),
+    ))
+
+    if (parsed.data.photos.length > 0) {
+      await db.insert(cleaningRequestPhotos).values(
+        parsed.data.photos.map((photo, index) => ({
+          cleaningRequestId: id,
+          propertyAssetId,
+          kind,
+          storagePath: photo.storagePath,
+          thumbnailStoragePath: photo.thumbnailStoragePath,
+          sortOrder: photo.slotIndex ?? index,
+        })),
+      )
+    }
+
+    const savedPhotos = await db
+      .select({
+        id: cleaningRequestPhotos.id,
+        storagePath: cleaningRequestPhotos.storagePath,
+        thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
+        sortOrder: cleaningRequestPhotos.sortOrder,
+      })
+      .from(cleaningRequestPhotos)
+      .where(and(
+        eq(cleaningRequestPhotos.cleaningRequestId, id),
+        eq(cleaningRequestPhotos.propertyAssetId, propertyAssetId),
+        eq(cleaningRequestPhotos.kind, kind),
+      ))
+
+    return c.json({
+      success: true,
+      photos: savedPhotos
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((photo) => ({
+          ...photo,
+          signedUrl: null,
+          thumbnailSignedUrl: null,
+        })),
+    })
+  }
+
+  // Space-scoped (general cleaning) — existing path
+  if (request.serviceType !== 'general') {
+    return c.json({ error: '이 청소 요청은 공간별 사진 저장 대상이 아니에요.' }, 400)
+  }
+
   const [space] = await db
     .select({ id: propertySpaces.id, category: propertySpaces.category })
     .from(propertySpaces)
-    .where(and(eq(propertySpaces.id, propertySpaceId), eq(propertySpaces.propertyId, request.propertyId)))
+    .where(and(eq(propertySpaces.id, propertySpaceId!), eq(propertySpaces.propertyId, request.propertyId)))
     .limit(1)
 
   if (!space) {
@@ -714,7 +846,7 @@ managerRoutes.post('/cleanings/:id/photos', async (c) => {
 
   await db.delete(cleaningRequestPhotos).where(and(
     eq(cleaningRequestPhotos.cleaningRequestId, id),
-    eq(cleaningRequestPhotos.propertySpaceId, propertySpaceId),
+    eq(cleaningRequestPhotos.propertySpaceId, propertySpaceId!),
     eq(cleaningRequestPhotos.kind, kind),
   ))
 
@@ -741,7 +873,7 @@ managerRoutes.post('/cleanings/:id/photos', async (c) => {
     .from(cleaningRequestPhotos)
     .where(and(
       eq(cleaningRequestPhotos.cleaningRequestId, id),
-      eq(cleaningRequestPhotos.propertySpaceId, propertySpaceId),
+      eq(cleaningRequestPhotos.propertySpaceId, propertySpaceId!),
       eq(cleaningRequestPhotos.kind, kind),
     ))
 
@@ -780,6 +912,7 @@ managerRoutes.get('/cleanings/open', async (c) => {
       scheduledTime: cleaningRequests.scheduledTime,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       memo: cleaningRequests.memo,
       linenWash: cleaningRequests.linenWash,
       finalPrice: cleaningRequests.finalPrice,
@@ -851,6 +984,7 @@ managerRoutes.get('/cleanings/me', async (c) => {
       scheduledTime: cleaningRequests.scheduledTime,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       memo: cleaningRequests.memo,
       linenWash: cleaningRequests.linenWash,
       finalPrice: cleaningRequests.finalPrice,
@@ -1191,6 +1325,7 @@ managerRoutes.post('/cleanings/:id/status', async (c) => {
       status: cleaningRequests.status,
       hostId: cleaningRequests.hostId,
       propertyId: cleaningRequests.propertyId,
+      serviceType: cleaningRequests.serviceType,
       propertyName: properties.name,
     })
     .from(cleaningRequests)
@@ -1210,60 +1345,93 @@ managerRoutes.post('/cleanings/:id/status', async (c) => {
     return c.json({ error: '진행 중인 요청만 완료할 수 있어요.' }, 400)
   }
 
-  // Validate per-space photo completeness
+  // Validate photo completeness — depends on service type
   if (parsed.data.status === 'in_progress' || parsed.data.status === 'completed') {
-    const propertySpaceRows = await db
-      .select({ id: propertySpaces.id, category: propertySpaces.category })
-      .from(propertySpaces)
-      .where(eq(propertySpaces.propertyId, request.propertyId))
+    if (request.serviceType === 'ac') {
+      const linkedAssets = await db
+        .select({ assetId: cleaningRequestAssets.assetId })
+        .from(cleaningRequestAssets)
+        .where(eq(cleaningRequestAssets.cleaningRequestId, id))
 
-    const propertySpaceList = propertySpaceRows.filter((space) => isPhotoSpaceCategory(space.category))
-
-    if (propertySpaceList.length === 0) {
-      return c.json({ error: '청소 사진 대상 공간(거실/침실/화장실)이 등록되어 있지 않아요.' }, 400)
-    }
-
-    if (parsed.data.status === 'in_progress') {
-      const beforePhotos = await db
-        .select({ propertySpaceId: cleaningRequestPhotos.propertySpaceId })
-        .from(cleaningRequestPhotos)
-        .where(and(
-          eq(cleaningRequestPhotos.cleaningRequestId, id),
-          eq(cleaningRequestPhotos.kind, 'before'),
-        ))
-      const withBefore = new Set(
-        beforePhotos.map((p) => p.propertySpaceId).filter((v): v is string => v !== null),
-      )
-      const missing = propertySpaceList.filter((space) => !withBefore.has(space.id))
-      if (missing.length > 0) {
-        return c.json({
-          error: '모든 공간의 청소 전 사진을 1장 이상 올려야 시작할 수 있어요.',
-        }, 400)
+      if (linkedAssets.length === 0) {
+        return c.json({ error: '청소할 에어컨이 등록되어 있지 않아요.' }, 400)
       }
-    } else {
-      // Completion: every before slot needs a matching after slot
+
       const pairRows = await db
         .select({
-          propertySpaceId: cleaningRequestPhotos.propertySpaceId,
+          propertyAssetId: cleaningRequestPhotos.propertyAssetId,
           kind: cleaningRequestPhotos.kind,
-          sortOrder: cleaningRequestPhotos.sortOrder,
         })
         .from(cleaningRequestPhotos)
         .where(eq(cleaningRequestPhotos.cleaningRequestId, id))
 
-      const beforeKeys = new Set<string>()
-      const afterKeys = new Set<string>()
-      for (const row of pairRows) {
-        if (!row.propertySpaceId) continue
-        const key = `${row.propertySpaceId}|${row.sortOrder}`
-        if (row.kind === 'before') beforeKeys.add(key)
-        else afterKeys.add(key)
-      }
-      const missingPair = [...beforeKeys].filter((key) => !afterKeys.has(key))
-      if (missingPair.length > 0) {
+      const requiredKind = parsed.data.status === 'in_progress' ? 'before' : 'after'
+      const withKind = new Set(
+        pairRows
+          .filter((p) => p.kind === requiredKind && p.propertyAssetId)
+          .map((p) => p.propertyAssetId as string),
+      )
+      const missing = linkedAssets.filter((row) => !withKind.has(row.assetId))
+      if (missing.length > 0) {
         return c.json({
-          error: '모든 청소 전 사진에 대응하는 청소 후 사진을 올려야 완료할 수 있어요.',
+          error: requiredKind === 'before'
+            ? '모든 에어컨의 청소 전 사진을 올려야 시작할 수 있어요.'
+            : '모든 에어컨의 청소 후 사진을 올려야 완료할 수 있어요.',
         }, 400)
+      }
+    } else {
+      const propertySpaceRows = await db
+        .select({ id: propertySpaces.id, category: propertySpaces.category })
+        .from(propertySpaces)
+        .where(eq(propertySpaces.propertyId, request.propertyId))
+
+      const propertySpaceList = propertySpaceRows.filter((space) => isPhotoSpaceCategory(space.category))
+
+      if (propertySpaceList.length === 0) {
+        return c.json({ error: '청소 사진 대상 공간(거실/침실/화장실)이 등록되어 있지 않아요.' }, 400)
+      }
+
+      if (parsed.data.status === 'in_progress') {
+        const beforePhotos = await db
+          .select({ propertySpaceId: cleaningRequestPhotos.propertySpaceId })
+          .from(cleaningRequestPhotos)
+          .where(and(
+            eq(cleaningRequestPhotos.cleaningRequestId, id),
+            eq(cleaningRequestPhotos.kind, 'before'),
+          ))
+        const withBefore = new Set(
+          beforePhotos.map((p) => p.propertySpaceId).filter((v): v is string => v !== null),
+        )
+        const missing = propertySpaceList.filter((space) => !withBefore.has(space.id))
+        if (missing.length > 0) {
+          return c.json({
+            error: '모든 공간의 청소 전 사진을 1장 이상 올려야 시작할 수 있어요.',
+          }, 400)
+        }
+      } else {
+        const pairRows = await db
+          .select({
+            propertySpaceId: cleaningRequestPhotos.propertySpaceId,
+            kind: cleaningRequestPhotos.kind,
+            sortOrder: cleaningRequestPhotos.sortOrder,
+          })
+          .from(cleaningRequestPhotos)
+          .where(eq(cleaningRequestPhotos.cleaningRequestId, id))
+
+        const beforeKeys = new Set<string>()
+        const afterKeys = new Set<string>()
+        for (const row of pairRows) {
+          if (!row.propertySpaceId) continue
+          const key = `${row.propertySpaceId}|${row.sortOrder}`
+          if (row.kind === 'before') beforeKeys.add(key)
+          else afterKeys.add(key)
+        }
+        const missingPair = [...beforeKeys].filter((key) => !afterKeys.has(key))
+        if (missingPair.length > 0) {
+          return c.json({
+            error: '모든 청소 전 사진에 대응하는 청소 후 사진을 올려야 완료할 수 있어요.',
+          }, 400)
+        }
       }
     }
   }

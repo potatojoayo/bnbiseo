@@ -7,6 +7,7 @@ import { db } from '@/db'
 import {
   profiles,
   properties,
+  cleaningRequestAssets,
   cleaningRequests,
   cleaningRequestPhotos,
   managers,
@@ -151,6 +152,7 @@ adminRoutes.get('/stats', async (c) => {
       scheduledTime: cleaningRequests.scheduledTime,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       finalPrice: cleaningRequests.finalPrice,
       propertyName: properties.name,
       hostName: profiles.fullName,
@@ -170,6 +172,7 @@ adminRoutes.get('/stats', async (c) => {
       status: cleaningRequests.status,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       propertyName: properties.name,
       managerName: managers.name,
     })
@@ -249,6 +252,7 @@ adminRoutes.get('/cleaning', async (c) => {
       managerId: cleaningRequests.managerId,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       status: cleaningRequests.status,
       scheduledDate: cleaningRequests.scheduledDate,
       scheduledTime: cleaningRequests.scheduledTime,
@@ -297,6 +301,7 @@ adminRoutes.get('/cleaning/:id', async (c) => {
       managerId: cleaningRequests.managerId,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       status: cleaningRequests.status,
       scheduledDate: cleaningRequests.scheduledDate,
       scheduledTime: cleaningRequests.scheduledTime,
@@ -347,6 +352,7 @@ adminRoutes.get('/cleaning/:id', async (c) => {
     .select({
       id: cleaningRequestPhotos.id,
       propertySpaceId: cleaningRequestPhotos.propertySpaceId,
+      propertyAssetId: cleaningRequestPhotos.propertyAssetId,
       kind: cleaningRequestPhotos.kind,
       storagePath: cleaningRequestPhotos.storagePath,
       thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
@@ -354,6 +360,20 @@ adminRoutes.get('/cleaning/:id', async (c) => {
     })
     .from(cleaningRequestPhotos)
     .where(eq(cleaningRequestPhotos.cleaningRequestId, request.id))
+
+  const selectedAssetRows = request.serviceType === 'ac'
+    ? await db
+        .select({
+          id: propertyAssets.id,
+          name: propertyAssets.name,
+          location: propertyAssets.location,
+          brand: propertyAssets.brand,
+          modelNumber: propertyAssets.modelNumber,
+        })
+        .from(cleaningRequestAssets)
+        .innerJoin(propertyAssets, eq(cleaningRequestAssets.assetId, propertyAssets.id))
+        .where(eq(cleaningRequestAssets.cleaningRequestId, request.id))
+    : []
 
   const summary = summarizeSpaces(spaces)
 
@@ -389,8 +409,20 @@ adminRoutes.get('/cleaning/:id', async (c) => {
         .map(toCleaningPhoto),
     }))
 
+  const cleaningPhotosByAsset = selectedAssetRows.map((asset) => ({
+    assetId: asset.id,
+    assetName: asset.name,
+    location: asset.location,
+    before: requestPhotoRows
+      .filter((p) => p.propertyAssetId === asset.id && p.kind === 'before')
+      .map(toCleaningPhoto),
+    after: requestPhotoRows
+      .filter((p) => p.propertyAssetId === asset.id && p.kind === 'after')
+      .map(toCleaningPhoto),
+  }))
+
   const legacyCleaningPhotos = requestPhotoRows
-    .filter((p) => p.propertySpaceId === null)
+    .filter((p) => p.propertySpaceId === null && p.propertyAssetId === null)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((photo) => ({ ...toCleaningPhoto(photo), kind: photo.kind }))
 
@@ -407,6 +439,8 @@ adminRoutes.get('/cleaning/:id', async (c) => {
       ? signedUrlMap.get(request.managerAvatarThumbnailStoragePath) ?? null
       : null,
     cleaningPhotosBySpace,
+    cleaningPhotosByAsset,
+    selectedAssets: selectedAssetRows,
     legacyCleaningPhotos,
   })
 })

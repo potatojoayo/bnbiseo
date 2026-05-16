@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { MapPinIcon } from 'lucide-react'
 import { ManagerCleaningPhotoField } from '@/components/manager-cleaning-photo-field'
 import { ManagerPairedAfterField } from '@/components/manager-paired-after-field'
+import { ManagerAcPhotoField } from '@/components/manager-ac-photo-field'
 import { PhotoLightbox, type LightboxPhoto } from '@/components/photo-lightbox'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { CleaningStatusBadge } from '@/components/cleaning-status-badge'
@@ -122,37 +123,90 @@ export default function ManagerCleaningDetailPage() {
     setPhotosBySpace(serverPhotosBySpace)
   }, [serverPhotosBySpace])
 
+  const [photosByAsset, setPhotosByAsset] = useState<Record<string, { before: UploadedManagerCleaningImage | null; after: UploadedManagerCleaningImage | null }>>({})
+  const serverPhotosByAsset = useMemo(() => {
+    const result: Record<string, { before: UploadedManagerCleaningImage | null; after: UploadedManagerCleaningImage | null }> = {}
+    for (const group of cleaning?.cleaningPhotosByAsset ?? []) {
+      const before = group.before[0]
+      const after = group.after[0]
+      result[group.assetId] = {
+        before: before
+          ? {
+              storagePath: before.storagePath,
+              thumbnailStoragePath: before.thumbnailStoragePath,
+              previewUrl: before.thumbnailSignedUrl || before.signedUrl || '',
+            }
+          : null,
+        after: after
+          ? {
+              storagePath: after.storagePath,
+              thumbnailStoragePath: after.thumbnailStoragePath,
+              previewUrl: after.thumbnailSignedUrl || after.signedUrl || '',
+            }
+          : null,
+      }
+    }
+    return result
+  }, [cleaning?.cleaningPhotosByAsset])
+
+  useEffect(() => {
+    setPhotosByAsset(serverPhotosByAsset)
+  }, [serverPhotosByAsset])
+
   const [openLightboxIndex, setOpenLightboxIndex] = useState<number | null>(null)
   const photoSpacesForLightbox = cleaning?.cleaningPhotosBySpace ?? []
-  const { flatLightboxPhotos, lightboxIndexLookup } = useMemo(() => {
+  const selectedAssetsForLightbox = cleaning?.selectedAssets ?? []
+  const serviceTypeForLightbox = cleaning?.serviceType ?? 'general'
+  const { flatLightboxPhotos, lightboxIndexLookup, lightboxAssetIndex } = useMemo(() => {
     const flatLightboxPhotos: LightboxPhoto[] = []
     const lightboxIndexLookup: Record<string, { before: number; after: number }> = {}
-    for (const space of photoSpacesForLightbox) {
-      const sortedBefore = [...space.before].sort((a, b) => a.sortOrder - b.sortOrder)
-      const afterMap = photosBySpace[space.spaceId]?.afterBySlot ?? {}
+    const lightboxAssetIndex: Record<string, { before: number; after: number }> = {}
 
-      sortedBefore.forEach((before, indexInSpace) => {
-        const slot = before.sortOrder
-        const afterLocal = afterMap[slot]
-        const slotLabel = `#${indexInSpace + 1}`
-
+    if (serviceTypeForLightbox === 'ac') {
+      for (const asset of selectedAssetsForLightbox) {
+        const beforeLocal = photosByAsset[asset.id]?.before
+        const afterLocal = photosByAsset[asset.id]?.after
         const beforeIdx = flatLightboxPhotos.length
         flatLightboxPhotos.push({
-          url: before.signedUrl || before.thumbnailSignedUrl,
-          label: `${space.spaceName} · 청소 전 ${slotLabel}`,
+          url: beforeLocal?.previewUrl ?? null,
+          label: `${asset.name} · 청소 전`,
         })
-
         const afterIdx = flatLightboxPhotos.length
         flatLightboxPhotos.push({
           url: afterLocal?.previewUrl ?? null,
-          label: `${space.spaceName} · 청소 후 ${slotLabel}`,
+          label: `${asset.name} · 청소 후`,
         })
+        lightboxAssetIndex[asset.id] = { before: beforeIdx, after: afterIdx }
+      }
+    } else {
+      for (const space of photoSpacesForLightbox) {
+        const sortedBefore = [...space.before].sort((a, b) => a.sortOrder - b.sortOrder)
+        const afterMap = photosBySpace[space.spaceId]?.afterBySlot ?? {}
 
-        lightboxIndexLookup[`${space.spaceId}|${slot}`] = { before: beforeIdx, after: afterIdx }
-      })
+        sortedBefore.forEach((before, indexInSpace) => {
+          const slot = before.sortOrder
+          const afterLocal = afterMap[slot]
+          const slotLabel = `#${indexInSpace + 1}`
+
+          const beforeIdx = flatLightboxPhotos.length
+          flatLightboxPhotos.push({
+            url: before.signedUrl || before.thumbnailSignedUrl,
+            label: `${space.spaceName} · 청소 전 ${slotLabel}`,
+          })
+
+          const afterIdx = flatLightboxPhotos.length
+          flatLightboxPhotos.push({
+            url: afterLocal?.previewUrl ?? null,
+            label: `${space.spaceName} · 청소 후 ${slotLabel}`,
+          })
+
+          lightboxIndexLookup[`${space.spaceId}|${slot}`] = { before: beforeIdx, after: afterIdx }
+        })
+      }
     }
-    return { flatLightboxPhotos, lightboxIndexLookup }
-  }, [photoSpacesForLightbox, photosBySpace])
+
+    return { flatLightboxPhotos, lightboxIndexLookup, lightboxAssetIndex }
+  }, [photoSpacesForLightbox, photosBySpace, selectedAssetsForLightbox, photosByAsset, serviceTypeForLightbox])
 
   const openCleaning = openCleanings.find((item) => item.id === id)
   const previewCleaning = cleaning ?? openCleaning
@@ -189,8 +243,8 @@ export default function ManagerCleaningDetailPage() {
     : actionStatus === 'completed'
       ? '청소 완료'
       : null
-  const canWriteReport = cleaning?.status === 'in_progress'
-  const canViewReport = cleaning?.status === 'completed'
+  const canWriteReport = cleaning?.status === 'in_progress' && cleaning?.serviceType !== 'ac'
+  const canViewReport = cleaning?.status === 'completed' && cleaning?.serviceType !== 'ac'
   const canEditBeforePhotos = cleaning?.status === 'confirmed'
   const canEditAfterPhotos = cleaning?.status === 'in_progress'
   const canViewPhotos = !!cleaning && ['confirmed', 'in_progress', 'completed'].includes(cleaning.status)
@@ -199,6 +253,9 @@ export default function ManagerCleaningDetailPage() {
     report?.report.assets.some((item) => item.assetId === asset.id && item.status),
   ) ?? false
   const photoSpaces = photoSpacesForLightbox
+  const selectedAcAssets = cleaning?.selectedAssets ?? []
+  const isAcService = cleaning?.serviceType === 'ac'
+
   const allSpacesHaveBefore = photoSpaces.length > 0 && photoSpaces.every(
     (space) => (photosBySpace[space.spaceId]?.before ?? []).length > 0,
   )
@@ -206,8 +263,17 @@ export default function ManagerCleaningDetailPage() {
     const afterBySlot = photosBySpace[space.spaceId]?.afterBySlot ?? {}
     return space.before.every((before) => afterBySlot[before.sortOrder] != null)
   })
-  const canStartCleaning = allSpacesHaveBefore
-  const canCompleteCleaning = allAssetsInspected && allSpacesPaired
+  const allAcHaveBefore = selectedAcAssets.length > 0 && selectedAcAssets.every(
+    (asset) => photosByAsset[asset.id]?.before != null,
+  )
+  const allAcHaveAfter = selectedAcAssets.length > 0 && selectedAcAssets.every(
+    (asset) => photosByAsset[asset.id]?.after != null,
+  )
+
+  const canStartCleaning = isAcService ? allAcHaveBefore : allSpacesHaveBefore
+  const canCompleteCleaning = isAcService
+    ? allAcHaveAfter
+    : allAssetsInspected && allSpacesPaired
 
   async function handleClaim() {
     setIsClaiming(true)
@@ -306,6 +372,40 @@ export default function ManagerCleaningDetailPage() {
     } catch (error) {
       setPhotosBySpace(serverPhotosBySpace)
       toast.error(error instanceof ApiError ? error.message : '청소 전 사진을 저장하지 못했어요.')
+    } finally {
+      setIsSavingPhotos(false)
+    }
+  }
+
+  async function saveAcPhoto(
+    propertyAssetId: string,
+    kind: 'before' | 'after',
+    image: UploadedManagerCleaningImage | null,
+  ) {
+    setIsSavingPhotos(true)
+    setPhotosByAsset((previous) => ({
+      ...previous,
+      [propertyAssetId]: {
+        before: previous[propertyAssetId]?.before ?? null,
+        after: previous[propertyAssetId]?.after ?? null,
+        [kind]: image,
+      },
+    }))
+    try {
+      await api.post(`/manager/cleanings/${id}/photos`, {
+        propertyAssetId,
+        kind,
+        photos: image
+          ? [{
+              storagePath: image.storagePath,
+              thumbnailStoragePath: image.thumbnailStoragePath,
+              slotIndex: 0,
+            }]
+          : [],
+      })
+    } catch (error) {
+      setPhotosByAsset(serverPhotosByAsset)
+      toast.error(error instanceof ApiError ? error.message : '에어컨 사진을 저장하지 못했어요.')
     } finally {
       setIsSavingPhotos(false)
     }
@@ -411,10 +511,14 @@ export default function ManagerCleaningDetailPage() {
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-[13px] text-ink-muted">청소 유형</p>
             <p className="text-[14px] font-medium text-ink">
-              {CLEANING_TYPE_LABELS[previewCleaning.cleaningType]}
-              <span className="ml-1.5 text-[12px] text-ink-muted">
-                · {previewCleaning.cleaningPlan === 'regular' ? '정기' : '단건'}
-              </span>
+              {previewCleaning.serviceType === 'ac'
+                ? '에어컨 청소'
+                : CLEANING_TYPE_LABELS[previewCleaning.cleaningType]}
+              {previewCleaning.serviceType !== 'ac' && (
+                <span className="ml-1.5 text-[12px] text-ink-muted">
+                  · {previewCleaning.cleaningPlan === 'regular' ? '정기' : '단건'}
+                </span>
+              )}
             </p>
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
@@ -501,7 +605,52 @@ export default function ManagerCleaningDetailPage() {
 
       {cleaning && (actionLabel || canWriteReport || canViewReport || canViewPhotos) && (
         <div className="mt-5 flex flex-col gap-3">
-          {canViewPhotos && photoSpaces.length > 0 && (
+          {canViewPhotos && isAcService && selectedAcAssets.length > 0 && (
+            <section className="space-y-5">
+              <div>
+                <p className="text-[16px] font-semibold text-ink">에어컨별 청소 사진</p>
+                <p className="mt-1 text-[12px] text-ink-muted">
+                  {canEditBeforePhotos
+                    ? '모든 에어컨의 청소 전 사진을 올려야 청소를 시작할 수 있어요.'
+                    : canEditAfterPhotos
+                      ? '모든 에어컨의 청소 후 사진을 올려야 청소를 완료할 수 있어요.'
+                      : '에어컨별 청소 전/후 사진을 확인하세요.'}
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                {selectedAcAssets.map((asset) => {
+                  const photos = photosByAsset[asset.id] ?? { before: null, after: null }
+                  return (
+                    <ManagerAcPhotoField
+                      key={asset.id}
+                      cleaningId={id}
+                      asset={{ id: asset.id, name: asset.name, location: asset.location }}
+                      beforeImage={photos.before}
+                      afterImage={photos.after}
+                      canEditBefore={canEditBeforePhotos}
+                      canEditAfter={canEditAfterPhotos}
+                      showAfter={cleaning.status === 'in_progress' || cleaning.status === 'completed'}
+                      onBeforeChange={(image) => {
+                        if (isSavingPhotos) return
+                        void saveAcPhoto(asset.id, 'before', image)
+                      }}
+                      onAfterChange={(image) => {
+                        if (isSavingPhotos) return
+                        void saveAcPhoto(asset.id, 'after', image)
+                      }}
+                      onError={(message) => { if (message) toast.error(message) }}
+                      onOpenLightbox={(kind) => {
+                        const indices = lightboxAssetIndex[asset.id]
+                        if (!indices) return
+                        setOpenLightboxIndex(kind === 'before' ? indices.before : indices.after)
+                      }}
+                    />
+                  )
+                })}
+              </div>
+            </section>
+          )}
+          {canViewPhotos && !isAcService && photoSpaces.length > 0 && (
             <section className="space-y-5">
               <div>
                 <p className="text-[16px] font-semibold text-ink">공간별 청소 사진</p>
@@ -641,7 +790,7 @@ export default function ManagerCleaningDetailPage() {
       </section>
       )}
 
-      {cleaning && (
+      {cleaning && !isAcService && (
       <section className="mt-7 space-y-4">
         <p className="text-[16px] font-semibold text-ink">청소 준비 정보</p>
         <ManagerCleaningPrepReadGroup
@@ -679,7 +828,7 @@ export default function ManagerCleaningDetailPage() {
       </section>
       )}
 
-      {cleaning && (
+      {cleaning && !isAcService && (
       <section className="mt-7 space-y-4">
         <p className="text-[16px] font-semibold text-ink">공간 정보</p>
         {cleaning.spaces.length === 0 ? (
@@ -725,32 +874,40 @@ export default function ManagerCleaningDetailPage() {
       </section>
       )}
 
-      {cleaning && (
-      <section className="mt-7 space-y-4">
-        <p className="text-[16px] font-semibold text-ink">시설물 정보</p>
-        {cleaning.assets.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
-            등록된 시설물이 없어요.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {cleaning.assets.map((asset) => (
-              <AssetCard
-                key={asset.id}
-                name={asset.name}
-                category={ASSET_CATEGORY_LABELS[asset.category]}
-                location={asset.location}
-                brand={asset.brand}
-                modelNumber={asset.modelNumber}
-                notes={asset.notes}
-                imageUrl={asset.photos[0]?.signedUrl ?? asset.photos[0]?.thumbnailSignedUrl ?? null}
-                href={`/manager/cleanings/${id}/assets/${asset.id}`}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-      )}
+      {cleaning && (() => {
+        const acAssetIdSet = isAcService ? new Set(selectedAcAssets.map((asset) => asset.id)) : null
+        const assetsToShow = acAssetIdSet
+          ? cleaning.assets.filter((asset) => acAssetIdSet.has(asset.id))
+          : cleaning.assets
+        const sectionTitle = isAcService ? '청소할 에어컨' : '시설물 정보'
+        const emptyText = isAcService ? '청소할 에어컨이 없어요.' : '등록된 시설물이 없어요.'
+        return (
+          <section className="mt-7 space-y-4">
+            <p className="text-[16px] font-semibold text-ink">{sectionTitle}</p>
+            {assetsToShow.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-outline-strong px-4 py-6 text-center text-[14px] text-ink-muted">
+                {emptyText}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {assetsToShow.map((asset) => (
+                  <AssetCard
+                    key={asset.id}
+                    name={asset.name}
+                    category={ASSET_CATEGORY_LABELS[asset.category]}
+                    location={asset.location}
+                    brand={asset.brand}
+                    modelNumber={asset.modelNumber}
+                    notes={asset.notes}
+                    imageUrl={asset.photos[0]?.signedUrl ?? asset.photos[0]?.thumbnailSignedUrl ?? null}
+                    href={`/manager/cleanings/${id}/assets/${asset.id}`}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )
+      })()}
 
       {cleaning && canClaimCleaning && (
         <div className="mt-7">

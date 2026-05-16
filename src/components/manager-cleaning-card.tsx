@@ -26,6 +26,11 @@ export function ManagerCleaningCard({
     <div className={cn('rounded-xl border border-outline-dim px-4 py-4', className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
+          {cleaning.serviceType === 'ac' && (
+            <span className="mb-1.5 inline-flex h-5 items-center rounded-full bg-ink px-2 text-[11px] font-medium text-white">
+              에어컨 청소
+            </span>
+          )}
           <p className="text-[15px] font-semibold text-ink">
             {cleaning.propertyName || '숙소'}
           </p>
@@ -33,7 +38,9 @@ export function ManagerCleaningCard({
             {cleaning.cleaningType === 'urgent' && (
               <span className="text-brand mr-1.5">긴급 청소</span>
             )}
-            <span>{cleaning.cleaningPlan === 'regular' ? '정기' : '단건'}</span>
+            {cleaning.serviceType !== 'ac' && (
+              <span>{cleaning.cleaningPlan === 'regular' ? '정기' : '단건'}</span>
+            )}
           </p>
         </div>
         {showStatus && (

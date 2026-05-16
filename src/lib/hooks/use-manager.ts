@@ -30,6 +30,7 @@ export type ManagerCleaning = {
   status: 'pending' | 'confirmed' | 'in_progress' | 'completed'
   scheduledDate: string
   scheduledTime: string
+  serviceType: 'general' | 'ac'
   cleaningType: 'standard' | 'urgent'
   cleaningPlan: 'regular' | 'one_time'
   memo: string | null
@@ -102,6 +103,20 @@ export type ManagerCleaningDetail = ManagerCleaning & {
     category: SpaceCategory
     before: CleaningSpacePhoto[]
     after: CleaningSpacePhoto[]
+  }>
+  cleaningPhotosByAsset: Array<{
+    assetId: string
+    assetName: string
+    location: string
+    before: CleaningSpacePhoto[]
+    after: CleaningSpacePhoto[]
+  }>
+  selectedAssets: Array<{
+    id: string
+    name: string
+    location: string
+    brand: string | null
+    modelNumber: string | null
   }>
   legacyCleaningPhotos: Array<CleaningSpacePhoto & { kind: 'before' | 'after' }>
   spaces: Array<{

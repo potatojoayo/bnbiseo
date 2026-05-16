@@ -239,6 +239,13 @@
       "when": 1778906624343,
       "tag": "0033_magical_paibok",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1778934439700,
+      "tag": "0034_aspiring_sunspot",
+      "breakpoints": true
     }
   ]
 }

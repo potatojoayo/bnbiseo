@@ -1,0 +1,532 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { CheckIcon, ChevronLeftIcon } from 'lucide-react'
+import { toast } from 'sonner'
+import { CalendarPicker } from '@/components/calendar-picker'
+import { PropertyCard } from '@/components/property-card'
+import { cn, getToday, getTomorrow, formatDateLabel, formatTimeKorean, ALL_TIME_SLOTS, getMinTime, getAvailableTimeSlots, getDefaultTime, countPaidCleaningsThisMonth } from '@/lib/utils'
+import {
+  CLEANING_PLAN_LABELS,
+  EXTRA_BED_PRICE,
+  FIRST_CLEANING_DISCOUNT,
+  LINEN_WASH_LABELS,
+  LINEN_WASH_PRICING,
+  REGULAR_PLAN_THRESHOLD,
+  calculateCleaningPrice,
+  determineCleaningPlan,
+} from '@/lib/cleaning-pricing'
+import { PROPERTY_REGISTRATION_STEPS } from '@/lib/process-steps'
+import { useProperties } from '@/lib/hooks/use-properties'
+import { useCleaningRequests } from '@/lib/hooks/use-cleaning'
+import { useAuth } from '@/lib/auth-provider'
+import { CompoundInput, CompoundField, FloatingTextarea } from '@/components/ui/floating-input'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { ProcessDrawer } from '@/components/process-drawer'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
+
+export default function NewCleaningPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { user, loading: authLoading } = useAuth()
+  const { data: properties = [], isLoading: propertiesLoading } = useProperties()
+  const { data: cleaningHistory = [], isLoading: cleaningLoading } = useCleaningRequests()
+
+  const isFirstCleaning = cleaningHistory.length === 0
+
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>(searchParams.get('propertyId') ?? '')
+  const [date, setDate] = useState(searchParams.get('date') ?? getTomorrow())
+  const [time, setTime] = useState(searchParams.get('time') ?? '11:00')
+  const [memo, setMemo] = useState(searchParams.get('memo') ?? '')
+  const [linenWash, setLinenWash] = useState(searchParams.get('linenWash') === '1')
+
+  const [dateDrawerOpen, setDateDrawerOpen] = useState(false)
+  const [timeDrawerOpen, setTimeDrawerOpen] = useState(false)
+  const [pricingDrawerOpen, setPricingDrawerOpen] = useState(false)
+  const [registrationDrawerOpen, setRegistrationDrawerOpen] = useState(false)
+
+  const isUrgent = date === getToday()
+  const activeProperties = properties.filter((property) => property.status === 'active')
+  const pendingProperties = properties.filter((property) => property.status === 'pending_activation')
+  const selectedProperty = activeProperties.find((p) => p.id === selectedPropertyId)
+  const timeSlots = getAvailableTimeSlots(date)
+
+  const paidThisMonth = selectedProperty
+    ? countPaidCleaningsThisMonth(cleaningHistory, selectedProperty.id)
+    : 0
+  const plan = determineCleaningPlan(paidThisMonth)
+
+  const priceInfo = selectedProperty?.bedrooms
+    ? calculateCleaningPrice({
+        bedrooms: selectedProperty.bedrooms,
+        beddings: selectedProperty.beddings ?? 0,
+        plan,
+        isUrgent,
+        linenWash,
+        linenWashLocation: selectedProperty.linenWashLocation,
+      })
+    : null
+  const estimatedPrice = priceInfo
+    ? (isFirstCleaning ? Math.max(priceInfo.total - FIRST_CLEANING_DISCOUNT, 0) : priceInfo.total)
+    : 0
+
+  useEffect(() => {
+    if (!propertiesLoading && activeProperties.length === 1 && !selectedPropertyId) {
+      setSelectedPropertyId(activeProperties[0].id)
+      return
+    }
+
+    if (!propertiesLoading && selectedPropertyId && !activeProperties.some((property) => property.id === selectedPropertyId)) {
+      setSelectedPropertyId(activeProperties[0]?.id ?? '')
+    }
+  }, [activeProperties, propertiesLoading, selectedPropertyId])
+
+  // If selected property doesn't support linen wash, auto-uncheck
+  useEffect(() => {
+    if (selectedProperty && !selectedProperty.linenWashLocation && linenWash) {
+      setLinenWash(false)
+    }
+  }, [selectedProperty, linenWash])
+
+  // When date changes, validate time
+  function handleDateSelect(newDate: string) {
+    setDate(newDate)
+    const slots = getAvailableTimeSlots(newDate)
+    if (!slots.includes(time)) {
+      setTime(getDefaultTime(newDate))
+    }
+    setTimeout(() => setDateDrawerOpen(false), 300)
+  }
+
+  function handleTimeSelect(newTime: string) {
+    setTime(newTime)
+    setTimeout(() => setTimeDrawerOpen(false), 300)
+  }
+
+  // Form → Review page transition
+  function handleNext(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedPropertyId) return
+    const minTime = getMinTime(date)
+    if (minTime && time < minTime) {
+      setTime(minTime)
+      return
+    }
+    const params = new URLSearchParams({
+      propertyId: selectedPropertyId,
+      date,
+      time,
+    })
+    if (memo) params.set('memo', memo)
+    if (linenWash) params.set('linenWash', '1')
+    router.push(`/cleaning/new/general/review?${params.toString()}`)
+  }
+
+  const isPageLoading =
+    authLoading ||
+    (!!user && (propertiesLoading || cleaningLoading))
+
+  if (isPageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100dvh-80px)]">
+        <div className="w-6 h-6 rounded-full border-2 border-outline-dim border-t-ink-muted animate-spin" />
+      </div>
+    )
+  }
+
+  if (properties.length === 0) {
+    return (
+      <div className="animate-fade-up-fast flex flex-col min-h-[calc(100dvh-80px)] px-6 pt-6">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
+        >
+          <ChevronLeftIcon size={32} />
+        </button>
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <h2 className="text-[18px] font-semibold text-ink mb-2">
+            등록된 숙소가 없어요
+          </h2>
+          <p className="text-[14px] text-ink-muted leading-relaxed">
+            청소를 요청하려면 먼저 숙소를 등록해주세요
+          </p>
+          <Link
+            href="/properties/new"
+            className="mt-6 px-5 h-10 rounded-lg bg-brand text-white text-[14px] font-semibold inline-flex items-center justify-center active:scale-[0.98] transition-all"
+          >
+            숙소 등록하기
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (activeProperties.length === 0) {
+    return (
+      <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col px-6 pt-6 pb-10">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
+        >
+          <ChevronLeftIcon size={32} />
+        </button>
+        <h1 className="text-[22px] font-semibold text-ink mb-6">
+          청소 요청
+        </h1>
+
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <h2 className="text-[18px] font-semibold text-ink mb-2">
+            숙소 등록 완료 후 청소를 요청할 수 있어요
+          </h2>
+          <p className="text-[14px] text-ink-muted leading-relaxed">
+            48시간 이내 직접 방문해 숙소 등록을 완료해드려요.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRegistrationDrawerOpen(true)}
+            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors mt-4"
+          >
+            숙소 등록은 어떻게 진행되나요?
+          </button>
+        </div>
+
+        <ProcessDrawer
+          open={registrationDrawerOpen}
+          onOpenChange={setRegistrationDrawerOpen}
+          title="숙소 등록 진행 과정"
+          steps={PROPERTY_REGISTRATION_STEPS}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="animate-fade-up-fast min-h-[calc(100dvh-80px)] flex flex-col p-6 pb-10">
+      {/* Header */}
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="mb-3 -ml-4 inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface-soft"
+      >
+        <ChevronLeftIcon size={32} />
+      </button>
+      <h1 className="text-[22px] font-semibold text-ink mb-6">
+        청소 요청
+      </h1>
+
+      <form onSubmit={handleNext} className="flex flex-col gap-5">
+        {/* Property Selection */}
+        {activeProperties.length >= 1 && (
+          <div>
+            <div className="flex flex-col gap-3">
+              {[...activeProperties, ...pendingProperties].map((p) => {
+                const selected = p.status === 'active' && selectedPropertyId === p.id
+                const disabled = p.status === 'pending_activation'
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      if (disabled) {
+                        toast.info('등록 완료 후 청소를 요청할 수 있어요.')
+                        return
+                      }
+                      setSelectedPropertyId(p.id)
+                    }}
+                    className={cn(
+                      'w-full text-left transition-all active:scale-[0.99]',
+                      disabled && 'opacity-70'
+                    )}
+                    aria-disabled={disabled}
+                  >
+                    <PropertyCard property={p} selected={selected} />
+                  </button>
+                )
+              })}
+            </div>
+            <div className="flex justify-end mt-2">
+              <Link
+                href="/properties/new"
+                className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors"
+              >
+                + 숙소 추가
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Date & Time */}
+        <div>
+          <CompoundInput>
+            {/* Date field — tappable */}
+            <button
+              type="button"
+              className="w-full text-left"
+              onClick={() => setDateDrawerOpen(true)}
+            >
+              <CompoundField
+                label="희망 날짜"
+                borderRadius="12px 12px 0 0"
+              >
+                <span className="block w-full text-[16px] text-ink" style={{ fontFamily: 'var(--font-body)' }}>
+                  {formatDateLabel(date)}
+                </span>
+              </CompoundField>
+            </button>
+
+            {/* Time field — tappable */}
+            <button
+              type="button"
+              className="w-full text-left"
+              onClick={() => setTimeDrawerOpen(true)}
+            >
+              <CompoundField
+                label="희망 시간"
+                borderRadius="0 0 12px 12px"
+              >
+                <span className="block w-full text-[16px] text-ink" style={{ fontFamily: 'var(--font-body)' }}>
+                  {formatTimeKorean(time)}
+                </span>
+              </CompoundField>
+            </button>
+          </CompoundInput>
+
+          {isUrgent && (
+            <p className="text-[13px] text-brand mt-2 px-1">
+              당일 청소는 긴급 청소로 진행되며 별도 할증이 적용됩니다.
+            </p>
+          )}
+        </div>
+
+        {/* Memo */}
+        <CompoundInput>
+          <FloatingTextarea
+            label="메모 (선택)"
+            placeholder="특이사항이 있으면 알려주세요"
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            borderRadius="12px"
+          />
+        </CompoundInput>
+
+        {/* Linen wash add-on — shown only if property has a configured location */}
+        {selectedProperty?.linenWashLocation && (
+          <div>
+            <p className="text-[13px] font-medium text-ink-muted mb-2 px-1">추가 옵션</p>
+            <button
+              type="button"
+              onClick={() => setLinenWash((prev) => !prev)}
+              className={cn(
+                'w-full flex items-center justify-between rounded-xl border px-4 py-3.5 text-left transition-colors',
+                linenWash ? 'border-ink bg-surface-soft' : 'border-ink-faint hover:bg-surface-soft',
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className={cn(
+                    'flex h-[22px] w-[22px] items-center justify-center rounded-md border-[1.5px] shrink-0 transition-colors',
+                    linenWash ? 'bg-ink border-ink' : 'border-outline',
+                  )}
+                >
+                  {linenWash && (
+                    <CheckIcon size={14} strokeWidth={3} className="text-white" />
+                  )}
+                </span>
+                <div>
+                  <p className="text-[14px] font-semibold text-ink">침구류 세탁·건조</p>
+                  <p className="text-[12px] text-ink-muted mt-0.5">
+                    {LINEN_WASH_LABELS[selectedProperty.linenWashLocation]}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[14px] font-semibold text-ink">
+                +{LINEN_WASH_PRICING[selectedProperty.linenWashLocation].toLocaleString()}원
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Price estimate */}
+        {priceInfo && (
+          <div className="rounded-xl border border-ink-faint px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[14px] text-ink-muted">
+                  {isUrgent ? '긴급 청소 금액' : '청소 금액'}
+                </span>
+                <span className="inline-flex h-[20px] items-center rounded-md bg-ink px-1.5 text-[11px] font-semibold text-white">
+                  {CLEANING_PLAN_LABELS[priceInfo.plan]}
+                </span>
+              </div>
+              <div className="text-right">
+                {isFirstCleaning && (
+                  <span className="text-[14px] text-ink-faint line-through mr-2">
+                    {priceInfo.total.toLocaleString()}원
+                  </span>
+                )}
+                <span className="text-[20px] font-semibold text-ink">
+                  {estimatedPrice.toLocaleString()}원
+                </span>
+              </div>
+            </div>
+            {isFirstCleaning && (
+              <p className="text-[12px] text-brand mt-1.5 text-right">
+                첫 청소 {FIRST_CLEANING_DISCOUNT.toLocaleString()}원 할인 적용
+              </p>
+            )}
+            {isUrgent && (
+              <p className="text-[12px] text-ink-muted mt-1">
+                긴급 할증 50% 포함
+              </p>
+            )}
+            {priceInfo.plan === 'one_time' && (
+              <p className="text-[12px] text-ink-muted mt-1">
+                이번 달 {REGULAR_PLAN_THRESHOLD + 1}번째 청소부터 정기가가 자동 적용돼요.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Pricing info */}
+        {priceInfo && <>
+          <button
+            type="button"
+            onClick={() => setPricingDrawerOpen(true)}
+            className="text-[13px] text-ink-muted underline underline-offset-2 hover:text-ink transition-colors -mt-3"
+          >
+            청소 금액은 어떻게 계산되나요?
+          </button>
+          <Drawer open={pricingDrawerOpen} onOpenChange={setPricingDrawerOpen}>
+          <DrawerContent>
+            <div className="w-full px-5 pb-8 overflow-y-auto">
+              <DrawerHeader className="px-0">
+                <DrawerTitle className="text-[18px] font-semibold text-ink">
+                  청소 금액 안내
+                </DrawerTitle>
+              </DrawerHeader>
+
+              <div className="flex flex-col gap-5 mt-2">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">기본 요금 (침실 수 기준)</p>
+                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
+                    <div className="grid grid-cols-3 gap-y-1.5 text-[13px]">
+                      <span className="text-ink-muted">방 수</span>
+                      <span className="text-ink-muted text-right">정기</span>
+                      <span className="text-ink-muted text-right">단건</span>
+                      <span>2룸</span><span className="text-right">40,000원</span><span className="text-right">45,000원</span>
+                      <span>3룸</span><span className="text-right">50,000원</span><span className="text-right">55,000원</span>
+                      <span>4룸</span><span className="text-right">80,000원</span><span className="text-right">90,000원</span>
+                    </div>
+                    <p className="mt-2 text-[12px] text-ink-muted">5룸 이상은 동일한 패턴으로 산정됩니다.</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">정기 / 단건</p>
+                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
+                    같은 숙소의 결제완료 청소가 이번 달 {REGULAR_PLAN_THRESHOLD}건이 되면, 다음 청소부터 정기가가 자동 적용됩니다.
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">추가 침대</p>
+                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
+                    침실당 침대 1개는 무료, 초과 침대 1개당 {EXTRA_BED_PRICE.toLocaleString()}원이 추가됩니다.
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">포함 서비스</p>
+                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
+                    호텔식 침구 세팅과 시설 점검 리포트가 기본 포함됩니다.
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted mb-2">긴급 청소</p>
+                  <div className="rounded-lg bg-surface-subtle px-4 py-3 text-[14px] text-ink leading-relaxed">
+                    당일 요청 시 긴급 청소로 진행되며, 기본 금액에 50% 할증이 적용됩니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
+        </>}
+
+        {/* Next */}
+        <LoadingButton
+          type="submit"
+          variant="primary"
+          disabled={!selectedPropertyId && !propertiesLoading}
+        >
+          {!selectedPropertyId ? '숙소를 선택해주세요' : '청소 요청하기'}
+        </LoadingButton>
+      </form>
+
+      {/* Date Picker Drawer — Calendar */}
+      <Drawer open={dateDrawerOpen} onOpenChange={setDateDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader className="text-left px-4 pt-4 pb-2">
+            <DrawerTitle className="text-[18px] font-semibold text-ink">
+              날짜 선택
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-6">
+            <CalendarPicker
+              selected={date}
+              onSelect={handleDateSelect}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Time Picker Drawer */}
+      <Drawer open={timeDrawerOpen} onOpenChange={setTimeDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader className="text-left px-4 pt-4 pb-2">
+            <DrawerTitle className="text-[18px] font-semibold text-ink">
+              시간 선택
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto flex-1 pb-safe">
+            {ALL_TIME_SLOTS.map((t, i) => {
+              const isSelected = t === time
+              const isDisabled = !timeSlots.includes(t)
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => !isDisabled && handleTimeSelect(t)}
+                  className={cn(
+                    'w-full flex items-center justify-between py-3 px-4 text-[15px] transition-colors',
+                    i > 0 && 'border-t border-outline-dim',
+                    isDisabled
+                      ? 'text-outline-strong cursor-default'
+                      : isSelected
+                        ? 'font-semibold text-ink'
+                        : 'text-ink hover:bg-surface-soft active:bg-surface-dim'
+                  )}
+                >
+                  <span>{formatTimeKorean(t)}</span>
+                  {isSelected && !isDisabled && (
+                    <span className="w-[20px] h-[20px] rounded-full bg-ink flex items-center justify-center shrink-0">
+                      <CheckIcon size={12} strokeWidth={3} className="text-white" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  )
+}

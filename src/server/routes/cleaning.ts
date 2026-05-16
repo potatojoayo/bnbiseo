@@ -7,6 +7,7 @@ import {
   cleaningInspectionAssetPhotos,
   cleaningInspectionAssetReports,
   cleaningInspectionReports,
+  cleaningRequestAssets,
   cleaningRequestPhotos,
   cleaningRequests,
   managers,
@@ -17,6 +18,8 @@ import {
 } from '@/db/schema'
 import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
 import {
+  AC_FIRST_CLEANING_DISCOUNT,
+  calculateAcCleaningPrice,
   calculateCleaningPrice,
   determineCleaningPlan,
   FIRST_CLEANING_DISCOUNT,
@@ -30,12 +33,14 @@ import {
 } from '../lib/notifications'
 
 const CleaningRequestSchema = z.object({
+  serviceType: z.enum(['general', 'ac']).default('general'),
   propertyId: z.string().uuid(),
   scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   scheduledTime: z.string().regex(/^\d{2}:\d{2}$/),
   memo: z.string().optional(),
   isUrgent: z.boolean().default(false),
   linenWash: z.boolean().default(false),
+  assetIds: z.array(z.string().uuid()).default([]),
   paymentMethod: z.enum(['card', 'bank_transfer']).default('card'),
 })
 
@@ -91,6 +96,7 @@ cleaningRoutes.get('/', async (c) => {
       hostId: cleaningRequests.hostId,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       status: cleaningRequests.status,
       scheduledDate: cleaningRequests.scheduledDate,
       scheduledTime: cleaningRequests.scheduledTime,
@@ -127,6 +133,7 @@ cleaningRoutes.get('/:id', async (c) => {
       hostId: cleaningRequests.hostId,
       cleaningType: cleaningRequests.cleaningType,
       cleaningPlan: cleaningRequests.cleaningPlan,
+      serviceType: cleaningRequests.serviceType,
       status: cleaningRequests.status,
       scheduledDate: cleaningRequests.scheduledDate,
       scheduledTime: cleaningRequests.scheduledTime,
@@ -175,6 +182,7 @@ cleaningRoutes.get('/:id', async (c) => {
     .select({
       id: cleaningRequestPhotos.id,
       propertySpaceId: cleaningRequestPhotos.propertySpaceId,
+      propertyAssetId: cleaningRequestPhotos.propertyAssetId,
       kind: cleaningRequestPhotos.kind,
       storagePath: cleaningRequestPhotos.storagePath,
       thumbnailStoragePath: cleaningRequestPhotos.thumbnailStoragePath,
@@ -182,6 +190,20 @@ cleaningRoutes.get('/:id', async (c) => {
     })
     .from(cleaningRequestPhotos)
     .where(eq(cleaningRequestPhotos.cleaningRequestId, request.id))
+
+  const selectedAssetRows = request.serviceType === 'ac'
+    ? await db
+        .select({
+          id: propertyAssets.id,
+          name: propertyAssets.name,
+          location: propertyAssets.location,
+          brand: propertyAssets.brand,
+          modelNumber: propertyAssets.modelNumber,
+        })
+        .from(cleaningRequestAssets)
+        .innerJoin(propertyAssets, eq(cleaningRequestAssets.assetId, propertyAssets.id))
+        .where(eq(cleaningRequestAssets.cleaningRequestId, request.id))
+    : []
   const signedUrlMap = await createSignedUrlMap(
     [
       request.managerAvatarStoragePath,
@@ -216,8 +238,20 @@ cleaningRoutes.get('/:id', async (c) => {
         .map(toCleaningPhoto),
     }))
 
+  const cleaningPhotosByAsset = selectedAssetRows.map((asset) => ({
+    assetId: asset.id,
+    assetName: asset.name,
+    location: asset.location,
+    before: cleaningPhotos
+      .filter((p) => p.propertyAssetId === asset.id && p.kind === 'before')
+      .map(toCleaningPhoto),
+    after: cleaningPhotos
+      .filter((p) => p.propertyAssetId === asset.id && p.kind === 'after')
+      .map(toCleaningPhoto),
+  }))
+
   const legacyCleaningPhotos = cleaningPhotos
-    .filter((p) => p.propertySpaceId === null)
+    .filter((p) => p.propertySpaceId === null && p.propertyAssetId === null)
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((photo) => ({ ...toCleaningPhoto(photo), kind: photo.kind }))
 
@@ -233,6 +267,8 @@ cleaningRoutes.get('/:id', async (c) => {
       ? signedUrlMap.get(request.managerAvatarThumbnailStoragePath) ?? null
       : null,
     cleaningPhotosBySpace,
+    cleaningPhotosByAsset,
+    selectedAssets: selectedAssetRows,
     legacyCleaningPhotos,
   })
 })
@@ -354,7 +390,17 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
   }
 
-  const { propertyId, scheduledDate, scheduledTime, memo, isUrgent, linenWash, paymentMethod } = validated.data
+  const {
+    serviceType,
+    propertyId,
+    scheduledDate,
+    scheduledTime,
+    memo,
+    isUrgent,
+    linenWash,
+    assetIds,
+    paymentMethod,
+  } = validated.data
 
   // Verify property ownership
   const [property] = await db
@@ -371,69 +417,120 @@ cleaningRoutes.post('/', async (c) => {
     return c.json({ error: '등록 완료된 숙소만 청소를 요청할 수 있어요' }, 400)
   }
 
-  const spaces = await db
-    .select({
-      category: propertySpaces.category,
-      pyeong: propertySpaces.pyeong,
+  let priceTotal: number
+  let discount: number
+  let finalPrice: number
+  let plan: 'one_time' | 'regular' = 'one_time'
+  let effectiveIsUrgent = false
+  let effectiveLinenWash = false
+  let validAssetIds: string[] = []
+
+  if (serviceType === 'general') {
+    const spaces = await db
+      .select({
+        category: propertySpaces.category,
+        pyeong: propertySpaces.pyeong,
+      })
+      .from(propertySpaces)
+      .where(eq(propertySpaces.propertyId, propertyId))
+
+    const summary = summarizeSpaces(spaces)
+
+    if (!summary.bedrooms) {
+      return c.json({ error: '숙소 침실 정보가 필요해요' }, 400)
+    }
+
+    const beddingFixtures = await db
+      .select({ id: propertyAssets.id })
+      .from(propertyAssets)
+      .where(and(
+        eq(propertyAssets.propertyId, propertyId),
+        eq(propertyAssets.category, 'bedding'),
+        eq(propertyAssets.isActive, true),
+      ))
+
+    if (linenWash && !property.linenWashLocation) {
+      return c.json({ error: '이 숙소는 침구류 세탁 옵션이 설정되어 있지 않아요.' }, 400)
+    }
+
+    const { monthStart, monthEnd } = getKstMonthBounds()
+    const paidThisMonth = await db
+      .select({ id: cleaningRequests.id })
+      .from(cleaningRequests)
+      .where(and(
+        eq(cleaningRequests.propertyId, propertyId),
+        eq(cleaningRequests.serviceType, 'general'),
+        isNotNull(cleaningRequests.paidAt),
+        gte(cleaningRequests.paidAt, monthStart),
+        lt(cleaningRequests.paidAt, monthEnd),
+        ne(cleaningRequests.status, 'cancelled'),
+      ))
+
+    plan = determineCleaningPlan(paidThisMonth.length)
+
+    const priceResult = calculateCleaningPrice({
+      bedrooms: summary.bedrooms,
+      beddings: beddingFixtures.length,
+      plan,
+      isUrgent,
+      linenWash,
+      linenWashLocation: property.linenWashLocation,
     })
-    .from(propertySpaces)
-    .where(eq(propertySpaces.propertyId, propertyId))
 
-  const summary = summarizeSpaces(spaces)
+    const existingRequests = await db
+      .select({ id: cleaningRequests.id })
+      .from(cleaningRequests)
+      .where(and(
+        eq(cleaningRequests.hostId, profileId),
+        eq(cleaningRequests.serviceType, 'general'),
+      ))
+      .limit(1)
 
-  if (!summary.bedrooms) {
-    return c.json({ error: '숙소 침실 정보가 필요해요' }, 400)
+    const isFirstCleaning = existingRequests.length === 0
+
+    priceTotal = priceResult.total
+    discount = isFirstCleaning ? FIRST_CLEANING_DISCOUNT : 0
+    finalPrice = Math.max(priceTotal - discount, 0)
+    effectiveIsUrgent = isUrgent
+    effectiveLinenWash = linenWash
+  } else {
+    // AC cleaning
+    if (assetIds.length === 0) {
+      return c.json({ error: '청소할 에어컨을 1대 이상 선택해주세요.' }, 400)
+    }
+
+    const acAssets = await db
+      .select({ id: propertyAssets.id })
+      .from(propertyAssets)
+      .where(and(
+        eq(propertyAssets.propertyId, propertyId),
+        eq(propertyAssets.category, 'ac'),
+        eq(propertyAssets.isActive, true),
+        inArray(propertyAssets.id, assetIds),
+      ))
+
+    if (acAssets.length !== assetIds.length) {
+      return c.json({ error: '선택한 에어컨 정보가 올바르지 않아요.' }, 400)
+    }
+
+    validAssetIds = acAssets.map((row) => row.id)
+
+    const priceResult = calculateAcCleaningPrice({ acCount: validAssetIds.length })
+
+    const existingAcRequests = await db
+      .select({ id: cleaningRequests.id })
+      .from(cleaningRequests)
+      .where(and(
+        eq(cleaningRequests.hostId, profileId),
+        eq(cleaningRequests.serviceType, 'ac'),
+      ))
+      .limit(1)
+
+    const isFirstAc = existingAcRequests.length === 0
+    priceTotal = priceResult.total
+    discount = isFirstAc ? AC_FIRST_CLEANING_DISCOUNT : 0
+    finalPrice = Math.max(priceTotal - discount, 0)
   }
-
-  const beddingFixtures = await db
-    .select({ id: propertyAssets.id })
-    .from(propertyAssets)
-    .where(and(
-      eq(propertyAssets.propertyId, propertyId),
-      eq(propertyAssets.category, 'bedding'),
-      eq(propertyAssets.isActive, true),
-    ))
-
-  // Guard: linenWash requires the property to have a configured linen wash location
-  if (linenWash && !property.linenWashLocation) {
-    return c.json({ error: '이 숙소는 침구류 세탁 옵션이 설정되어 있지 않아요.' }, 400)
-  }
-
-  // 청구월 내 이 숙소의 결제완료(미취소) 청소 건수로 정기/단건 결정
-  const { monthStart, monthEnd } = getKstMonthBounds()
-  const paidThisMonth = await db
-    .select({ id: cleaningRequests.id })
-    .from(cleaningRequests)
-    .where(and(
-      eq(cleaningRequests.propertyId, propertyId),
-      isNotNull(cleaningRequests.paidAt),
-      gte(cleaningRequests.paidAt, monthStart),
-      lt(cleaningRequests.paidAt, monthEnd),
-      ne(cleaningRequests.status, 'cancelled'),
-    ))
-
-  const plan = determineCleaningPlan(paidThisMonth.length)
-
-  // Calculate price
-  const priceResult = calculateCleaningPrice({
-    bedrooms: summary.bedrooms,
-    beddings: beddingFixtures.length,
-    plan,
-    isUrgent,
-    linenWash,
-    linenWashLocation: property.linenWashLocation,
-  })
-
-  // Check if first cleaning
-  const existingRequests = await db
-    .select({ id: cleaningRequests.id })
-    .from(cleaningRequests)
-    .where(eq(cleaningRequests.hostId, profileId))
-    .limit(1)
-
-  const isFirstCleaning = existingRequests.length === 0
-  const discount = isFirstCleaning ? FIRST_CLEANING_DISCOUNT : 0
-  const finalPrice = Math.max(priceResult.total - discount, 0)
 
   // Generate orderId for TossPayments (6-64 chars, [A-Za-z0-9\-_=])
   const timestamp = Date.now()
@@ -444,20 +541,30 @@ cleaningRoutes.post('/', async (c) => {
     .values({
       propertyId,
       hostId: profileId,
-      cleaningType: isUrgent ? 'urgent' : 'standard',
+      serviceType,
+      cleaningType: effectiveIsUrgent ? 'urgent' : 'standard',
       cleaningPlan: plan,
       status: 'pending_payment',
       scheduledDate,
       scheduledTime,
       memo: memo || null,
-      linenWash,
-      price: priceResult.total,
+      linenWash: effectiveLinenWash,
+      price: priceTotal,
       discount,
       finalPrice,
       orderId,
       paymentMethod,
     })
     .returning()
+
+  if (serviceType === 'ac' && validAssetIds.length > 0) {
+    await db.insert(cleaningRequestAssets).values(
+      validAssetIds.map((assetId) => ({
+        cleaningRequestId: created.id,
+        assetId,
+      })),
+    )
+  }
 
   // 무통장 입금: 관리자에게 입금 확인 요청 알림 발송 (호스트/매니저는 입금 확인 후 알림)
   if (paymentMethod === 'bank_transfer') {

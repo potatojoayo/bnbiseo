@@ -133,6 +133,9 @@ export default function AdminCleaningDetailPage() {
     cleaning.propertyBathrooms != null && `욕실 ${cleaning.propertyBathrooms}`,
   ].filter(Boolean)
   const photoSpaces = cleaning.cleaningPhotosBySpace
+  const photoAssets = cleaning.cleaningPhotosByAsset
+  const selectedAssets = cleaning.selectedAssets
+  const isAcService = cleaning.serviceType === 'ac'
   const showBeforePhotos = cleaning.status === 'in_progress' || cleaning.status === 'completed'
   const showAfterPhotos = cleaning.status === 'completed'
 
@@ -296,7 +299,63 @@ export default function AdminCleaningDetailPage() {
           </section>
         )}
 
-        {showBeforePhotos && photoSpaces.length > 0 && (
+        {isAcService && selectedAssets.length > 0 && (
+          <section className="space-y-3">
+            <p className="text-[16px] font-semibold text-ink">청소 대상 에어컨 ({selectedAssets.length}대)</p>
+            <div className="flex flex-col gap-2">
+              {selectedAssets.map((asset) => (
+                <div key={asset.id} className="rounded-xl border border-outline-dim px-4 py-3">
+                  <p className="text-[14px] font-semibold text-ink">{asset.name}</p>
+                  <p className="mt-0.5 text-[12px] text-ink-muted">
+                    {asset.location}
+                    {asset.brand || asset.modelNumber
+                      ? ` · ${[asset.brand, asset.modelNumber].filter(Boolean).join(' ')}`
+                      : ''}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {isAcService && showBeforePhotos && photoAssets.length > 0 && (
+          <section className="space-y-4">
+            <div>
+              <p className="text-[16px] font-semibold text-ink">에어컨별 청소 사진</p>
+              <p className="mt-1 text-[12px] text-ink-muted">
+                {showAfterPhotos ? '매니저가 촬영한 에어컨별 청소 전/후 사진입니다.' : '매니저가 도착해 촬영한 청소 전 현황입니다.'}
+              </p>
+            </div>
+            {showAfterPhotos ? (
+              <CleaningPairPhotos
+                spaces={photoAssets.map((asset) => ({
+                  spaceId: asset.assetId,
+                  spaceName: asset.assetName,
+                  categoryLabel: asset.location,
+                  before: asset.before,
+                  after: asset.after,
+                }))}
+              />
+            ) : (
+              <div className="flex flex-col gap-4">
+                {photoAssets.map((asset) => (
+                  <div key={asset.assetId} className="rounded-xl border border-outline-dim p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[15px] font-semibold text-ink">{asset.assetName}</p>
+                      <span className="text-[11px] font-medium text-ink-muted">{asset.location}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[12px] font-semibold text-ink-muted tracking-wider uppercase">청소 전</p>
+                      <CleaningPrepPhotoGrid photos={asset.before} emptyText="청소 전 사진이 없어요." />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {!isAcService && showBeforePhotos && photoSpaces.length > 0 && (
           <section className="space-y-4">
             <div>
               <p className="text-[16px] font-semibold text-ink">공간별 청소 사진</p>

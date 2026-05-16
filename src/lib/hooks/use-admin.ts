@@ -9,6 +9,7 @@ type PendingItem = {
   scheduledTime: string
   cleaningType: string
   cleaningPlan: 'regular' | 'one_time'
+  serviceType: 'general' | 'ac'
   finalPrice: number
   propertyName: string | null
   hostName: string | null
@@ -20,6 +21,7 @@ type ScheduleItem = {
   status: string
   cleaningType: string
   cleaningPlan: 'regular' | 'one_time'
+  serviceType: 'general' | 'ac'
   propertyName: string | null
   managerName: string | null
 }
@@ -47,6 +49,7 @@ type CleaningRequest = {
   managerName: string | null
   cleaningType: string
   cleaningPlan: 'regular' | 'one_time'
+  serviceType: 'general' | 'ac'
   status: string
   scheduledDate: string
   scheduledTime: string
@@ -227,6 +230,7 @@ export type AdminCleaningDetail = {
   managerId: string | null
   cleaningType: string
   cleaningPlan: 'regular' | 'one_time'
+  serviceType: 'general' | 'ac'
   status: string
   scheduledDate: string
   scheduledTime: string
@@ -258,6 +262,20 @@ export type AdminCleaningDetail = {
     category: 'living_room' | 'bedroom' | 'bathroom' | 'veranda' | 'exterior' | 'other'
     before: AdminCleaningPhoto[]
     after: AdminCleaningPhoto[]
+  }>
+  cleaningPhotosByAsset: Array<{
+    assetId: string
+    assetName: string
+    location: string
+    before: AdminCleaningPhoto[]
+    after: AdminCleaningPhoto[]
+  }>
+  selectedAssets: Array<{
+    id: string
+    name: string
+    location: string
+    brand: string | null
+    modelNumber: string | null
   }>
   legacyCleaningPhotos: Array<AdminCleaningPhoto & { kind: 'before' | 'after' }>
 }
