@@ -85,8 +85,8 @@ export function CleaningPairPhotos({ spaces }: CleaningPairPhotosProps) {
                     const slot = beforePhoto.sortOrder
                     const afterPhoto = afterBySlot.get(slot)
                     const slotLabel = `#${index + 1}`
-                    const beforeUrlThumb = beforePhoto.thumbnailSignedUrl || beforePhoto.signedUrl
-                    const afterUrlThumb = afterPhoto ? afterPhoto.thumbnailSignedUrl || afterPhoto.signedUrl : null
+                    const beforeUrlThumb = beforePhoto.signedUrl || beforePhoto.thumbnailSignedUrl
+                    const afterUrlThumb = afterPhoto ? afterPhoto.signedUrl || afterPhoto.thumbnailSignedUrl : null
                     const indices = indexLookup[`${space.spaceId}|${slot}`]
 
                     return (

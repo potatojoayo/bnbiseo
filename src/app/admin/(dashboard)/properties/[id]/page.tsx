@@ -209,7 +209,7 @@ function AdminPropertyRegistrationForm({
     photos.map((photo) => ({
       storagePath: photo.storagePath,
       thumbnailStoragePath: photo.thumbnailStoragePath,
-      previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+      previewUrl: photo.signedUrl || photo.thumbnailSignedUrl || '',
     }))
   const [cleaningClosetPhotos, setCleaningClosetPhotos] = useState<UploadedAdminImage[]>(
     toUploadedImages(initialData.cleaningPrepPhotos.cleaning_closet),

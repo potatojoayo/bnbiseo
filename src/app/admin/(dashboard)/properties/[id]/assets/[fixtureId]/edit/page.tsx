@@ -167,7 +167,7 @@ function AdminFixtureEditForm({
       id: photo.id,
       storagePath: photo.storagePath,
       thumbnailStoragePath: photo.thumbnailStoragePath,
-      previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+      previewUrl: photo.signedUrl || photo.thumbnailSignedUrl || '',
     })),
   )
 

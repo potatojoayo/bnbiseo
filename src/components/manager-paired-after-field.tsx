@@ -76,7 +76,7 @@ export function ManagerPairedAfterField({
       <div className="flex flex-col gap-3">
         {sortedBefore.map((before, index) => {
           const slot = before.sortOrder
-          const beforeUrl = before.thumbnailSignedUrl || before.signedUrl
+          const beforeUrl = before.signedUrl || before.thumbnailSignedUrl
           const after = afterBySlot[slot]
           const isPending = pendingSlot === slot
           const slotLabel = `#${index + 1}`

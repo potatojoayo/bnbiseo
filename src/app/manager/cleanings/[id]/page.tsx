@@ -102,7 +102,7 @@ export default function ManagerCleaningDetailPage() {
         afterBySlot[photo.sortOrder] = {
           storagePath: photo.storagePath,
           thumbnailStoragePath: photo.thumbnailStoragePath,
-          previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+          previewUrl: photo.signedUrl || photo.thumbnailSignedUrl || '',
         }
       }
       result[group.spaceId] = {
@@ -111,7 +111,7 @@ export default function ManagerCleaningDetailPage() {
           .map((photo) => ({
             storagePath: photo.storagePath,
             thumbnailStoragePath: photo.thumbnailStoragePath,
-            previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+            previewUrl: photo.signedUrl || photo.thumbnailSignedUrl || '',
           })),
         afterBySlot,
       }
@@ -134,14 +134,14 @@ export default function ManagerCleaningDetailPage() {
           ? {
               storagePath: before.storagePath,
               thumbnailStoragePath: before.thumbnailStoragePath,
-              previewUrl: before.thumbnailSignedUrl || before.signedUrl || '',
+              previewUrl: before.signedUrl || before.thumbnailSignedUrl || '',
             }
           : null,
         after: after
           ? {
               storagePath: after.storagePath,
               thumbnailStoragePath: after.thumbnailStoragePath,
-              previewUrl: after.thumbnailSignedUrl || after.signedUrl || '',
+              previewUrl: after.signedUrl || after.thumbnailSignedUrl || '',
             }
           : null,
       }

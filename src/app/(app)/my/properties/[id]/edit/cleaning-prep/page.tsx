@@ -17,7 +17,7 @@ const toUploadedImages = (photos: CleaningPrepPhoto[]): UploadedAdminImage[] =>
   photos.map((photo) => ({
     storagePath: photo.storagePath,
     thumbnailStoragePath: photo.thumbnailStoragePath,
-    previewUrl: photo.thumbnailSignedUrl || photo.signedUrl || '',
+    previewUrl: photo.signedUrl || photo.thumbnailSignedUrl || '',
   }))
 
 export default function MyPropertyCleaningPrepEditPage() {

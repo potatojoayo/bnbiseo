@@ -31,7 +31,7 @@ export function CleaningPrepPhotoGrid({ photos, emptyText }: CleaningPrepPhotoGr
     <>
       <div className="grid grid-cols-3 gap-2">
         {photos.map((photo, index) => {
-          const thumbUrl = photo.thumbnailSignedUrl || photo.signedUrl
+          const thumbUrl = photo.signedUrl || photo.thumbnailSignedUrl
           return (
             <button
               key={photo.id}

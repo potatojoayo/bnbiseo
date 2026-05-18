@@ -408,7 +408,7 @@ export default function ManagerRepairDetailPage() {
         initialPhotos={(repair.completionReport?.photos ?? []).map((photo) => ({
           storagePath: photo.storagePath,
           thumbnailStoragePath: photo.thumbnailStoragePath,
-          previewUrl: photo.thumbnailSignedUrl ?? photo.signedUrl ?? '',
+          previewUrl: photo.signedUrl ?? photo.thumbnailSignedUrl ?? '',
         }))}
         onSuccess={async () => {
           await invalidate.repairDetail(id)
