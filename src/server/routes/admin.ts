@@ -13,6 +13,8 @@ import {
   managers,
   propertyAssets,
   propertyAssetPhotos,
+  propertyCleaningManualStepPhotos,
+  propertyCleaningManualSteps,
   propertyCleaningPrepPhotos,
   propertySpaces,
   propertySpacePhotos,
@@ -24,6 +26,7 @@ import {
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 import { isPhotoSpaceCategory } from '@/lib/cleaning-photo-spaces'
+import { loadCleaningManual } from './properties'
 import {
   notifyCleaningAssigned,
   notifyCleaningBankTransferConfirmed,
@@ -1985,6 +1988,169 @@ adminRoutes.post('/properties/:id/registration', async (c) => {
       propertyName: property.name,
     })
   }
+
+  return c.json({ success: true })
+})
+
+const CleaningManualStepSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().min(1, '제목을 입력해주세요.').max(200),
+  description: z.string().max(2000).nullable().optional(),
+  photos: z
+    .array(
+      z.object({
+        storagePath: z.string().min(1),
+        thumbnailStoragePath: z.string().min(1),
+      }),
+    )
+    .max(20),
+})
+
+const CleaningManualSchema = z.object({
+  steps: z.array(CleaningManualStepSchema).max(50),
+})
+
+const CleaningManualUploadSchema = z.object({
+  fileName: z.string().min(1),
+})
+
+adminRoutes.get('/properties/:id/cleaning-manual', async (c) => {
+  const id = c.req.param('id')
+
+  const [property] = await db
+    .select({ id: properties.id, name: properties.name })
+    .from(properties)
+    .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
+    .limit(1)
+
+  if (!property) {
+    return warnJson(c, { error: '숙소를 찾을 수 없어요' }, 404)
+  }
+
+  return c.json(await loadCleaningManual(property.id, property.name))
+})
+
+adminRoutes.post('/properties/:id/cleaning-manual/upload-url', async (c) => {
+  const propertyId = c.req.param('id')
+  const body = await c.req.json().catch(() => null)
+  const validated = CleaningManualUploadSchema.safeParse(body)
+
+  if (!validated.success) {
+    return warnJson(c, { errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [property] = await db
+    .select({ id: properties.id })
+    .from(properties)
+    .where(and(eq(properties.id, propertyId), isNull(properties.deletedAt)))
+    .limit(1)
+
+  if (!property) {
+    return warnJson(c, { error: '숙소를 찾을 수 없어요' }, 404)
+  }
+
+  const extension = validated.data.fileName.includes('.')
+    ? validated.data.fileName.slice(validated.data.fileName.lastIndexOf('.')).toLowerCase()
+    : '.jpg'
+  const safeExtension = extension.match(/^\.[a-z0-9]+$/) ? extension : '.jpg'
+  const fileId = crypto.randomUUID()
+  const storagePath = `properties/${propertyId}/cleaning-manual/original/${fileId}${safeExtension}`
+  const thumbnailStoragePath = `properties/${propertyId}/cleaning-manual/thumb/${fileId}.jpg`
+  const supabaseAdmin = getSupabaseAdmin()
+  const [{ data: originalData, error: originalError }, { data: thumbnailData, error: thumbnailError }] = await Promise.all([
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(storagePath),
+    supabaseAdmin.storage.from('images').createSignedUploadUrl(thumbnailStoragePath),
+  ])
+
+  if (originalError || thumbnailError || !originalData || !thumbnailData) {
+    return warnJson(c, { error: originalError?.message || thumbnailError?.message || '업로드 URL을 만들 수 없어요.' }, 400)
+  }
+
+  return c.json({
+    original: { path: storagePath, token: originalData.token },
+    thumbnail: { path: thumbnailStoragePath, token: thumbnailData.token },
+  })
+})
+
+adminRoutes.put('/properties/:id/cleaning-manual', async (c) => {
+  const id = c.req.param('id')
+  const body = await c.req.json().catch(() => null)
+  const validated = CleaningManualSchema.safeParse(body)
+
+  if (!validated.success) {
+    return warnJson(c, { errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [property] = await db
+    .select({ id: properties.id })
+    .from(properties)
+    .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
+    .limit(1)
+
+  if (!property) {
+    return warnJson(c, { error: '숙소를 찾을 수 없어요' }, 404)
+  }
+
+  await db.transaction(async (tx) => {
+    const existingSteps = await tx
+      .select({ id: propertyCleaningManualSteps.id })
+      .from(propertyCleaningManualSteps)
+      .where(eq(propertyCleaningManualSteps.propertyId, id))
+
+    const incomingIds = validated.data.steps
+      .map((step) => step.id)
+      .filter((stepId): stepId is string => Boolean(stepId))
+
+    const stepsToDelete = existingSteps
+      .map((step) => step.id)
+      .filter((stepId) => !incomingIds.includes(stepId))
+
+    if (stepsToDelete.length > 0) {
+      await tx.delete(propertyCleaningManualSteps).where(inArray(propertyCleaningManualSteps.id, stepsToDelete))
+    }
+
+    for (const [index, step] of validated.data.steps.entries()) {
+      let stepId = step.id
+      const description = step.description?.trim() || null
+
+      if (stepId) {
+        await tx
+          .update(propertyCleaningManualSteps)
+          .set({
+            title: step.title.trim(),
+            description,
+            sortOrder: index,
+            updatedAt: new Date(),
+          })
+          .where(eq(propertyCleaningManualSteps.id, stepId))
+        await tx
+          .delete(propertyCleaningManualStepPhotos)
+          .where(eq(propertyCleaningManualStepPhotos.stepId, stepId))
+      } else {
+        const [created] = await tx
+          .insert(propertyCleaningManualSteps)
+          .values({
+            propertyId: id,
+            title: step.title.trim(),
+            description,
+            sortOrder: index,
+          })
+          .returning({ id: propertyCleaningManualSteps.id })
+        stepId = created.id
+      }
+
+      if (step.photos.length > 0) {
+        await tx.insert(propertyCleaningManualStepPhotos).values(
+          step.photos.map((photo, photoIndex) => ({
+            stepId: stepId!,
+            storagePath: photo.storagePath,
+            thumbnailStoragePath: photo.thumbnailStoragePath,
+            sortOrder: photoIndex,
+          })),
+        )
+      }
+    }
+  })
 
   return c.json({ success: true })
 })

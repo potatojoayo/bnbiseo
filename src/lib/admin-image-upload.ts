@@ -86,6 +86,18 @@ export async function uploadAdminImage(
     kind,
   })
 
+  return uploadToSignedUrls(file, signed)
+}
+
+export async function uploadAdminCleaningManualImage(propertyId: string, file: File) {
+  const signed = await api.post<UploadUrlResponse>(`/admin/properties/${propertyId}/cleaning-manual/upload-url`, {
+    fileName: file.name,
+  })
+
+  return uploadToSignedUrls(file, signed)
+}
+
+async function uploadToSignedUrls(file: File, signed: UploadUrlResponse) {
   const thumbnailBlob = await createThumbnailBlob(file)
   const thumbnailFile = new File([thumbnailBlob], `${file.name.replace(/\.[^.]+$/, '') || 'thumb'}.jpg`, {
     type: 'image/jpeg',

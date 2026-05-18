@@ -87,6 +87,7 @@ export type PropertyDetail = Property & {
   trashDisposalLocation: string | null
   linenWashExternalAddress: string | null
   linenWashExternalAddressDetail: string | null
+  cleaningManualStepCount: number
   cleaningPrepPhotos: CleaningPrepPhotosByKind
   spaces: PropertySpace[]
   assets: PropertyAsset[]
@@ -120,6 +121,38 @@ export function usePropertyDetail(id: string) {
   return useQuery({
     queryKey: ['properties', 'detail', id],
     queryFn: () => api.get<PropertyDetail>(`/properties/${id}`),
+    enabled: !!user && !!id,
+  })
+}
+
+export type CleaningManualPhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  sortOrder: number
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
+
+export type CleaningManualStep = {
+  id: string
+  title: string
+  description: string | null
+  sortOrder: number
+  photos: CleaningManualPhoto[]
+}
+
+export type CleaningManual = {
+  propertyName: string
+  steps: CleaningManualStep[]
+}
+
+export function usePropertyCleaningManual(id: string) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['properties', 'cleaning-manual', id],
+    queryFn: () => api.get<CleaningManual>(`/properties/${id}/cleaning-manual`),
     enabled: !!user && !!id,
   })
 }

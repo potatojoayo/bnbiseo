@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
 import { createClient } from '@supabase/supabase-js'
-import { and, asc, desc, eq, inArray, isNull, ne, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
 import {
+  cleaningManualStepChecks,
   cleaningRequestAssets,
   cleaningRequestPhotos,
   cleaningInspectionAssetPhotos,
@@ -15,6 +16,7 @@ import {
   properties,
   propertyAssets,
   propertyAssetPhotos,
+  propertyCleaningManualSteps,
   propertyCleaningPrepPhotos,
   propertySpaces,
   propertySpacePhotos,
@@ -27,6 +29,7 @@ import {
 import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
 import { summarizeSpaces, summarizeSpacesByProperty } from '@/lib/property-space-summary'
 import { isPhotoSpaceCategory } from '@/lib/cleaning-photo-spaces'
+import { loadCleaningManual } from './properties'
 import {
   notifyCleaningAssigned,
   notifyCleaningCompleted,
@@ -283,6 +286,12 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     ...prepPhotos.map((photo) => photo.thumbnailStoragePath),
   ])
 
+  const [manualCountRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(propertyCleaningManualSteps)
+    .where(eq(propertyCleaningManualSteps.propertyId, request.propertyId))
+  const cleaningManualStepCount = manualCountRow?.count ?? 0
+
   const cleaningPrepPhotosByKind = {
     cleaning_closet: [] as Array<{
       id: string
@@ -375,6 +384,7 @@ async function getManagerCleaningDetail(managerId: string, id: string) {
     propertyLivingRooms: summary.livingRooms,
     propertyBedrooms: summary.bedrooms,
     propertyBathrooms: summary.bathrooms,
+    cleaningManualStepCount,
     cleaningPrepPhotos: cleaningPrepPhotosByKind,
     cleaningPhotosBySpace,
     cleaningPhotosByAsset,
@@ -1053,6 +1063,115 @@ managerRoutes.get('/cleanings/:id', async (c) => {
   return c.json(detail)
 })
 
+managerRoutes.get('/cleanings/:id/cleaning-manual', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+
+  const [request] = await db
+    .select({ id: cleaningRequests.id, propertyId: cleaningRequests.propertyId })
+    .from(cleaningRequests)
+    .where(and(
+      eq(cleaningRequests.id, id),
+      or(
+        eq(cleaningRequests.managerId, managerId),
+        and(
+          eq(cleaningRequests.status, 'pending'),
+          isNull(cleaningRequests.managerId),
+        ),
+      ),
+    ))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '청소 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  const [property] = await db
+    .select({ id: properties.id, name: properties.name })
+    .from(properties)
+    .where(eq(properties.id, request.propertyId))
+    .limit(1)
+
+  if (!property) {
+    return c.json({ error: '숙소를 찾을 수 없어요.' }, 404)
+  }
+
+  const manual = await loadCleaningManual(property.id, property.name)
+  const checkedRows = await db
+    .select({ stepId: cleaningManualStepChecks.stepId })
+    .from(cleaningManualStepChecks)
+    .where(eq(cleaningManualStepChecks.cleaningRequestId, request.id))
+
+  return c.json({
+    ...manual,
+    checkedStepIds: checkedRows.map((row) => row.stepId),
+  })
+})
+
+const ManualCheckSchema = z.object({
+  stepId: z.string().uuid(),
+  checked: z.boolean(),
+})
+
+managerRoutes.post('/cleanings/:id/cleaning-manual/check', async (c) => {
+  const id = c.req.param('id')
+  const managerId = c.get('managerId')
+  const body = await c.req.json().catch(() => null)
+  const validated = ManualCheckSchema.safeParse(body)
+
+  if (!validated.success) {
+    return c.json({ errors: validated.error.flatten().fieldErrors }, 400)
+  }
+
+  const [request] = await db
+    .select({ id: cleaningRequests.id, propertyId: cleaningRequests.propertyId, status: cleaningRequests.status })
+    .from(cleaningRequests)
+    .where(and(
+      eq(cleaningRequests.id, id),
+      eq(cleaningRequests.managerId, managerId),
+    ))
+    .limit(1)
+
+  if (!request) {
+    return c.json({ error: '청소 요청을 찾을 수 없어요.' }, 404)
+  }
+
+  if (request.status !== 'in_progress') {
+    return c.json({ error: '청소 진행 중에만 체크할 수 있어요.' }, 400)
+  }
+
+  const [step] = await db
+    .select({ id: propertyCleaningManualSteps.id })
+    .from(propertyCleaningManualSteps)
+    .where(and(
+      eq(propertyCleaningManualSteps.id, validated.data.stepId),
+      eq(propertyCleaningManualSteps.propertyId, request.propertyId),
+    ))
+    .limit(1)
+
+  if (!step) {
+    return c.json({ error: '단계를 찾을 수 없어요.' }, 404)
+  }
+
+  if (validated.data.checked) {
+    await db
+      .insert(cleaningManualStepChecks)
+      .values({ cleaningRequestId: id, stepId: validated.data.stepId })
+      .onConflictDoNothing({
+        target: [cleaningManualStepChecks.cleaningRequestId, cleaningManualStepChecks.stepId],
+      })
+  } else {
+    await db
+      .delete(cleaningManualStepChecks)
+      .where(and(
+        eq(cleaningManualStepChecks.cleaningRequestId, id),
+        eq(cleaningManualStepChecks.stepId, validated.data.stepId),
+      ))
+  }
+
+  return c.json({ success: true })
+})
+
 managerRoutes.get('/cleanings/:id/report', async (c) => {
   const id = c.req.param('id')
   const managerId = c.get('managerId')
@@ -1432,6 +1551,27 @@ managerRoutes.post('/cleanings/:id/status', async (c) => {
             error: '모든 청소 전 사진에 대응하는 청소 후 사진을 올려야 완료할 수 있어요.',
           }, 400)
         }
+      }
+    }
+  }
+
+  if (parsed.data.status === 'completed') {
+    const manualSteps = await db
+      .select({ id: propertyCleaningManualSteps.id })
+      .from(propertyCleaningManualSteps)
+      .where(eq(propertyCleaningManualSteps.propertyId, request.propertyId))
+
+    if (manualSteps.length > 0) {
+      const checks = await db
+        .select({ stepId: cleaningManualStepChecks.stepId })
+        .from(cleaningManualStepChecks)
+        .where(eq(cleaningManualStepChecks.cleaningRequestId, id))
+      const checkedSet = new Set(checks.map((c) => c.stepId))
+      const missing = manualSteps.filter((step) => !checkedSet.has(step.id))
+      if (missing.length > 0) {
+        return c.json({
+          error: '청소 매뉴얼의 모든 단계를 체크해야 완료할 수 있어요.',
+        }, 400)
       }
     }
   }

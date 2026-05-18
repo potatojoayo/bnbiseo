@@ -75,6 +75,10 @@ type CleaningRequestDetail = CleaningRequest & {
   cleaningPhotosByAsset: CleaningPhotosByAsset[]
   selectedAssets: CleaningSelectedAsset[]
   legacyCleaningPhotos: Array<CleaningSpacePhoto & { kind: 'before' | 'after' }>
+  cleaningManualProgress?: {
+    totalSteps: number
+    checkedSteps: number
+  }
 }
 type AssetCategory =
   | 'lighting'

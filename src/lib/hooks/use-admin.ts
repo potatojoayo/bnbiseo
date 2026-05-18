@@ -405,6 +405,38 @@ export function useAdminPropertyRegistration(propertyId: string) {
   })
 }
 
+export type CleaningManualPhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  sortOrder: number
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
+
+export type CleaningManualStep = {
+  id: string
+  title: string
+  description: string | null
+  sortOrder: number
+  photos: CleaningManualPhoto[]
+}
+
+export type CleaningManual = {
+  propertyName: string
+  steps: CleaningManualStep[]
+}
+
+export function useAdminCleaningManual(propertyId: string) {
+  return useQuery({
+    queryKey: ['admin', 'cleaning-manual', propertyId],
+    queryFn: () => api.get<CleaningManual>(`/admin/properties/${propertyId}/cleaning-manual`),
+    enabled: !!propertyId,
+    staleTime: 0,
+    refetchOnMount: true,
+  })
+}
+
 export function useInvalidateAdmin() {
   const queryClient = useQueryClient()
   return {
@@ -418,6 +450,10 @@ export function useInvalidateAdmin() {
     propertyRegistration: (propertyId?: string) =>
       queryClient.invalidateQueries({
         queryKey: propertyId ? ['admin', 'property-registration', propertyId] : ['admin', 'property-registration'],
+      }),
+    cleaningManual: (propertyId?: string) =>
+      queryClient.invalidateQueries({
+        queryKey: propertyId ? ['admin', 'cleaning-manual', propertyId] : ['admin', 'cleaning-manual'],
       }),
   }
 }

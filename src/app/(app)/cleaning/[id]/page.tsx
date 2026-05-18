@@ -336,6 +336,26 @@ export default function CleaningDetailPage() {
         </section>
       )}
 
+      {cleaning.status === 'in_progress' && (cleaning.cleaningManualProgress?.totalSteps ?? 0) > 0 && (() => {
+        const totalSteps = cleaning.cleaningManualProgress?.totalSteps ?? 0
+        const checkedSteps = cleaning.cleaningManualProgress?.checkedSteps ?? 0
+        const percent = Math.round((checkedSteps / totalSteps) * 100)
+        return (
+          <section className="mb-6 space-y-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-[13px] font-medium text-ink-muted">청소 진행도</p>
+              <p className="text-[13px] font-semibold text-ink">{percent}%</p>
+            </div>
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-surface-soft">
+              <div
+                className="h-full rounded-full bg-success/80 transition-all"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </section>
+        )
+      })()}
+
       {isAcService && selectedAssets.length > 0 && (
         <section className="mb-6 space-y-3">
           <p className="text-[16px] font-semibold text-ink">청소 대상 에어컨 ({selectedAssets.length}대)</p>

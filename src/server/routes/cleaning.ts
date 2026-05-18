@@ -7,6 +7,7 @@ import {
   cleaningInspectionAssetPhotos,
   cleaningInspectionAssetReports,
   cleaningInspectionReports,
+  cleaningManualStepChecks,
   cleaningRequestAssets,
   cleaningRequestPhotos,
   cleaningRequests,
@@ -14,6 +15,7 @@ import {
   profiles,
   properties,
   propertyAssets,
+  propertyCleaningManualSteps,
   propertySpaces,
 } from '@/db/schema'
 import { authMiddleware, requireProfile, type AuthEnv } from '../middleware/auth'
@@ -255,6 +257,18 @@ cleaningRoutes.get('/:id', async (c) => {
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((photo) => ({ ...toCleaningPhoto(photo), kind: photo.kind }))
 
+  const manualSteps = await db
+    .select({ id: propertyCleaningManualSteps.id })
+    .from(propertyCleaningManualSteps)
+    .where(eq(propertyCleaningManualSteps.propertyId, request.propertyId))
+
+  const checkedSteps = manualSteps.length > 0
+    ? await db
+        .select({ stepId: cleaningManualStepChecks.stepId })
+        .from(cleaningManualStepChecks)
+        .where(eq(cleaningManualStepChecks.cleaningRequestId, request.id))
+    : []
+
   return c.json({
     ...request,
     propertyPyeong: summary.pyeong,
@@ -270,6 +284,10 @@ cleaningRoutes.get('/:id', async (c) => {
     cleaningPhotosByAsset,
     selectedAssets: selectedAssetRows,
     legacyCleaningPhotos,
+    cleaningManualProgress: {
+      totalSteps: manualSteps.length,
+      checkedSteps: checkedSteps.length,
+    },
   })
 })
 

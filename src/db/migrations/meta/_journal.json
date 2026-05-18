@@ -246,6 +246,20 @@
       "when": 1778934439700,
       "tag": "0034_aspiring_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1779070221590,
+      "tag": "0035_pale_cloak",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1779073359124,
+      "tag": "0036_massive_mandrill",
+      "breakpoints": true
     }
   ]
 }

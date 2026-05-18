@@ -8,6 +8,7 @@ import { MapPinIcon } from 'lucide-react'
 import { ManagerCleaningPhotoField } from '@/components/manager-cleaning-photo-field'
 import { ManagerPairedAfterField } from '@/components/manager-paired-after-field'
 import { ManagerAcPhotoField } from '@/components/manager-ac-photo-field'
+import { ManagerCleaningManualChecklist } from '@/components/manager-cleaning-manual-checklist'
 import { PhotoLightbox, type LightboxPhoto } from '@/components/photo-lightbox'
 import { MobileBackButton } from '@/components/mobile-back-button'
 import { CleaningStatusBadge } from '@/components/cleaning-status-badge'
@@ -23,7 +24,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { api, ApiError } from '@/lib/api-client'
-import { useManagerCleaning, useManagerCleaningReport, useManagerOpenCleanings, useInvalidateManager, type ManagerCleaningDetail, type ManagerCleaningReport } from '@/lib/hooks/use-manager'
+import { useManagerCleaning, useManagerCleaningManual, useManagerCleaningReport, useManagerOpenCleanings, useInvalidateManager, type ManagerCleaningDetail, type ManagerCleaningReport } from '@/lib/hooks/use-manager'
 import type { UploadedManagerCleaningImage } from '@/lib/manager-cleaning-image-upload'
 import { cn, formatDateLabel, formatTimeKorean } from '@/lib/utils'
 import { calculateManagerPayout } from '@/lib/manager-payout'
@@ -88,6 +89,7 @@ export default function ManagerCleaningDetailPage() {
   const { data: openCleanings = [], isLoading: openCleaningsLoading } = useManagerOpenCleanings()
   const { data: cleaning, isLoading } = useManagerCleaning(id)
   const { data: report, isLoading: reportLoading } = useManagerCleaningReport(id)
+  const { data: cleaningManual } = useManagerCleaningManual(id)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isClaiming, setIsClaiming] = useState(false)
   const [isClaimDrawerOpen, setIsClaimDrawerOpen] = useState(false)
@@ -270,10 +272,15 @@ export default function ManagerCleaningDetailPage() {
     (asset) => photosByAsset[asset.id]?.after != null,
   )
 
+  const manualStepCount = cleaningManual?.steps.length ?? 0
+  const checkedStepIdSet = new Set(cleaningManual?.checkedStepIds ?? [])
+  const allManualStepsChecked = manualStepCount === 0
+    || (cleaningManual?.steps ?? []).every((step) => checkedStepIdSet.has(step.id))
+
   const canStartCleaning = isAcService ? allAcHaveBefore : allSpacesHaveBefore
-  const canCompleteCleaning = isAcService
+  const canCompleteCleaning = (isAcService
     ? allAcHaveAfter
-    : allAssetsInspected && allSpacesPaired
+    : allAssetsInspected && allSpacesPaired) && allManualStepsChecked
 
   async function handleClaim() {
     setIsClaiming(true)
@@ -603,6 +610,30 @@ export default function ManagerCleaningDetailPage() {
         </div>
       )}
 
+      {cleaning && cleaning.status === 'in_progress' && cleaningManual && cleaningManual.steps.length > 0 && (
+        <section className="mt-7 space-y-3">
+          <div>
+            <p className="text-[16px] font-semibold text-ink">청소 매뉴얼</p>
+            <p className="mt-1 text-[12px] text-ink-muted">
+              모든 단계를 체크해야 청소를 완료할 수 있어요.
+            </p>
+          </div>
+          <ManagerCleaningManualChecklist cleaningId={id} manual={cleaningManual} />
+        </section>
+      )}
+
+      {cleaning && cleaning.status !== 'in_progress' && cleaning.cleaningManualStepCount > 0 && (
+        <section className="mt-7 space-y-3">
+          <p className="text-[16px] font-semibold text-ink">청소 매뉴얼</p>
+          <Link
+            href={`/manager/cleanings/${id}/cleaning-manual`}
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-outline-strong text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
+          >
+            매뉴얼 보기
+          </Link>
+        </section>
+      )}
+
       {cleaning && (actionLabel || canWriteReport || canViewReport || canViewPhotos) && (
         <div className="mt-5 flex flex-col gap-3">
           {canViewPhotos && isAcService && selectedAcAssets.length > 0 && (
@@ -743,7 +774,9 @@ export default function ManagerCleaningDetailPage() {
                   return
                 }
                 if (actionStatus === 'completed' && !canCompleteCleaning) {
-                  if (!allAssetsInspected && !allSpacesPaired) {
+                  if (!allManualStepsChecked) {
+                    toast.info('청소 매뉴얼의 모든 단계를 체크한 뒤 청소를 완료할 수 있어요.')
+                  } else if (!allAssetsInspected && !allSpacesPaired) {
                     toast.info('모든 시설물 점검과 청소 전 사진별 청소 후 사진을 등록한 뒤 청소를 완료할 수 있어요.')
                   } else if (!allAssetsInspected) {
                     toast.info('모든 시설물의 점검 상태를 선택한 뒤 청소를 완료할 수 있어요.')
@@ -789,6 +822,7 @@ export default function ManagerCleaningDetailPage() {
         </CompoundInput>
       </section>
       )}
+
 
       {cleaning && !isAcService && (
       <section className="mt-7 space-y-4">

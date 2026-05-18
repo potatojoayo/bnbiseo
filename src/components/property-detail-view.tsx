@@ -440,6 +440,20 @@ export function PropertyDetailView({
             )}
           </section>
 
+          <section className="mt-7 space-y-3">
+            <p className="text-[16px] font-semibold text-ink">청소 매뉴얼</p>
+            <Link
+              href={
+                property.cleaningManualStepCount > 0
+                  ? `${detailBaseHref}/cleaning-manual`
+                  : `${detailBaseHref}/cleaning-manual/edit`
+              }
+              className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-outline-strong text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
+            >
+              {property.cleaningManualStepCount > 0 ? '매뉴얼 보기' : '매뉴얼 등록'}
+            </Link>
+          </section>
+
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}

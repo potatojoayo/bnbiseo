@@ -332,6 +332,54 @@ export const propertyCleaningPrepPhotos = pgTable('property_cleaning_prep_photos
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+export const propertyCleaningManualSteps = pgTable(
+  'property_cleaning_manual_steps',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    propertyId: uuid('property_id')
+      .notNull()
+      .references(() => properties.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    description: text('description'),
+    sortOrder: integer('sort_order').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index('property_cleaning_manual_steps_property_idx').on(t.propertyId, t.sortOrder)],
+)
+
+export const propertyCleaningManualStepPhotos = pgTable(
+  'property_cleaning_manual_step_photos',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stepId: uuid('step_id')
+      .notNull()
+      .references(() => propertyCleaningManualSteps.id, { onDelete: 'cascade' }),
+    storagePath: text('storage_path').notNull(),
+    thumbnailStoragePath: text('thumbnail_storage_path').notNull(),
+    sortOrder: smallint('sort_order').default(0).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index('property_cleaning_manual_step_photos_step_idx').on(t.stepId, t.sortOrder)],
+)
+
+export const cleaningManualStepChecks = pgTable(
+  'cleaning_manual_step_checks',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    cleaningRequestId: uuid('cleaning_request_id')
+      .notNull()
+      .references(() => cleaningRequests.id, { onDelete: 'cascade' }),
+    stepId: uuid('step_id')
+      .notNull()
+      .references(() => propertyCleaningManualSteps.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('cleaning_manual_step_checks_request_step_idx').on(t.cleaningRequestId, t.stepId),
+  ],
+)
+
 export const repairRequests = pgTable('repair_requests', {
   id: uuid('id').primaryKey().defaultRandom(),
   propertyId: uuid('property_id')

@@ -12,7 +12,7 @@ import { ImageWithSkeleton } from '@/components/ui/image-with-skeleton'
 import { AssetCard } from '@/components/asset-card'
 import { api, ApiError } from '@/lib/api-client'
 import { cn, formatKoreanPhone } from '@/lib/utils'
-import { useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
+import { useAdminCleaningManual, useAdminPropertyRegistration, useInvalidateAdmin } from '@/lib/hooks/use-admin'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { CompoundField, CompoundInput, FloatingInput } from '@/components/ui/floating-input'
 import { AdminImageUploadField } from '@/components/admin-image-upload-field'
@@ -924,6 +924,8 @@ function AdminPropertyDetailView({
   const queryClient = useQueryClient()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null)
+  const { data: cleaningManual } = useAdminCleaningManual(propertyId)
+  const hasCleaningManual = (cleaningManual?.steps.length ?? 0) > 0
 
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/admin/properties/${propertyId}`),
@@ -1131,6 +1133,31 @@ function AdminPropertyDetailView({
               ))}
             </div>
           )}
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <p className="text-[16px] font-semibold text-ink">청소 매뉴얼</p>
+            <p className="mt-1 text-[13px] text-ink-muted">
+              매니저가 청소할 때 따라할 단계별 매뉴얼이에요. 호스트와 매니저 모두 볼 수 있어요.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            {hasCleaningManual && (
+              <Link
+                href={`/admin/properties/${propertyId}/cleaning-manual`}
+                className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-outline-strong text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
+              >
+                매뉴얼 보기
+              </Link>
+            )}
+            <Link
+              href={`/admin/properties/${propertyId}/cleaning-manual/edit`}
+              className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-outline-strong text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
+            >
+              {hasCleaningManual ? '매뉴얼 수정' : '매뉴얼 등록'}
+            </Link>
+          </div>
         </section>
 
         <div className="flex flex-col gap-4">

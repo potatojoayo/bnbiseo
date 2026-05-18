@@ -91,6 +91,7 @@ export type ManagerCleaningDetail = ManagerCleaning & {
   linenWashLocation: 'in_house' | 'external' | null
   linenWashExternalAddress: string | null
   linenWashExternalAddressDetail: string | null
+  cleaningManualStepCount: number
   cleaningPrepPhotos: {
     cleaning_closet: CleaningPrepPhoto[]
     extra_linen: CleaningPrepPhoto[]
@@ -228,6 +229,39 @@ export function useManagerCleaningReport(id: string) {
     enabled: !!user && !!id,
     staleTime: 0,
     refetchOnMount: true,
+  })
+}
+
+export type ManagerCleaningManualPhoto = {
+  id: string
+  storagePath: string
+  thumbnailStoragePath: string
+  sortOrder: number
+  signedUrl: string | null
+  thumbnailSignedUrl: string | null
+}
+
+export type ManagerCleaningManualStep = {
+  id: string
+  title: string
+  description: string | null
+  sortOrder: number
+  photos: ManagerCleaningManualPhoto[]
+}
+
+export type ManagerCleaningManual = {
+  propertyName: string
+  steps: ManagerCleaningManualStep[]
+  checkedStepIds: string[]
+}
+
+export function useManagerCleaningManual(cleaningId: string) {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: ['manager', 'cleanings', 'cleaning-manual', cleaningId],
+    queryFn: () => api.get<ManagerCleaningManual>(`/manager/cleanings/${cleaningId}/cleaning-manual`),
+    enabled: !!user && !!cleaningId,
   })
 }
 

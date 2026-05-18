@@ -61,6 +61,21 @@ export async function uploadHostPropertyPhoto(
     kind,
   })
 
+  return finishUpload(file, signed)
+}
+
+export async function uploadHostCleaningManualImage(
+  propertyId: string,
+  file: File,
+): Promise<UploadedHostPropertyPhoto> {
+  const signed = await api.post<UploadUrlResponse>(`/properties/${propertyId}/cleaning-manual/upload-url`, {
+    fileName: file.name,
+  })
+
+  return finishUpload(file, signed)
+}
+
+async function finishUpload(file: File, signed: UploadUrlResponse): Promise<UploadedHostPropertyPhoto> {
   const thumbnailBlob = await createThumbnailBlob(file)
   const thumbnailFile = new File([thumbnailBlob], `${file.name.replace(/\.[^.]+$/, '') || 'thumb'}.jpg`, {
     type: 'image/jpeg',
