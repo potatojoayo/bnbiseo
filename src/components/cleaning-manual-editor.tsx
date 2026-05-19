@@ -318,7 +318,7 @@ function StepEditor({
           value={step.title}
           onChange={(e) => onChange({ title: e.target.value })}
           placeholder="단계 제목 (예: 침구류 세탁하기)"
-          className="block w-full rounded-lg border border-outline-strong bg-white px-3 py-2.5 text-[15px] font-medium text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none"
+          className="block w-full rounded-lg border border-outline-strong bg-white px-3 py-2.5 text-[16px] font-medium text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none"
           maxLength={200}
         />
         <textarea
@@ -326,7 +326,7 @@ function StepEditor({
           onChange={(e) => onChange({ description: e.target.value })}
           placeholder="구체적인 작업 방법이나 주의사항을 적어주세요. (선택)"
           rows={3}
-          className="block w-full resize-y rounded-lg border border-outline-strong bg-white px-3 py-2.5 text-[14px] leading-relaxed text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none"
+          className="block w-full resize-y rounded-lg border border-outline-strong bg-white px-3 py-2.5 text-[16px] leading-relaxed text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none"
           maxLength={2000}
         />
       </div>
