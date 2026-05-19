@@ -1142,22 +1142,16 @@ function AdminPropertyDetailView({
               매니저가 청소할 때 따라할 단계별 매뉴얼이에요. 호스트와 매니저 모두 볼 수 있어요.
             </p>
           </div>
-          <div className="flex flex-col gap-2">
-            {hasCleaningManual && (
-              <Link
-                href={`/admin/properties/${propertyId}/cleaning-manual`}
-                className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-outline-strong text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
-              >
-                매뉴얼 보기
-              </Link>
-            )}
-            <Link
-              href={`/admin/properties/${propertyId}/cleaning-manual/edit`}
-              className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-outline-strong text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
-            >
-              {hasCleaningManual ? '매뉴얼 수정' : '매뉴얼 등록'}
-            </Link>
-          </div>
+          <Link
+            href={
+              hasCleaningManual
+                ? `/admin/properties/${propertyId}/cleaning-manual`
+                : `/admin/properties/${propertyId}/cleaning-manual/edit`
+            }
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-outline-strong text-[14px] font-medium text-ink transition-colors hover:bg-surface-soft"
+          >
+            {hasCleaningManual ? '매뉴얼 보기' : '매뉴얼 등록'}
+          </Link>
         </section>
 
         <div className="flex flex-col gap-4">
