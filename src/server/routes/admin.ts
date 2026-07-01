@@ -826,8 +826,8 @@ const CreateManagerSchema = z.object({
   name: z.string().min(1),
   phone: PhoneDigits,
   memo: z.string().optional(),
-  avatarStoragePath: z.string().min(1),
-  avatarThumbnailStoragePath: z.string().min(1),
+  avatarStoragePath: z.string().min(1).optional(),
+  avatarThumbnailStoragePath: z.string().min(1).optional(),
 })
 
 const UpdateManagerSchema = z.object({

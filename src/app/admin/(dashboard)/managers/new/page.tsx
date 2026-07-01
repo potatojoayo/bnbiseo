@@ -224,7 +224,7 @@ export default function AdminManagerCreatePage() {
             variant="primary"
             loading={saving}
             loadingText="저장 중..."
-            disabled={!name || !phone || !email || !password || !avatarStoragePath || !avatarThumbnailStoragePath || uploadingAvatar}
+            disabled={!name || !phone || !email || !password || uploadingAvatar}
             onClick={handleSave}
           >
             추가하기
