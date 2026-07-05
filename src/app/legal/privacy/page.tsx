@@ -83,7 +83,7 @@ export default function PrivacyPage() {
               <p>보유 기간: 발송 후 즉시 파기 (법정 보관 기간 제외)</p>
             </div>
             <div>
-              <p className="text-ink font-medium">Resend, Inc.</p>
+              <p className="text-ink font-medium">Google LLC (Gmail)</p>
               <p>위탁 업무: 이메일 발송 (이메일 주소)</p>
               <p>보유 기간: 발송 후 즉시 파기</p>
             </div>
