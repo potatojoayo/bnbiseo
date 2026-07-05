@@ -1,5 +1,10 @@
-// Resend email helper.
-// Configure RESEND_API_KEY and RESEND_FROM (e.g. "BnBiseo <noreply@bnbiseo.com>") in env.
+// Email helper backed by Gmail SMTP (via nodemailer).
+// Configure the following env vars:
+//   GMAIL_USER         — the Gmail address used to authenticate & send (e.g. noreply@yourdomain / you@gmail.com)
+//   GMAIL_APP_PASSWORD — a 16-char Google App Password (requires 2FA on the account)
+//   MAIL_FROM          — optional display From, e.g. "BnBiseo <you@gmail.com>". Defaults to GMAIL_USER.
+
+import nodemailer, { type Transporter } from 'nodemailer'
 
 type SendEmailParams = {
   to: string | string[]
@@ -8,31 +13,34 @@ type SendEmailParams = {
   text?: string
 }
 
-export async function sendEmail(params: SendEmailParams) {
-  const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM
-  if (!apiKey) throw new Error('RESEND_API_KEY env var is not set')
-  if (!from) throw new Error('RESEND_FROM env var is not set')
+let transporter: Transporter | null = null
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: Array.isArray(params.to) ? params.to : [params.to],
-      subject: params.subject,
-      html: params.html,
-      text: params.text,
-    }),
+function getTransporter(user: string, pass: string): Transporter {
+  // Reuse a single transporter across invocations so the connection pool is shared.
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user, pass },
+    })
+  }
+  return transporter
+}
+
+export async function sendEmail(params: SendEmailParams) {
+  const user = process.env.GMAIL_USER
+  const pass = process.env.GMAIL_APP_PASSWORD
+  if (!user) throw new Error('GMAIL_USER env var is not set')
+  if (!pass) throw new Error('GMAIL_APP_PASSWORD env var is not set')
+
+  const from = process.env.MAIL_FROM || user
+
+  const info = await getTransporter(user, pass).sendMail({
+    from,
+    to: Array.isArray(params.to) ? params.to.join(', ') : params.to,
+    subject: params.subject,
+    html: params.html,
+    text: params.text,
   })
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '')
-    throw new Error(`Resend send failed (${response.status}): ${detail}`)
-  }
-
-  return response.json() as Promise<{ id: string }>
+  return { id: info.messageId }
 }
